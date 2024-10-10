@@ -106,7 +106,7 @@
                                 </div>
 
                                 <div class="align-items-center text-center">
-                                    <a class="btn-lg btn btn-link fs-16" href="{{ route('site.home') }}">
+                                    <a class="btn-lg btn btn-link fs-16" href="https://healinghandsguatemala.com.gt/">
                                         {{ translate('Go to Website') }}
                                     </a>
                                 </div>
