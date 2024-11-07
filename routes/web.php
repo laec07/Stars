@@ -18,7 +18,7 @@ Route::group(['middleware' => 'xssProtection'], function () {
 
 
     Route::get('/login', function () {
-        return view('auth.login');
+        return view('auth.login'); // Cambio para diriguir a LOGIN LAESTRADA
     });
 
 

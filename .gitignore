@@ -1,3 +1,9 @@
-/storage/*.key
-/storage/
+# ignora los archivos
 .env
+# Ignora todos los archivos .key en storage
+/storage/*.key
+
+# Ignora el directorio completo storage
+/storage/
+
+
