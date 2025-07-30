@@ -5,6 +5,24 @@
     var initTelephone;
     $(document).ready(function () {
 
+        // Mostrar/ocultar campo archivo según selección "Do you have any studies?"
+            $('#has_study').on('change', function () {
+            if ($(this).val() === 'Yes') {
+                $('#study_document_group').show();
+            } else {
+                $('#study_document_group').hide();
+                $('#archivo').val(''); // Limpia el archivo si elige No
+            }
+        }); 
+    
+        // Ejecutar una vez al cargar por si ya viene seleccionado
+            if ($('#has_study').val() === 'Yes') {
+                $('#study_document_group').show();
+            } else {
+                $('#study_document_group').hide();
+            }
+        
+    
         //load datatable
         Manager.GetDataList(0);
         Manager.LoadUserDropdown();
@@ -60,45 +78,28 @@
     });
 
     //show edit info modal
-   $(document).on('click', '.dTableEdit', function () {
-    var rowData = dTable.row($(this).parent()).data();
-    console.log(rowData);
-    _id = rowData.id;
+    $(document).on('click', '.dTableEdit', function () {
+        var rowData = dTable.row($(this).parent()).data();
+        console.log(rowData);
+        _id = rowData.id;
+        
+        $('#full_name').val(rowData.full_name);
+        $('#user_id').val(rowData.user_id);
+        $('#country_code').val(rowData.country_code);
+        initTelephone.setNumber('+' + rowData.phone_no);
+        $('#email').val(rowData.email);
+        $('#dob').val(rowData.dob);
+        $('#treated').val(rowData.treated);
+        $('#has_study').val(rowData.has_study);
+        $('#archivo').val(rowData.archivo);
+        $('#state').val(rowData.state);
+        
+         // ✅ Normalizar valor antes de asignarlo
+        let streValue = rowData.stre ? rowData.stre.charAt(0).toUpperCase() + rowData.stre.slice(1).toLowerCase() : '';
+        $('#stre').val(streValue);
 
-    $('#full_name').val(rowData.full_name);
-    $('#user_id').val(rowData.user_id);
-    $('#country_code').val(rowData.country_code);
-    initTelephone.setNumber('+' + rowData.phone_no);
-    $('#email').val(rowData.email);
-    $('#dob').val(rowData.dob);
-    $('#country').val(rowData.country);
-    $('#state').val(rowData.state);
-    $('#postal_code').val(rowData.postal_code);
-    $('#city').val(rowData.city);
-    $('#street_number').val(rowData.street_number);
-    $('#street_address').val(rowData.street_address);
-    $('#remarks').val(rowData.remarks);
-    $('#Occupation').val(rowData.Occupation);
-    $('#exercie').val(rowData.exercie);
-    $('#hobbies').val(rowData.hobbies);
-    $('#services').val(rowData.services);
-    $('#ser').val(rowData.ser);
-    $('#ses').val(rowData.ses);
-    $('#medical').val(rowData.medical);
-    $('#traumatic').val(rowData.traumatic);
-    $('#ex').val(rowData.ex);
-    $('#mosly').val(rowData.mosly);
-
-    // ✅ Normalizar valor antes de asignarlo
-    let streValue = rowData.stre ? rowData.stre.charAt(0).toUpperCase() + rowData.stre.slice(1).toLowerCase() : '';
-    $('#stre').val(streValue);
-
-    $('#mos').val(rowData.mos);
-    $('#li').val(rowData.li);
-
-    $("#frmModal").modal('show');
-});
-
+        $("#frmModal").modal('show');
+    });
 
 
     //delete
@@ -118,7 +119,7 @@
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
                 var jsonParam = form.serialize() + "&phone_no=" + initTelephone.getNumber();
-                var serviceUrl = "customer-create";
+                var serviceUrl = "patient-create";
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
                 function onSuccess(jsonData) {
@@ -138,11 +139,12 @@
                 }
             }
         },
+
         Update: function (form, id) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
                 var jsonParam = form.serialize() + "&id=" + id + "&phone_no=" + initTelephone.getNumber();
-                var serviceUrl = "customer-update";
+                var serviceUrl = "patient-update";
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
                 function onSuccess(jsonData) {
@@ -164,11 +166,12 @@
                 }
             }
         },
+        
         Delete: function (id) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
                 var jsonParam = { id: id };
-                var serviceUrl = "customer-delete";
+                var serviceUrl = "patient-delete";
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
                 function onSuccess(jsonData) {
@@ -191,13 +194,13 @@
 
         LoadUserDropdown: function () {
             var jsonParam = '';
-            var serviceUrl = "get-customer-user";
+            var serviceUrl = "get-patient-user";
             JsManager.SendJson('GET', serviceUrl, jsonParam, onSuccess, onFailed);
 
             function onSuccess(jsonData) {
                // var cbmOptions = '<option value="">Unknown User</option>';
-                var cbmOptions = '<option value="0">Customer</option>';
-                var cbmOptions = '<option value="1">Patient</option>';
+              
+               var cbmOptions = '<option value="0">Patient</option>';
             //    $.each(jsonData.data, function () {
               //      cbmOptions += '<option value=\"' + this.id + '\">' + this.name + '</option>';
                // });
@@ -211,7 +214,7 @@
 
         GetDataList: function (refresh) {
             var jsonParam = '';
-            var serviceUrl = "get-customer";
+            var serviceUrl = "get-patient";
             JsManager.SendJsonAsyncON('GET', serviceUrl, jsonParam, onSuccess, onFailed);
 
             function onSuccess(jsonData) {
@@ -239,7 +242,7 @@
                             exportOptions: {
                                 columns: [2, 3, 4, 5, 6]
                             },
-                            title: 'Customer List'
+                            title: 'Patient List'
                         },
                         {
                             text: '<i class="fa fa-print"></i> Print',
@@ -248,7 +251,7 @@
                             exportOptions: {
                                 columns: [2, 3, 4, 5, 6]
                             },
-                            title: 'Customer List'
+                            title: 'Patient List'
                         },
                         {
                             text: '<i class="fa fa-file-excel"></i> Excel',
@@ -257,7 +260,7 @@
                             exportOptions: {
                                 columns: [2, 3, 4, 5, 6]
                             },
-                            title: 'Customer List'
+                            title: 'Patient List'
                         }
                     ],
 
@@ -292,7 +295,7 @@
                         {
                             data: 'full_name',
                             name: 'full_name',
-                            title: 'Customer Name'
+                            title: 'Patient Name'
                         },
                         {
                             data: 'email',
@@ -310,11 +313,11 @@
                             title: 'Date of Birth'
                         },
                         {
-                            data: 'street_address',
-                            name: 'street_address',
-                            title: 'Street Address'
+                            data: 'archivo',
+                            name: 'archivo',
+                            title: 'Document'
                         },
-
+                     
                     ],
                     fixedColumns: false,
                     data: data

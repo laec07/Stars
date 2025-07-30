@@ -22,18 +22,22 @@ class CustomerController extends Controller
     }
 
     public function customer()
-    {
+    {   
         return view('customer.customer');
     }
 
     public function customerStore(Request $data)
     {
+       
         try {
             $validator = Validator::make($data->all(), [
                 'full_name' => ['required', 'string'],
                 'email' => ['required', 'string', 'unique:cmn_customers,email'],
                 'phone_no' => ['required', 'string', 'unique:cmn_customers,phone_no', 'max:20'],
-                'street_address' => ['required', 'string']
+                'street_address' => ['required', 'string'],
+                'stre' => ['nullable', 'in:Yes,No'],
+                'mosly' => ['nullable', 'in:Ligth,Moderate,Deep pressure'],
+                'traumatic' => ['nullable', 'in:YES,NO']
             ]);
             if (!$validator->fails()) {
                 $data['user_id'] =  $data['user_id']=UtilityRepository::emptyToNull($data->user_id);               
@@ -45,6 +49,20 @@ class CustomerController extends Controller
                             'username' => $data->phone_no,
                             'password' => Hash::make('12345678'),
                             'email' => $data->email,
+                            'dob' => $data->dob,
+                            'Occupation' => $data->Occupation,
+                            'exercie' => $data->exercie,
+                            'hobbies' => $data->hobbies,
+                            'services' =>$data->services,
+                            'ser'=>$data->ser,
+                            'ses'=>$data->ses,
+                            'medical'=>$data->medical,
+                            'traumatic'=>$data->traumatic,
+                            'ex'=>$data->ex,
+                            'mosly'=>$data->mosly,
+                            'stre'=>$data->stre,
+                            'mos'=>$data->mos,
+                            'li'=>$data->li,
                             'email_verified_at' => Carbon::now(),
                             'is_sys_adm' => 0,
                             'status' => 1,
@@ -53,11 +71,12 @@ class CustomerController extends Controller
                     );
                     $data['user_id'] = $userId->id;
                 }
-
+               
                 $data['id'] = null;
                 $data['created_at'] = auth()->id();
                 $data['dob']=UtilityRepository::emptyToNull($data->dob);
                 $rtr = CmnCustomer::create($data->all());
+                //dd($rtr);
                 return $this->apiResponse(['status' => '1', 'data' => ['cmn_customer_id' => $rtr->id]], 200);
             }
             return $this->apiResponse(['status' => '500', 'data' => $validator->errors()], 400);
@@ -68,13 +87,16 @@ class CustomerController extends Controller
 
     public function customerUpdate(Request $data)
     {
+        
         try {
             $validator = Validator::make($data->all(), [
                 'full_name' => ['required', 'string'],
                 'email' => ['required', 'string', 'unique:cmn_customers,email,' . $data->id . ',id'],
                 'phone_no' => ['required', 'string', 'unique:cmn_customers,phone_no,' . $data->id . ',id', 'max:20'],
-                'street_address' => ['required', 'string']
+                'street_address' => ['required', 'string'],
+                // 'Occupation' => ['required', 'string']
             ]);
+
             if (!$validator->fails()) {
                 //create new user
                 $data['user_id']=UtilityRepository::emptyToNull($data->user_id);
@@ -85,6 +107,20 @@ class CustomerController extends Controller
                             'username' => $data->phone_no,
                             'password' => Hash::make('12345678'),
                             'email' => $data->email,
+                            'dob' => $data->dob,
+                            'Occupation' => $data->Occupation,
+                            'exercie' => $data->exercie,
+                            'hobbies' => $data->hobbies,
+                            'services' =>$data->services,
+                            'ser'=>$data->ser,
+                            'ses'=>$data->ses,
+                            'medical'=>$data->medical,
+                            'traumatic'=>$data->traumatic,
+                            'ex'=>$data->ex,
+                            'mosly'=>$data->mosly,
+                            'stre'=>$data->stre,
+                            'mos'=>$data->mos,
+                            'li'=>$data->li,
                             'email_verified_at' => Carbon::now(),
                             'is_sys_adm' => 0,
                             'status' => 1,
@@ -92,6 +128,8 @@ class CustomerController extends Controller
                         ]
                     );
                     $data['user_id'] = $userId->id;
+
+                    
                 } else {
                     $savedUser = User::where('id', $data->user_id)->first();
                     if ($savedUser != null) {

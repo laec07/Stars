@@ -137,6 +137,7 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::get('get-payment-type-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getPaymentType'])->name('get.paument.type.dropdown');
             Route::get('get-service-by-category-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getServiceByCategory'])->name('get.service.by.category.dropdown');
             Route::get('get-customer-user', [App\Http\Controllers\Dropdown\DropdownController::class, 'getUsers'])->name('get.users');
+            Route::get('get-patient-user', [App\Http\Controllers\Dropdown\DropdownController::class, 'getUsers'])->name('get.users');
         });
 
 
@@ -194,6 +195,9 @@ Route::group(['middleware' => 'xssProtection'], function () {
 
             //get customer
             Route::get('get-customer', [\App\Http\Controllers\Customer\CustomerController::class, 'getAllCustomer'])->name('customer.get');
+
+            //get patient
+            Route::get('get-patient', [\App\Http\Controllers\Patient\PatientController::class, 'getAllPatient'])->name('patient.get');
 
             //get business holiday
             Route::get('get-business-holiday', [App\Http\Controllers\Settings\BusinessHolidayController::class, 'getBusinessHoliday'])->name('get.business.holiday');
@@ -263,9 +267,11 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::get('get-coupon-amount-from-admin', [App\Http\Controllers\Booking\SchServiceBookingController::class, 'getCouponAmount'])->name('get-coupon-amount-from-admin');
 
             Route::get('download-service-invoice-order', [App\Http\Controllers\Booking\SchServiceBookingController::class, 'DownloadServiceOrder'])->name('download.service.invoice.order');
+      
+             
         });
 
-
+       
 
         //permission check
         Route::group(['middleware' => ['permission']], function () {
@@ -313,10 +319,10 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('category-save', [App\Http\Controllers\Services\CategoriesController::class, 'createcategory'])->name('category.add');
             Route::post('category-update', [App\Http\Controllers\Services\CategoriesController::class, 'updatecategory'])->name('category.update');
             Route::post('category-delete', [App\Http\Controllers\Services\CategoriesController::class, 'deletecategory'])->name('category.delete');
-
+        
             // business
-            Route::get('business', [App\Http\Controllers\Settings\BusinessController::class, 'business'])->name('business.hour');
-
+            Route::get('business', [App\Http\Controllers\Settings\BusissControllerne::class, 'business'])->name('business.hour');
+            
             //Employee
             Route::get('employee', [App\Http\Controllers\Employee\EmployeeController::class, 'employee'])->name('employee');
             Route::post('save-update-employee-offday', [App\Http\Controllers\Employee\EmployeeController::class, 'saveOrUpdateEmployeeOffDay'])->name('save.update.offday');
@@ -344,12 +350,16 @@ Route::group(['middleware' => 'xssProtection'], function () {
 
             //Customer
             Route::get('customer', [\App\Http\Controllers\Customer\CustomerController::class, 'customer'])->name('customer');
-
             Route::post('customer-create', [\App\Http\Controllers\Customer\CustomerController::class, 'customerStore'])->name('customer.store');
             Route::post('customer-update', [\App\Http\Controllers\Customer\CustomerController::class, 'customerUpdate'])->name('customer.update');
             Route::post('customer-delete', [\App\Http\Controllers\Customer\CustomerController::class, 'customerDelete'])->name('customer.delete');
 
-
+            //Patient
+            Route::get('patient', [\App\Http\Controllers\Patient\PatientController::class, 'patient'])->name('patient');
+            Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
+            Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
+            Route::post('patient-delete', [\App\Http\Controllers\Patient\PatientController::class, 'patientDelete'])->name('patient.delete');
+                   
             //business holiday
             Route::get('business-holiday', [\App\Http\Controllers\Settings\BusinessHolidayController::class, 'businessHoliday'])->name('business.holiday');
             Route::post('save-update-business-holiday', [App\Http\Controllers\Settings\BusinessHolidayController::class, 'saveOrUpdateBusinessHoliday'])->name('save.update.business.holiday');

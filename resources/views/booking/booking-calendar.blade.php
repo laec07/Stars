@@ -416,7 +416,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <span class="fw-mediumbold">
-                                Add Customer
+                               
                             </span>
                         </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -472,22 +472,8 @@
                             <span class="help-block"></span>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group control-group form-inline controls">
-                                    <label>Country</label>
-                                    <input type="text" id="country" name="country" class="form-control input-full" />
-                                    <span class="help-block"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group control-group form-inline controls">
-                                    <label>City</label>
-                                    <input type="text" id="city" name="city" class="form-control input-full" />
-                                    <span class="help-block"></span>
-                                </div>
-                            </div>
-                        </div>
+                        
+                           
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group control-group form-inline controls">
@@ -495,21 +481,9 @@
                                     <input type="text" id="state" name="state" class="form-control input-full" />
                                     <span class="help-block"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group control-group form-inline controls">
-                                    <label>Postal Code</label>
-                                    <input type="number" id="postal_code" name="postal_code" class="form-control input-full" />
-                                    <span class="help-block"></span>
-                                </div>
-                            </div>
-                        </div>
+                            
 
-                        <div class="form-group control-group form-inline controls">
-                            <label>Remarks</label>
-                            <input type="text" id="remarks" name="remarks" class="form-control input-full" />
-                            <span class="help-block"></span>
-                        </div>
+                        
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>

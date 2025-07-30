@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dropdown;
 use App\Http\Controllers\Controller;
 use App\Http\Repository\Booking\BookingRepository;
 use App\Http\Repository\Customer\CustomerRepository;
+use App\Http\Repository\Patient\PatientRepository;
 use App\Http\Repository\Payment\PaymentRepository;
 use App\Models\Employee\SchEmployee;
 use App\Models\Services\SchServiceCategory;
@@ -77,6 +78,21 @@ class DropdownController extends Controller
             return $this->apiResponse(['status' => '403', 'data' => $qx], 400);
         }
     }
+
+    public function getPatient()
+    {
+        try{
+            $patie = new PatientRepository();
+            $patient = $patie->getPatientDropDown();
+            foreach ($patient as $val){
+                $val['name'] = $val['phone_no'] . ' - ' . $val['name'];
+            }
+            return $this->apiResponse(['status' => '1', 'data' => $patient], 200);
+        }  catch (Exception $qx) {
+            return $this->apiResponse(['status' => '403', 'data' => $qx], 400);
+        }
+    }
+
 
     public function getPaymentType()
     {

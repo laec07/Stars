@@ -14,12 +14,20 @@ class CmnCustomer extends Model
         'phone_no',
         'email',
         'dob',
-        'country',
-        'state',
-        'postal_code',
-        'city',
         'street_address',
-        'street_number',
-        'remarks'
+        'Occupation',
+        'exercie',
+        'hobbies',
+        'services',
+        'ser',
+        'ses',
+        'medical',
+        'traumatic',
+        'ex',
+        'mosly',
+        'stre',
+        'mos',
+        'li'
+
     ];
 }

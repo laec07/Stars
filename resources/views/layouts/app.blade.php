@@ -198,6 +198,13 @@
                                                     <span class="text">{{translate('Create New Customer')}}</span>
                                                 </div>
                                             </a>
+                                        </a>
+                                        <a class="col-6 col-md-4 p-0" href="{{route('patient')}}">
+                                            <div class="quick-actions-item">
+                                                <i class="flaticon-plus"></i>
+                                                <span class="text">{{translate('Create New patient')}}</span>
+                                            </div>
+                                        </a>
                                         </div>
                                     </div>
                                 </div>

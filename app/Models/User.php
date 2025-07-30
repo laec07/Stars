@@ -22,13 +22,26 @@ class User extends Authenticatable implements MustVerifyEmail{
         'email',
         'password',
         'username',
-        'photo',
+        'phone_no',
         'status',
         'sec_role_id',
         'is_sys_adm',
         'user_type',//1 for system user,2 web site user
         'email_verified_at',
-        'sch_employee_id'
+        'sch_employee_id',
+        'Occupation',
+        'exercie',
+        'hobbies',
+        'services',
+        'ser',
+        'ses',
+        'medical',
+        'traumatic',
+        'ex',
+        'mosly',
+        'stre',
+        'mos',
+        'li'
     ];
 
     public function secUserRole(){
@@ -38,7 +51,6 @@ class User extends Authenticatable implements MustVerifyEmail{
     public function balances(){
         return $this->hasMany('App\Models\Customer\CmnUserBalance');
     }
-
     public function balance(){
         return $this->balances->where('status',1)->sum('amount');
     }
