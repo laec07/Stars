@@ -267,12 +267,7 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::get('get-coupon-amount-from-admin', [App\Http\Controllers\Booking\SchServiceBookingController::class, 'getCouponAmount'])->name('get-coupon-amount-from-admin');
 
             Route::get('download-service-invoice-order', [App\Http\Controllers\Booking\SchServiceBookingController::class, 'DownloadServiceOrder'])->name('download.service.invoice.order');
-<<<<<<< HEAD
-      
-             
-=======
 
-            
             # start form fisio laestrada
             //get customer
             //Route::get('get-customer', [\App\Http\Controllers\Customer\CustomerController::class, 'getAllCustomer'])->name('customer.get');
@@ -282,7 +277,6 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::get('cheqmus-update', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'updateformCheqMusc'])->name('cheqmus.update'); // update
             Route::get('cheqmus-delete', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'deleteformCheqMusc'])->name('cheqmus.delete'); // delete
             # Find form fisio laestrada
->>>>>>> 08e520911275dda657bbd8a0559a5ecdf35aa715
         });
 
        
