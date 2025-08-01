@@ -37,7 +37,7 @@
                                     <span class="help-block"></span>
                                 </div>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-md-5" style="display: none;">
                                 <div class="form-group control-group form-inline controls"  >
                                     <label>{{translate('System User')}}</label>
                                     <div class="form-control input-full" style="background-color: #e9ecef; pointer-events: none;">Customer</div>
@@ -60,7 +60,7 @@
                                 <div class="form-group control-group form-inline controls">
 
                                     <label class="col-md-12 p-0">{{translate('Customer Phone')}} *</label>
-                                    <input type="tel" id="phone_no" maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" required data-validation-required-message="Phone number is required" class="form-control input-full w-100" />
+                                    <input type="tel" id="phone_no"  maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" required data-validation-required-message="Phone number is required" class="form-control input-full w-100" />
                                     <span class="help-block"></span>
                                 </div>
                             </div>
@@ -215,7 +215,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{translate('Close')}}</button>
-                        <button type="submit" class="btn btn-success btn-sm">{{translate('Save Change')}}</button>
+                        <button type="submit" class="btn btn-success btn-sm" data-dismiss="modal">{{translate('Save Change')}}</button>
                     </div>
                 </form>
             </div>

@@ -277,6 +277,11 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::get('cheqmus-update', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'updateformCheqMusc'])->name('cheqmus.update'); // update
             Route::get('cheqmus-delete', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'deleteformCheqMusc'])->name('cheqmus.delete'); // delete
             # Find form fisio laestrada
+
+            Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
+            Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
+            Route::post('patient-delete', [\App\Http\Controllers\Patient\PatientController::class, 'patientDelete'])->name('patient.delete');
+                   
         });
 
        

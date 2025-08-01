@@ -37,37 +37,36 @@ class PatientController extends Controller
 
         ]);
 
+
+        $rutaArchivo = $data->image_url; 
+                if ($rutaArchivo != null) {
+                    $rutaArchivo = UtilityRepository::saveFile($rutaArchivo, ['image/png', 'pdf/pdf', 'image/jpg', 'image/jpeg']);
+                }
+
         if (!$validator->fails()) {
             $data['user_id'] =  $data['user_id']=UtilityRepository::emptyToNull($data->user_id);               
             //create new user
-            if ($data->user_id == 0) {
-                $userId =   User::create(
+
+                $userId =   CmnPatient::create(
                     [
-                'name' => $data->full_name,
-                'username' => $data->phone_no,
-                'password' => Hash::make('12345678'),
+                'full_name' => $data->full_name,
+                'phone_no' => $data->phone_no,
                 'email' => $data->email,
                 'dob' => $data->dob,
                 'treated' => $data->treated,
                 'has_study' => $data->has_study,
-                'archivo' => $data->archhivo ?? null,
+                'archivo' => $rutaArchivo ?? null,
                 'state' => $data->state,
                 'email_verified_at' => Carbon::now(),
                 'is_sys_adm' => 0,
                 'status' => 1,
-                'user_type' => UserType::WebsiteUser
             ]
         );
 
         $data['user_id'] = $userId->id;
-        }
 
-        $data['id'] = null;
-        $data['created_at'] = auth()->id();
-        $data['dob']=UtilityRepository::emptyToNull($data->dob);
-        $rtr = CmnPatient::create($data->all());
-        //dd($rtr);
-        return $this->apiResponse(['status' => '1', 'data' => ['cmn_patient_id' => $rtr->id]], 200);
+        
+        return $this->apiResponse(['status' => '1', 'data' => ['cmn_patient_id' => $userId->id]], 200);
         }
          return $this->apiResponse(['status' => '500', 'data' => $validator->errors()], 400);
     } catch (Exception $ex) {

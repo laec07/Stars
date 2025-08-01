@@ -40,11 +40,15 @@
         //save or update
         JsManager.JqBootstrapValidation('#inputForm', (form, event) => {
             event.preventDefault();
-            if (_id == null) {
-                Manager.Save(form);
-            } else {
-                Manager.Update(form, _id);
-            }
+
+            var formData = new FormData(document.querySelector('#inputForm'));
+                formData.append("contact_no", initTelephone.getNumber());
+                if ($('#id').val() == null || $('#id').val() == '') {
+                    Manager.Save(formData);
+                } else {
+                    Manager.Update(formData);
+                }
+
         });
 
         initTelephone = window.intlTelInput(document.querySelector("#phone_no"), {
@@ -118,9 +122,9 @@
         Save: function (form) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
-                var jsonParam = form.serialize() + "&phone_no=" + initTelephone.getNumber();
+                var jsonParam = form;
                 var serviceUrl = "patient-create";
-                JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
+                JsManager.SendJsonWithFile("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
                 function onSuccess(jsonData) {
                     if (jsonData.status == "1") {
@@ -145,7 +149,7 @@
                 JsManager.StartProcessBar();
                 var jsonParam = form.serialize() + "&id=" + id + "&phone_no=" + initTelephone.getNumber();
                 var serviceUrl = "patient-update";
-                JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
+                JsManager.SendJsonWithFile("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
                 function onSuccess(jsonData) {
                     if (jsonData.status == "1") {
@@ -315,7 +319,14 @@
                         {
                             data: 'archivo',
                             name: 'archivo',
-                            title: 'Document'
+                            title: 'Document',
+                            render: function (data, type, row) {
+                                if (data) {
+                                    return `<a href="/storage/${data}" target="_blank" download>Descargar</a>`;
+                                } else {
+                                    return '<span class="text-muted"></span>';
+                                }
+                            }
                         },
                      
                     ],
