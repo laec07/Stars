@@ -107,11 +107,6 @@ class FisCheqmusController extends Controller
     public function deleteformCheqMusc(Request $data)
     {
         try {
-            // Debug: muestra query en log
-        DB::listen(function ($query) {
-            logger('SQL: ' . $query->sql);
-            logger('Bindings: ', $query->bindings);
-        });
             $validator = Validator::make($data->all(), [
                 'Id' => 'required|integer|exists:fis_cheqmus,Id',
             ]);

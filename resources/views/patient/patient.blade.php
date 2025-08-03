@@ -39,7 +39,7 @@
                                 <div class="col-md-5">
                                     <label>{{ translate('System User') }}</label>
                                     <div class="form-control input-full" style="background-color: #e9ecef; pointer-events: none;">Patient</div>
-                                    <input type="text" name="user_id" id="user_id" value="0">
+                                    <input type="hidden" name="user_id" id="user_id" value="0">
                                     <span class="help-block"></span>
                                 </div>
                             </div>

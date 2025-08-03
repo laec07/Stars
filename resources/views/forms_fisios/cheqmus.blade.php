@@ -33,7 +33,7 @@
 
                     <!-- Necesrio en todos los formularios -->
                     <div class="modal-body">
-                        <input type="hide" name="id" id="id" value="0"> <!-- Necesario para carga el ID del registro a actualiza, valida si es insert o update -->
+                        <input type="hidden" name="id" id="id" value="0"> <!-- Necesario para carga el ID del registro a actualiza, valida si es insert o update -->
                         <div class="row" id='patientDiv'>
                             <div class="col-md-12 mt-3">
                                 <div class="form-group">
