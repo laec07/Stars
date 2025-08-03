@@ -8,7 +8,7 @@
         //load datatable
         Manager.GetDataList(0);
         Manager.LoadUserDropdown();
-        Manager.LoadCustomerDropDown();
+        Manager.LoadPatientDropDown();
 
         //generate datatabe serial no
         dTableManager.dTableSerialNumber(dTable);
@@ -16,6 +16,9 @@
         //add  modal
         $("#btnAdd").on("click", function () {
             _id = null;
+            //Mostrar y ocultar nombre paciente y busqueda
+            patientDiv.style.display = 'block';
+            NompatientDiv.style.display = 'none';
             Manager.ResetForm();
             $("#frmModal1").modal('show');
         });
@@ -29,35 +32,34 @@
                 Manager.Update(form, _id);
             }
         });
-
     });
 
-    //show edit info modal
+    // Show edit info modal
     $(document).on('click', '.dTableEdit', function () {
         var rowData = dTable.row($(this).parent()).data();
-        _id = rowData.id;
-        $('#full_name').val(rowData.full_name);
-        $('#user_id').val(rowData.user_id);
-        $('#country_code').val(rowData.country_code);
-        initTelephone.setNumber('+' + rowData.phone_no)
-        $('#email').val(rowData.email);
-        $('#dob').val(rowData.dob);
-        $('#country').val(rowData.country);
-        $('#state').val(rowData.state);
-        $('#postal_code').val(rowData.postal_code);
-        $('#city').val(rowData.city);
-        $('#street_number').val(rowData.street_number);
-        $('#street_address').val(rowData.street_address);
-        $('#remarks').val(rowData.remarks);
+        console.log(rowData);
+        _id = rowData.Id;
+        
+        //Mostrar y ocultar nombre paciente y busqueda
+        patientDiv.style.display = 'none';
+        NompatientDiv.style.display = 'block';
 
-        $("#frmModal").modal('show');
+        // Asignación automática a inputs que coincidan con los nombres de las claves
+        Object.keys(rowData).forEach(function (key) {
+            if ($('#' + key).length) {
+                $('#' + key).val(rowData[key]);
+            }
+            
+        });
+        $('#id').val(_id);
+        $('#frmModal1').modal('show');
     });
 
 
     //delete
     $(document).on('click', '.dTableDelete', function () {
         var rowData = dTable.row($(this).parent()).data();
-        Manager.Delete(rowData.id);
+        Manager.Delete(rowData.Id);
     });
 
 
@@ -70,7 +72,8 @@
         Save: function (form) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
-                var jsonParam = form.serialize() + "&phone_no=" + initTelephone.getNumber();
+                var jsonParam = form.serialize();
+                console.log("Variable jsonParqam ");
                 var serviceUrl = "cheqmus-create";
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
@@ -94,7 +97,7 @@
         Update: function (form, id) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
-                var jsonParam = form.serialize() + "&id=" + id + "&phone_no=" + initTelephone.getNumber();
+                var jsonParam = form.serialize();
                 var serviceUrl = "cheqmus-update";
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
@@ -117,10 +120,10 @@
                 }
             }
         },
-        Delete: function (id) {
+        Delete: function (Id) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
-                var jsonParam = { id: id };
+                var jsonParam = { Id: Id };
                 var serviceUrl = "cheqmus-delete";
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
@@ -160,16 +163,16 @@
                 Message.Exception(xhr);
             }
         },
-        LoadCustomerDropDown: function (nowInsertedCustomerId) {
+        LoadPatientDropDown: function (nowInsertedCustomerId) { 
             var jsonParam = '';
-            var serviceUrl = "get-customer-dropdown";
+            var serviceUrl = "get-patient-dropdown";
             JsManager.SendJson('GET', serviceUrl, jsonParam, onSuccess, onFailed);
 
             function onSuccess(jsonData) {
-                JsManager.PopulateComboSelectPicker("#cmn_customer_id", jsonData.data, "Select One", '', nowInsertedCustomerId);
-                JsManager.PopulateComboSelectPicker("#filter_cmn_customer_id", jsonData.data, "All Customer", '0');
-                $("#cmn_customer_id").selectpicker('refresh');
-                $("#filter_cmn_customer_id").selectpicker('refresh');
+                JsManager.PopulateComboSelectPicker("#patient_id", jsonData.data, "Select One", '', nowInsertedCustomerId);
+                JsManager.PopulateComboSelectPicker("#filter_patient_id", jsonData.data, "All Customer", '0');
+                $("#patient_id").selectpicker('refresh');
+                $("#filter_patient_id").selectpicker('refresh');
             }
             function onFailed(xhr, status, err) {
                 Message.Exception(xhr);
@@ -254,9 +257,9 @@
                             render: function (data, type, row) {
                                 return EventManager.DataTableCommonButton();
                             }
-                        },// personalizar todos los campos de la tabla que se muestra al inicio
+                        },
                         {
-                            data: 'Fecha',
+                            data: 'fecha',
                             name: 'Fecha',
                             title: 'Fecha'
                         },
@@ -268,12 +271,17 @@
                         {
                             data: 'name_user',
                             name: 'name_user',
-                            title: 'User'
+                            title: 'Encargado'
                         },
                         {
-                            data: 'diagnostico',
+                            data: 'Diagnostico',
                             name: 'diagnostico',
                             title: 'diagnostico'
+                        },
+                        {
+                            data: 'Observaciones',
+                            name: 'Observaciones',
+                            title: 'Observaciones'
                         }
                     ],
                     fixedColumns: false,

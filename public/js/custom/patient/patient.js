@@ -40,13 +40,12 @@
         //save or update
         JsManager.JqBootstrapValidation('#inputForm', (form, event) => {
             event.preventDefault();
-
             var formData = new FormData(document.querySelector('#inputForm'));
-                formData.append("contact_no", initTelephone.getNumber());
-                if ($('#id').val() == null || $('#id').val() == '') {
+                formData.append("phone_no", initTelephone.getNumber());
+                if ($('#user_id').val() == null || $('#user_id').val() == '') {
                     Manager.Save(formData);
                 } else {
-                    Manager.Update(formData);
+                    Manager.Update(formData,_id);
                 }
 
         });
@@ -88,14 +87,13 @@
         _id = rowData.id;
         
         $('#full_name').val(rowData.full_name);
-        $('#user_id').val(rowData.user_id);
+        $('#user_id').val(rowData.id);
         $('#country_code').val(rowData.country_code);
         initTelephone.setNumber('+' + rowData.phone_no);
         $('#email').val(rowData.email);
         $('#dob').val(rowData.dob);
         $('#treated').val(rowData.treated);
         $('#has_study').val(rowData.has_study);
-        $('#archivo').val(rowData.archivo);
         $('#state').val(rowData.state);
         
          // ✅ Normalizar valor antes de asignarlo
@@ -147,7 +145,7 @@
         Update: function (form, id) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
-                var jsonParam = form.serialize() + "&id=" + id + "&phone_no=" + initTelephone.getNumber();
+                var jsonParam = form;
                 var serviceUrl = "patient-update";
                 JsManager.SendJsonWithFile("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
@@ -322,7 +320,7 @@
                             title: 'Document',
                             render: function (data, type, row) {
                                 if (data) {
-                                    return `<a href="/storage/${data}" target="_blank" download>Descargar</a>`;
+                                    return `<a href="/${data}" target="_blank" download>Descargar</a>`;
                                 } else {
                                     return '<span class="text-muted"></span>';
                                 }

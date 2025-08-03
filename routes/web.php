@@ -134,6 +134,7 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::get('get-category-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getServiceCategory'])->name('get.service.category');
             Route::get('get-employee-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getEmployee'])->name('get.employee.dropdown');
             Route::get('get-customer-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getCustomer'])->name('get.customer.dropdown');
+            Route::get('get-patient-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getPatient'])->name('get.patient.dropdown');
             Route::get('get-payment-type-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getPaymentType'])->name('get.paument.type.dropdown');
             Route::get('get-service-by-category-dropdown', [App\Http\Controllers\Dropdown\DropdownController::class, 'getServiceByCategory'])->name('get.service.by.category.dropdown');
             Route::get('get-customer-user', [App\Http\Controllers\Dropdown\DropdownController::class, 'getUsers'])->name('get.users');
@@ -273,9 +274,9 @@ Route::group(['middleware' => 'xssProtection'], function () {
             //Route::get('get-customer', [\App\Http\Controllers\Customer\CustomerController::class, 'getAllCustomer'])->name('customer.get');
             Route::get('fis-cheqmus', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'formCheqMusc'])->name('cheqmus.info'); // muestra la vista
             Route::get('get-cheqmus', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'getAllformCheqMusc'])->name('cheqmus.get'); // muestra datos de la tabla index
-            Route::get('cheqmus-create', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'createformCheqMusc'])->name('cheqmus.create'); // save
-            Route::get('cheqmus-update', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'updateformCheqMusc'])->name('cheqmus.update'); // update
-            Route::get('cheqmus-delete', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'deleteformCheqMusc'])->name('cheqmus.delete'); // delete
+            Route::post('cheqmus-create', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'createformCheqMusc'])->name('cheqmus.create'); // save
+            Route::post('cheqmus-update', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'updateformCheqMusc'])->name('cheqmus.update'); // update
+            Route::post('cheqmus-delete', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'deleteformCheqMusc'])->name('cheqmus.delete'); // delete
             # Find form fisio laestrada
 
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');

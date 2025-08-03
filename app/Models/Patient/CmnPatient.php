@@ -23,6 +23,8 @@ class CmnPatient extends Model
         'has_study',
         'archivo',
         'state',
-        
+        'status',
+        'created_by',
+        'updated_by'
     ];
 }

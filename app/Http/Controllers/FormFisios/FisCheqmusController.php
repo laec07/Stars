@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Exception;
 use App\Models\FormFisios\FisCheqmus;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FisCheqmusController extends Controller
 {
@@ -25,21 +28,20 @@ class FisCheqmusController extends Controller
 
     }
 
+    /* --- Obtiene datos a mostrar en pantalla principal index
+    ------ Colocar los datos que se mostrara en el div al actualizar
+    */
     public function getAllformCheqMusc()
-    {
+    { 
         try {
-            $data = FisCheqmus::join('cmn_customers', 'fis_cheqmus.csm_id', '=', 'cmn_customers.id')
-            ->join('users', 'fis_cheqmus.user_id', '=', 'users.id')
+            $data = FisCheqmus::join('cmn_patients', 'fis_cheqmus.patient_id', '=', 'cmn_patients.id')
+            ->join('users', 'fis_cheqmus.user_id','=','users.id')
             ->select(
-                'fis_cheqmus.id',
-                'fis_cheqmus.Fecha',
-                'fis_cheqmus.diagnostico',
-                'fis_cheqmus.personalizado1',
-                'fis_cheqmus.personalizado2',
-                'fis_cheqmus.personalizado3',
-                'cmn_customers.full_name as customer_name',
+                'fis_cheqmus.*',
+                'cmn_patients.full_name as customer_name',
                 'users.name as name_user'
             )
+            ->where('fis_cheqmus.status','=','1')
             ->get();
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {
@@ -47,67 +49,86 @@ class FisCheqmusController extends Controller
         }
     }
 
-    public function createformCheqMusc()
+    //Guardar Información
+    public function createformCheqMusc(Request $data)
     {
-        dd("Hol mundo");
+
         try {
-            $data = FisCheqmus::join('cmn_customers', 'fis_cheqmus.csm_id', '=', 'cmn_customers.id')
-            ->join('users', 'fis_cheqmus.user_id', '=', 'users.id')
-            ->select(
-                'fis_cheqmus.id',
-                'fis_cheqmus.Fecha',
-                'fis_cheqmus.diagnostico',
-                'fis_cheqmus.personalizado1',
-                'fis_cheqmus.personalizado2',
-                'fis_cheqmus.personalizado3',
-                'cmn_customers.full_name as customer_name',
-                'users.name as name_user'
-            )
-            ->get();
+
+        $validator = Validator::make($data->all(), [ 
+            'patient_id' => 'required|string',
+
+        ]);
+            if (!$validator->fails()) {
+                FisCheqmus::create($data->only(
+                    (new FisCheqmus())->getFillable()
+                ));
+                return $this->apiResponse(['status' => '1', 'data' => ''], 200);
+            }
+
+            
+        } catch (Exception $qx) {
+            return $this->apiResponse(['status' => '403', 'data' => $qx->getMessage()], 400);
+        }
+    }
+
+    //Actualiza Información
+    public function updateformCheqMusc(Request $data)
+    {
+        try {
+           // Validar que venga un ID válido
+            $validator = Validator::make($data->all(), [
+                'id' => 'required|integer|exists:fis_cheqmus,id',
+            ]);
+
+            if ($validator->fails()) {
+            return $this->apiResponse(['status' => '422', 'data' => $validator->errors()], 422);
+            }
+
+            // Buscar el registro a actualizar
+            $cheqMusc = FisCheqmus::find($data->id);
+            if (!$cheqMusc) {
+                return $this->apiResponse(['status' => '404', 'data' => 'Registro no encontrado'], 404);
+            }
+            
+            // Obtener los campos que se pueden actualizar
+            $fillableData = $data->only((new FisCheqmus())->getFillable());
+
+            // Actualizar
+            $cheqMusc->update($fillableData);
+            
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {
             return $this->apiResponse(['status' => '403', 'data' => $qx], 400);
         }
     }
 
-    public function updateformCheqMusc()
+    //Desactiva Información
+    public function deleteformCheqMusc(Request $data)
     {
         try {
-            $data = FisCheqmus::join('cmn_customers', 'fis_cheqmus.csm_id', '=', 'cmn_customers.id')
-            ->join('users', 'fis_cheqmus.user_id', '=', 'users.id')
-            ->select(
-                'fis_cheqmus.id',
-                'fis_cheqmus.Fecha',
-                'fis_cheqmus.diagnostico',
-                'fis_cheqmus.personalizado1',
-                'fis_cheqmus.personalizado2',
-                'fis_cheqmus.personalizado3',
-                'cmn_customers.full_name as customer_name',
-                'users.name as name_user'
-            )
-            ->get();
-            return $this->apiResponse(['status' => '1', 'data' => $data], 200);
-        } catch (Exception $qx) {
-            return $this->apiResponse(['status' => '403', 'data' => $qx], 400);
-        }
-    }
+            // Debug: muestra query en log
+        DB::listen(function ($query) {
+            logger('SQL: ' . $query->sql);
+            logger('Bindings: ', $query->bindings);
+        });
+            $validator = Validator::make($data->all(), [
+                'Id' => 'required|integer|exists:fis_cheqmus,Id',
+            ]);
 
-    public function deleteformCheqMusc()
-    {
-        try {
-            $data = FisCheqmus::join('cmn_customers', 'fis_cheqmus.csm_id', '=', 'cmn_customers.id')
-            ->join('users', 'fis_cheqmus.user_id', '=', 'users.id')
-            ->select(
-                'fis_cheqmus.id',
-                'fis_cheqmus.Fecha',
-                'fis_cheqmus.diagnostico',
-                'fis_cheqmus.personalizado1',
-                'fis_cheqmus.personalizado2',
-                'fis_cheqmus.personalizado3',
-                'cmn_customers.full_name as customer_name',
-                'users.name as name_user'
-            )
-            ->get();
+            if ($validator->fails()) {
+                return $this->apiResponse(['status' => '422', 'data' => $validator->errors()], 422);
+            }
+
+            $cheqMusc = FisCheqmus::find($data->Id); // Usa el primaryKey correcto
+            if (!$cheqMusc) {
+                return $this->apiResponse(['status' => '404', 'data' => 'Registro no encontrado'], 404);
+            }
+
+            $cheqMusc->status = 0;
+            $cheqMusc->updated_by = Auth::id();
+            $cheqMusc->save();
+
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {
             return $this->apiResponse(['status' => '403', 'data' => $qx], 400);

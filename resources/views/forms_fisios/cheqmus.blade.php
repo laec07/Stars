@@ -9,7 +9,8 @@
 <link href="{{ dsAsset('js/lib/jquery-schedule-plus/css/style.css')}}" rel="stylesheet" />
 <link href="{{ dsAsset('css/custom/forms_fisios/fis-cheqmus.css')}}" rel="stylesheet" />
 @endpush
-
+<!-- Autor: laestrada -->
+<!-- Descripción: Formulario para chequo muscular -->
 <div class="page-inner">
 
     <!--Modal add menu-->
@@ -30,27 +31,35 @@
                         </button>
                     </div>
 
-
+                    <!-- Necesrio en todos los formularios -->
                     <div class="modal-body">
-
-                        <div class="row">
-                            <div class="col-md-12 mt-3 " >
+                        <input type="hide" name="id" id="id" value="0"> <!-- Necesario para carga el ID del registro a actualiza, valida si es insert o update -->
+                        <div class="row" id='patientDiv'>
+                            <div class="col-md-12 mt-3">
                                 <div class="form-group">
-                                <label for="cmn_customer_id" class="float-left">{{translate('Customer')}} <b class="color-red"> *</b> </label>
+                                    <label for="patient_id" class="float-left">Paciente<b class="color-red"> *</b></label>
                                     <div class="input-group">
-                                        <select required id="cmn_customer_id" name="cmn_customer_id" class="form-control" data-live-search="true"></select>
+                                        <select required id="patient_id" name="patient_id" class="form-control" data-live-search="true"></select>
                                         <div class="input-group-append">
-                                            <button id="btnAddNewCustomer" class="btn btn-primary btn-sm" type="button"><i class="fas fa-plus-circle"></i> {{translate('Add Customer')}}</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12" id='NompatientDiv'>
+                                <label>Paciente</label>
+                                <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
+                            </div>
+                        </div>
+                    <!-- Necesrio en todos los formularios -->
+
                         <div class="container">
                             <div class="alert alert-info" role="alert" >
                                 <h5 class="text-center mb-3">
                                 ESCALA PARA LA VALORACIÓN DE LA FUERZA MUSCULAR
                                 </h5> <br>
+                                <!-- Div para agregar instrucciones -->
                                 <div class="d-flex flex-column flex-md-row flex-wrap justify-content-center gap-2">
                                     <span class="badge bg-danger">Nulo: 0</span>
                                     <span class="badge bg-warning text-dark">Vestigio: 1</span>
@@ -59,6 +68,7 @@
                                     <span class="badge bg-light text-dark">Bueno: 4</span>
                                     <span class="badge bg-success">Normal: 5</span>
                                 </div>
+                                <!-- Div para agregar instrucciones -->
                             </div>
                         </div>   
 
@@ -197,7 +207,7 @@
                                     </tr>
                                     <tr>
                                         <td><select id="fcm_ro_dx" name="fcm_ro_dx" class="form-select form-select-sm">
-                                            <option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option>
+                                            <option selected>5</option><option>4</option><option>3</option><option>2</option><option>1</option><option>0</option>
                                         </select></td>
                                         <td>Extensión</td>
                                         <td><select id="fcm_ro_ix" name="fcm_ro_ix" class="form-select form-select-sm">
@@ -414,6 +424,17 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <div class="form-group control-group form-inline ">
+                                <label>Diagnostico</label>
+                                <input type="text" id="Diagnostico" name="Diagnostico" class="form-control input-full" >
+                        </div>
+
+                        <div class="form-group control-group form-inline ">
+                            <label>{{translate('Observaciones')}}</label>
+                            <textarea type="text" id="Observaciones" name="Observaciones"  class="form-control input-full"></textarea>
+                            <span class="help-block"></span>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{translate('Close')}}</button>
@@ -448,3 +469,9 @@
 
 
 @endsection
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+   
+});
+</script>
