@@ -76,6 +76,7 @@
                             <table class="table table-bordered table-sm align-middle">
                                 <thead class="table-primary text-center">
                                     <tr>
+                                
                                     <th colspan="2">IZQUIERDA</th>
                                     <th></th>
                                     <th colspan="2">DERECHA</th>
