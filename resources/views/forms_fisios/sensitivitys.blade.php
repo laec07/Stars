@@ -23,7 +23,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">
                             <span class="fw-mediumbold">
-                                {{translate('Sensitivity evaluation')}}
+                                {{translate('Sensitivity evaluation')}} 
                             </span>
                         </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -51,11 +51,21 @@
                                 <label>Paciente</label>
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
                             </div>
+                            <div class="col-md-12" id='DatosImpresion'>
+                                <label>Fecha de evaluación:</label>
+                                <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
+                                <label>Paciente:</label>
+                                <input type="text" id="customer_name2" name="customer_name2" class="form-control" readonly><br>
+                                <label>Edad:</label>
+                                <input type="text" id="age" name="age" class="form-control" readonly><br>
+                                <label>Encargado:</label>
+                                <input type="text" id="encargado" name="encargado" class="form-control" readonly>
+                            </div>
                         </div>
                     <!-- Necesrio en todos los formularios -->
 
                         <div class="container">
-                            <div class="alert alert-info" role="alert" >
+                            <div class="alert alert-info no-print" role="alert" id="instructions">
                                 <h5 class="text-center mb-3">
                                      INSTRUCCIONES: 
                                 Marcar las áreas en cada categoría (Normales, Sin Sensibilidad, Con Alteraciones)
@@ -99,19 +109,19 @@
                                         
                                         <!-- Zonas Normales -->
                                         <td class="text-center align-middle" style="background-color: #9ac705;" >
-                                            <input type="hidden" name="c{{ $i }}_zn" value="0">
+                                            <input class="no-print" type="hidden" name="c{{ $i }}_zn" value="0">
                                             <input type="checkbox" class="form-check-input" name="c{{ $i }}_zn" value="1" id="c{{ $i }}_zn">
                                         </td>
 
                                         <!-- Zonas Sin Sensibilidad -->
                                         <td class="text-center align-middle" style="background-color: #9ac705;">
-                                            <input type="hidden" name="c{{ $i }}_zs" value="0">
+                                            <input class="no-print" type="hidden" name="c{{ $i }}_zs" value="0">
                                             <input type="checkbox" class="form-check-input" name="c{{ $i }}_zs" value="1" id="c{{ $i }}_zs">
                                         </td>
 
                                         <!-- Zonas Con Alteraciones -->
                                         <td class="text-center align-middle" style="background-color: #9ac705;">
-                                            <input type="hidden" name="c{{ $i }}_za" value="0">
+                                            <input class="no-print" type="hidden" name="c{{ $i }}_za" value="0">
                                             <input type="checkbox" class="form-check-input" name="c{{ $i }}_za" value="1" id="c{{ $i }}_za">
                                         </td>
 
@@ -128,19 +138,19 @@
 
                                         <!-- Zonas Normales -->
                                         <td class="text-center align-middle" style="background-color: #FFC0CB;" >
-                                            <input type="hidden" name="t{{ $i }}_zn" value="0">
+                                            <input class="no-print" type="hidden" name="t{{ $i }}_zn" value="0">
                                             <input type="checkbox" class="form-check-input" name="t{{ $i }}_zn" value="1" id="t{{ $i }}_zn">
                                         </td>
 
                                         <!-- Zonas Sin Sensibilidad -->
                                         <td class="text-center align-middle" style="background-color: #FFC0CB;" >
-                                            <input type="hidden" name="t{{ $i }}_zs" value="0">
+                                            <input class="no-print" type="hidden" name="t{{ $i }}_zs" value="0">
                                             <input type="checkbox" class="form-check-input" name="t{{ $i }}_zs" value="1" id="t{{ $i }}_zs">
                                         </td>
 
                                         <!-- Zonas Con Alteraciones -->
                                         <td class="text-center align-middle" style="background-color: #FFC0CB;" >
-                                            <input type="hidden" name="t{{ $i }}_za" value="0">
+                                            <input class="no-print" type="hidden" name="t{{ $i }}_za" value="0">
                                             <input type="checkbox" class="form-check-input" name="t{{ $i }}_za" value="1" id="t{{ $i }}_za">
                                         </td>
 
@@ -157,19 +167,19 @@
 
                                         <!-- Zonas Normales -->
                                         <td class="text-center align-middle" style="background-color: #17C1E8;">
-                                            <input type="hidden" name="l{{ $i }}_zn" value="0">
+                                            <input class="no-print" type="hidden" name="l{{ $i }}_zn" value="0">
                                             <input type="checkbox" class="form-check-input" name="l{{ $i }}_zn" value="1" id="l{{ $i }}_zn">
                                         </td>
 
                                         <!-- Zonas Sin Sensibilidad -->
                                         <td class="text-center align-middle" style="background-color: #17C1E8;">
-                                            <input type="hidden" name="l{{ $i }}_zs" value="0">
+                                            <input class="no-print" type="hidden" name="l{{ $i }}_zs" value="0">
                                             <input type="checkbox" class="form-check-input" name="l{{ $i }}_zs" value="1" id="l{{ $i }}_zs">
                                         </td>
 
                                         <!-- Zonas Con Alteraciones -->
                                         <td class="text-center align-middle" style="background-color: #17C1E8;">
-                                            <input type="hidden" name="l{{ $i }}_za" value="0">
+                                            <input class="no-print" type="hidden" name="l{{ $i }}_za" value="0">
                                             <input type="checkbox" class="form-check-input" name="l{{ $i }}_za" value="1" id="l{{ $i }}_za">
                                         </td>
 
@@ -209,14 +219,15 @@
                         </table>
 
                         </div>
-
+                        <br>
+                        <br>
                         <div class="form-group control-group form-inline ">
-                                <label>Diagnostico</label>
+                                <label>Diagnóstico: </label>
                                 <input type="text" id="Diagnostico" name="Diagnostico" class="form-control input-full" >
                         </div>
 
                         <div class="form-group control-group form-inline ">
-                            <label>{{translate('Observaciones')}}</label>
+                            <label>{{translate('Observaciones')}}: </label>
                             <textarea type="text" id="Observaciones" name="Observaciones"  class="form-control input-full"></textarea>
                             <span class="help-block"></span>
                         </div>
