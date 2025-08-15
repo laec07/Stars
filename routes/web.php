@@ -279,7 +279,9 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('cheqmus-delete', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'deleteformCheqMusc'])->name('cheqmus.delete'); // delete
             # Find form fisio laestrada
 
+
             # Evaluacion sencibilidad Daniel's
+
             Route::get('fis-sensitivitys', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'formSensitivitys'])->name('sensitivitys.info'); // muestra la vista
             Route::get('get-sensitivitys', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'getAllformSensitivitys'])->name('sensitivitys.get'); // muestra datos de la tabla index
             Route::post('sensitivitys-create', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'createformSensitivitys'])->name('sensitivitys.create'); // save
@@ -287,11 +289,40 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('sensitivitys-delete', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'deleteformSensitivitys'])->name('sensitivitys.delete'); // delete
              # Find Evaluacion sencibilidad Daniel's 
 
+            
+            # Evaluacion De Dolor Daniel's
+            Route::get('fis-evdolors', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'formEvDolors'])->name('evdolors.info'); // muestra la vista
+            Route::get('get-evdolors', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'getAllformEvDolors'])->name('evdolors.get'); // muestra datos de la tabla index
+            Route::post('evdolors-create', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'createformEvDolors'])->name('evdolors.create'); // save
+            Route::post('evdolors-update', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'updateformEvDolors'])->name('evdolors.update'); // update
+            Route::post('evdolors-delete', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'deleteformEvDolors'])->name('evdolors.delete'); // delete
+            # Evaluacion De Dolor Daniel's
+
+             # Antropometría terapia física Daniel's
+            Route::get('fis-antropometrias', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'formAntropometrias'])->name('antropometrias.info'); // muestra la vista
+            Route::get('get-antropometrias', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'getAllformAntropometrias'])->name('antropometrias.get'); // muestra datos de la tabla index
+            Route::post('antropometrias-create', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'createformAntropometrias'])->name('antropometrias.create'); // save
+            Route::post('antropometrias-update', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'updateformAntropometrias'])->name('antropometrias.update'); // update
+            Route::post('antropometrias-delete', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'deleteformAntropometrias'])->name('antropometrias.delete'); // delete
+            # Antropometría terapia física Daniel's
+
+             # Antropometría Daniel's
+            Route::get('fis-antropoms', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'formAntropoms'])->name('antropoms.info'); // muestra la vista
+            Route::get('get-antropoms', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'getAllformAntropoms'])->name('antropoms.get'); // muestra datos de la tabla index
+            Route::post('antropoms-create', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'createformAntropoms'])->name('antropoms.create'); // save
+            Route::post('antropoms-update', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'updateformAntropoms'])->name('antropoms.update'); // update
+            Route::post('antropoms-delete', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'deleteformAntropoms'])->name('antropoms.delete'); // delete
+            # Antropometría Daniel's
+           
+
+
+
 
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
             Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
             Route::post('patient-delete', [\App\Http\Controllers\Patient\PatientController::class, 'patientDelete'])->name('patient.delete');
-                   
+             
+                       
         });
 
        
