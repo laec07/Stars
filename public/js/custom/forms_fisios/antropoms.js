@@ -34,55 +34,25 @@
         });
     });
 
-   // Show edit info modal
-$(document).on('click', '.dTableEdit', function () {
+    // Show edit info modal
+    
+  $(document).on('click', '.dTableEdit', function () {
     var rowData = dTable.row($(this).parent()).data();
     console.log(rowData);
     _id = rowData.id;
-
-    //Mostrar y ocultar nombre paciente y busqueda
+    
+    // Mostrar/ocultar paciente
     patientDiv.style.display = 'none';
     NompatientDiv.style.display = 'block';
 
-    // Definir campos que son checkbox
-    const checkboxFields = [
-        // EQUILIBRIO SENTADO
-        'equi_s', 'equi_f',
-        // LEVANTARSE
-        'lev_i', 'lev_c', 'lev_ca',
-        // INTENTO DE LEVANTARSE
-        'int_i', 'int_c', 'int_ca',
-        // EQUILIBRIO INMEDIATO AL LEVANTARSE
-        'equil_i', 'equil_e', 'equil_es',
-        // EQUILIBRIO EN BIPEDESTACIÓN
-        'equib_i', 'equib_e', 'equib_b',
-        // EMPUJON
-        'em_t', 'em_s', 'em_f',
-        // OJOS CERRADOS
-        'oj_i', 'oj_e',
-        // GIRO DE 360
-        'gir_p', 'gir_pa',
-        // SENTARSE
-        'se_i', 'se_u', 'se_s'
-    ];
-
-    // Agregar hidden inputs para checkboxes
-    checkboxFields.forEach(field => {
-        let checkbox = $('[name="' + field + '"]');
-        if (checkbox.length && !checkbox.prev('input[type="hidden"]').length) {
-            checkbox.before('<input type="hidden" name="' + field + '" value="0">');
-        }
-    });
-
-    // Asignación automática de valores
-    Object.keys(rowData).forEach(key => {
+    // Asignar valores a todos los campos
+    Object.keys(rowData).forEach(function (key) {
         const input = $('[name="' + key + '"]');
         if (input.length) {
-            if (checkboxFields.includes(key)) {
-                // Checkbox → marcar/desmarcar
-                input.filter('[type="checkbox"]').prop('checked', rowData[key] == 1);
+            if (input.is(':checkbox')) {
+                // ✅ marcar si es 1, desmarcar si es 0 o null
+                input.prop('checked', rowData[key] == 1);
             } else {
-                // Otros campos
                 input.val(rowData[key]);
             }
         }
@@ -91,13 +61,6 @@ $(document).on('click', '.dTableEdit', function () {
     $('#id').val(_id);
     $('#frmModal1').modal('show');
 });
-
-// Limpiar formulario al cerrar modal
-$('#frmModal1').on('hidden.bs.modal', function () {
-    this.reset();
-});
-
-
 
 
     //delete
@@ -112,19 +75,22 @@ $('#frmModal1').on('hidden.bs.modal', function () {
             $("#inputForm").trigger('reset');
         },
 
-       Save: function (form) {
+      Save: function (form) {
     if (Message.Prompt()) {
 
-        // Forzar que todos los checkbox desmarcados envíen 0
+        // 🔹 Forzar que todos los checkboxes tengan valor 1 o 0 antes de serialize()
         $(form).find('input[type=checkbox]').each(function () {
             if (!$(this).is(':checked')) {
-                $(this).after('<input type="hidden" name="' + this.name + '" value="0">');
+                $(this).prop('checked', false).val(0);
+            } else {
+                $(this).val(1);
             }
         });
 
         JsManager.StartProcessBar();
         var jsonParam = form.serialize();
-        var serviceUrl = "antropometrias-create";
+        var serviceUrl = "antropoms-create";
+
         JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
         function onSuccess(jsonData) {
@@ -148,16 +114,19 @@ $('#frmModal1').on('hidden.bs.modal', function () {
 Update: function (form, id) {
     if (Message.Prompt()) {
 
-        // Forzar que todos los checkbox desmarcados envíen 0
+        // 🔹 Igual que en Save: actualizar valores de checkboxes
         $(form).find('input[type=checkbox]').each(function () {
             if (!$(this).is(':checked')) {
-                $(this).after('<input type="hidden" name="' + this.name + '" value="0">');
+                $(this).prop('checked', false).val(0);
+            } else {
+                $(this).val(1);
             }
         });
 
         JsManager.StartProcessBar();
         var jsonParam = form.serialize();
-        var serviceUrl = "antropometrias-update";
+        var serviceUrl = "antropoms-update";
+
         JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
         function onSuccess(jsonData) {
@@ -183,7 +152,7 @@ Update: function (form, id) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
                 var jsonParam = { id: id };
-                var serviceUrl = "antropometrias-delete";
+                var serviceUrl = "antropoms-delete";
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
                 function onSuccess(jsonData) {
@@ -239,7 +208,7 @@ Update: function (form, id) {
         },
         GetDataList: function (refresh) {
             var jsonParam = '';
-            var serviceUrl = "get-antropometrias"; // cambiar
+            var serviceUrl = "get-antropoms"; // cambiar
             JsManager.SendJsonAsyncON('GET', serviceUrl, jsonParam, onSuccess, onFailed);
 
             function onSuccess(jsonData) {
@@ -267,7 +236,7 @@ Update: function (form, id) {
                             exportOptions: {
                                 columns: [2, 3, 4, 5]
                             },
-                            title: 'Anthropometry physical therapy List' // cambiar
+                            title: 'Anthropometry List' // cambiar
                         },
                         {
                             text: '<i class="fa fa-print"></i> Print',
@@ -276,7 +245,7 @@ Update: function (form, id) {
                             exportOptions: {
                                 columns: [2, 3, 4, 5]
                             },
-                            title: 'Anthropometry physical therapy List'// cambiar
+                            title: 'Anthropometry List'// cambiar
                         },
                         {
                             text: '<i class="fa fa-file-excel"></i> Excel',
@@ -285,7 +254,7 @@ Update: function (form, id) {
                             exportOptions: {
                                 columns: [2, 3, 4, 5]
                             },
-                            title: 'Anthropometry physical therapy List'// cambiar
+                            title: 'Anthropometry List'// cambiar
                         }
                     ],
 
@@ -332,13 +301,11 @@ Update: function (form, id) {
                             name: 'name_user',
                             title: 'Encargado'
                         },
-                       /** 
                         {
                             data: 'observaciones',
-                            name: 'Observaciones',
+                            name: 'observaciones',
                             title: 'Observaciones'
                         }
-                             **/
                     ],
                     fixedColumns: false,
                     data: data

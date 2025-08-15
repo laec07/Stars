@@ -302,6 +302,14 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('antropometrias-update', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'updateformAntropometrias'])->name('antropometrias.update'); // update
             Route::post('antropometrias-delete', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'deleteformAntropometrias'])->name('antropometrias.delete'); // delete
             # Antropometría terapia física Daniel's
+
+             # Antropometría Daniel's
+            Route::get('fis-antropoms', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'formAntropoms'])->name('antropoms.info'); // muestra la vista
+            Route::get('get-antropoms', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'getAllformAntropoms'])->name('antropoms.get'); // muestra datos de la tabla index
+            Route::post('antropoms-create', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'createformAntropoms'])->name('antropoms.create'); // save
+            Route::post('antropoms-update', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'updateformAntropoms'])->name('antropoms.update'); // update
+            Route::post('antropoms-delete', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'deleteformAntropoms'])->name('antropoms.delete'); // delete
+            # Antropometría Daniel's
            
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
             Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
