@@ -5,6 +5,6 @@
 
 # Ignora el directorio completo storage
 /storage/
-
+/bootstrap/cache/
 
 /public/uploadfiles/

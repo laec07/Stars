@@ -162,7 +162,10 @@ function isValidEmail(email) {
     EventManager = {
         DataTableCommonButton: function () {
             return '<button class="btn btn-primary btn-datatable btn-round float-left dTableEdit mr-2" title="Click to edit"><i class="fas fa-edit"></i></button>' +
-                '<button class="btn btn-danger btn-datatable btn-round float-left dTableDelete" title="Click to delete"><i class="far fa-trash-alt"></i></button>';
+                '<button class="btn btn-danger btn-datatable btn-round float-left dTableDelete" title="Click to delete"><i class="far fa-trash-alt"></i></button>' +
+                '<button class="btn btn-info btn-datatable btn-round float-left dTableView" title="View / Print details">' +
+                    '<i class="fas fa-print"></i>' +
+               '</button>'; //LAESTRADA
         }
 
     };

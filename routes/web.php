@@ -279,13 +279,16 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('cheqmus-delete', [\App\Http\Controllers\FormFisios\FisCheqmusController::class, 'deleteformCheqMusc'])->name('cheqmus.delete'); // delete
             # Find form fisio laestrada
 
-             # Evaluacion sencibilidad Daniel's
+
+            # Evaluacion sencibilidad Daniel's
+
             Route::get('fis-sensitivitys', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'formSensitivitys'])->name('sensitivitys.info'); // muestra la vista
             Route::get('get-sensitivitys', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'getAllformSensitivitys'])->name('sensitivitys.get'); // muestra datos de la tabla index
             Route::post('sensitivitys-create', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'createformSensitivitys'])->name('sensitivitys.create'); // save
             Route::post('sensitivitys-update', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'updateformSensitivitys'])->name('sensitivitys.update'); // update
             Route::post('sensitivitys-delete', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'deleteformSensitivitys'])->name('sensitivitys.delete'); // delete
              # Find Evaluacion sencibilidad Daniel's 
+
             
             # Evaluacion De Dolor Daniel's
             Route::get('fis-evdolors', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'formEvDolors'])->name('evdolors.info'); // muestra la vista
@@ -311,6 +314,10 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('antropoms-delete', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'deleteformAntropoms'])->name('antropoms.delete'); // delete
             # Antropometría Daniel's
            
+
+
+
+
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
             Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
             Route::post('patient-delete', [\App\Http\Controllers\Patient\PatientController::class, 'patientDelete'])->name('patient.delete');
