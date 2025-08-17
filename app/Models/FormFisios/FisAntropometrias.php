@@ -16,29 +16,30 @@ class FisAntropometrias extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'id',
+     
         'patient_id',
         'user_id',
         'fecha',
         //Campos Antropometrias
         //EQUILIBRIO SENTADO
-        'equi_s','equi_f',
+        'equi_s',
         //LEVANTARSE
-        'lev_i','lev_c','lev_ca',
+        'lev_i',
         //INTENTO DE LEVANTARSE
-        'int_i','int_c','int_ca', 
+        'int_i',
         //EQUILIBRIO INMEDIATO AL LEVANTARSE
-        'equil_i','equil_e','equil_es',
+        'equil_i',
         //EQUILIBRIO EN BIPEDESTACIÒN
-        'equib_i','equib_e','equib_b',
+        'equib_i',
         //EMPUJON
-        'em_t','em_s','em_f',
+        'em_t',
         //OJOS CERRADOS
-        'oj_i','oj_e',
+        'oj_i',
         //GIRO DE 360°
-        'gir_p','gir_pa',
+        'gir_p',
         //SENTARSE
-        'se_i','se_u','se_s',
+        'se_i',
+        "total_puntaje",
         'Campopersonalizado1', 'Campopersonalizado2',
         'Campopersonalizado3', 'Campopersonalizado4', 'Campopersonalizado5',
         'status', 'created_by', 'updated_by'

@@ -2,25 +2,24 @@
     "use strict";
     var dTable = null;
     var _id = null;
-    var initTelephone;
-    $(document).ready(function () {
 
+    $(document).ready(function () {
         //load datatable
         Manager.GetDataList(0);
         Manager.LoadUserDropdown();
         Manager.LoadPatientDropDown();
 
-        //generate datatabe serial no
+        //generate datatable serial no
         dTableManager.dTableSerialNumber(dTable);
 
-        //add  modal
+        //add modal
         $("#btnAdd").on("click", function () {
             _id = null;
-            //Mostrar y ocultar nombre paciente y busqueda
             patientDiv.style.display = 'block';
             NompatientDiv.style.display = 'none';
             Manager.ResetForm();
             $("#frmModal1").modal('show');
+            calcularTotal(); // reinicia total
         });
 
         //save or update
@@ -32,73 +31,64 @@
                 Manager.Update(form, _id);
             }
         });
-    });
 
-   // Show edit info modal
-$(document).on('click', '.dTableEdit', function () {
-    var rowData = dTable.row($(this).parent()).data();
-    console.log(rowData);
-    _id = rowData.id;
+        // === 🚀 Calcular total ===
+        function calcularTotal() {
+            let total = 0;
 
-    //Mostrar y ocultar nombre paciente y busqueda
-    patientDiv.style.display = 'none';
-    NompatientDiv.style.display = 'block';
+            document.querySelectorAll('.puntaje').forEach(el => {
+                total += parseInt(el.value) || 0;
+            });
 
-    // Definir campos que son checkbox
-    const checkboxFields = [
-        // EQUILIBRIO SENTADO
-        'equi_s', 'equi_f',
-        // LEVANTARSE
-        'lev_i', 'lev_c', 'lev_ca',
-        // INTENTO DE LEVANTARSE
-        'int_i', 'int_c', 'int_ca',
-        // EQUILIBRIO INMEDIATO AL LEVANTARSE
-        'equil_i', 'equil_e', 'equil_es',
-        // EQUILIBRIO EN BIPEDESTACIÓN
-        'equib_i', 'equib_e', 'equib_b',
-        // EMPUJON
-        'em_t', 'em_s', 'em_f',
-        // OJOS CERRADOS
-        'oj_i', 'oj_e',
-        // GIRO DE 360
-        'gir_p', 'gir_pa',
-        // SENTARSE
-        'se_i', 'se_u', 'se_s'
-    ];
+            // Actualiza el texto visible
+            document.getElementById('total_puntaje').innerText = total + ' / 15';
 
-    // Agregar hidden inputs para checkboxes
-    checkboxFields.forEach(field => {
-        let checkbox = $('[name="' + field + '"]');
-        if (checkbox.length && !checkbox.prev('input[type="hidden"]').length) {
-            checkbox.before('<input type="hidden" name="' + field + '" value="0">');
+            // Actualiza el input hidden (se envía al backend)
+            document.getElementById('input_total_puntaje').value = total;
         }
+
+        // Escuchar cambios en los selects
+        document.querySelectorAll('.puntaje').forEach(el => {
+            el.addEventListener('change', calcularTotal);
+        });
+
+        // Inicializar al cargar
+        calcularTotal();
+        // === 🚀 Fin ===
     });
 
-    // Asignación automática de valores
-    Object.keys(rowData).forEach(key => {
-        const input = $('[name="' + key + '"]');
-        if (input.length) {
-            if (checkboxFields.includes(key)) {
-                // Checkbox → marcar/desmarcar
-                input.filter('[type="checkbox"]').prop('checked', rowData[key] == 1);
-            } else {
-                // Otros campos
+    // Show edit info modal
+    $(document).on('click', '.dTableEdit', function () {
+        var rowData = dTable.row($(this).parent()).data();
+        console.log(rowData);
+        _id = rowData.id;
+
+        //Mostrar y ocultar nombre paciente y busqueda
+        patientDiv.style.display = 'none';
+        NompatientDiv.style.display = 'block';
+
+        // Asignación automática de valores (inputs normales)
+        Object.keys(rowData).forEach(key => {
+            const input = $('[name="' + key + '"]');
+            if (input.length) {
                 input.val(rowData[key]);
             }
+        });
+
+        // 🚀 Mostrar el total en el span y en el hidden
+        if (rowData.total_puntaje !== undefined) {
+            $('#input_total_puntaje').val(rowData.total_puntaje);
+            $('#total_puntaje').text(rowData.total_puntaje + ' / 15');
         }
+
+        $('#id').val(_id);
+        $('#frmModal1').modal('show');
     });
 
-    $('#id').val(_id);
-    $('#frmModal1').modal('show');
-});
-
-// Limpiar formulario al cerrar modal
-$('#frmModal1').on('hidden.bs.modal', function () {
-    this.reset();
-});
-
-
-
+    // Limpiar formulario al cerrar modal
+    $('#frmModal1').on('hidden.bs.modal', function () {
+        this.reset();
+    });
 
     //delete
     $(document).on('click', '.dTableDelete', function () {
@@ -107,77 +97,62 @@ $('#frmModal1').on('hidden.bs.modal', function () {
     });
 
     var Manager = {
-
         ResetForm: function () {
             $("#inputForm").trigger('reset');
+            $('#input_total_puntaje').val(0);
+            $('#total_puntaje').text('0 / 15');
         },
 
-       Save: function (form) {
-    if (Message.Prompt()) {
+        Save: function (form) {
+            if (Message.Prompt()) {
+                JsManager.StartProcessBar();
+                var jsonParam = form.serialize(); // incluye el hidden
+                var serviceUrl = "antropometrias-create";
+                JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
-        // Forzar que todos los checkbox desmarcados envíen 0
-        $(form).find('input[type=checkbox]').each(function () {
-            if (!$(this).is(':checked')) {
-                $(this).after('<input type="hidden" name="' + this.name + '" value="0">');
+                function onSuccess(jsonData) {
+                    if (jsonData.status == "1") {
+                        Message.Success("save");
+                        Manager.ResetForm();
+                        Manager.GetDataList(1); //reload datatable
+                    } else {
+                        Message.Error("save");
+                    }
+                    JsManager.EndProcessBar();
+                }
+
+                function onFailed(xhr, status, err) {
+                    JsManager.EndProcessBar();
+                    Message.Exception(xhr);
+                }
             }
-        });
+        },
 
-        JsManager.StartProcessBar();
-        var jsonParam = form.serialize();
-        var serviceUrl = "antropometrias-create";
-        JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
+        Update: function (form, id) {
+            if (Message.Prompt()) {
+                JsManager.StartProcessBar();
+                var jsonParam = form.serialize(); // incluye el hidden
+                var serviceUrl = "antropometrias-update";
+                JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
-        function onSuccess(jsonData) {
-            if (jsonData.status == "1") {
-                Message.Success("save");
-                Manager.ResetForm();
-                Manager.GetDataList(1); //reload datatable
-            } else {
-                Message.Error("save");
+                function onSuccess(jsonData) {
+                    if (jsonData.status == "1") {
+                        Message.Success("update");
+                        _id = null;
+                        Manager.ResetForm();
+                        Manager.GetDataList(1); //reload datatable
+                    } else {
+                        Message.Error("update");
+                    }
+                    JsManager.EndProcessBar();
+                }
+
+                function onFailed(xhr, status, err) {
+                    JsManager.EndProcessBar();
+                    Message.Exception(xhr);
+                }
             }
-            JsManager.EndProcessBar();
-        }
-
-        function onFailed(xhr, status, err) {
-            JsManager.EndProcessBar();
-            Message.Exception(xhr);
-        }
-    }
-},
-
-Update: function (form, id) {
-    if (Message.Prompt()) {
-
-        // Forzar que todos los checkbox desmarcados envíen 0
-        $(form).find('input[type=checkbox]').each(function () {
-            if (!$(this).is(':checked')) {
-                $(this).after('<input type="hidden" name="' + this.name + '" value="0">');
-            }
-        });
-
-        JsManager.StartProcessBar();
-        var jsonParam = form.serialize();
-        var serviceUrl = "antropometrias-update";
-        JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
-
-        function onSuccess(jsonData) {
-            if (jsonData.status == "1") {
-                Message.Success("update");
-                _id = null;
-                Manager.ResetForm();
-                Manager.GetDataList(1); //reload datatable
-            } else {
-                Message.Error("update");
-            }
-            JsManager.EndProcessBar();
-        }
-
-        function onFailed(xhr, status, err) {
-            JsManager.EndProcessBar();
-            Message.Exception(xhr);
-        }
-    }
-},
+        },
 
         Delete: function (id) {
             if (Message.Prompt()) {
@@ -194,7 +169,6 @@ Update: function (form, id) {
                         Message.Error("delete");
                     }
                     JsManager.EndProcessBar();
-
                 }
 
                 function onFailed(xhr, status, err) {
@@ -222,6 +196,7 @@ Update: function (form, id) {
                 Message.Exception(xhr);
             }
         },
+
         LoadPatientDropDown: function (nowInsertedCustomerId) { 
             var jsonParam = '';
             var serviceUrl = "get-patient-dropdown";
@@ -237,9 +212,10 @@ Update: function (form, id) {
                 Message.Exception(xhr);
             }
         },
+
         GetDataList: function (refresh) {
             var jsonParam = '';
-            var serviceUrl = "get-antropometrias"; // cambiar
+            var serviceUrl = "get-antropometrias"; 
             JsManager.SendJsonAsyncON('GET', serviceUrl, jsonParam, onSuccess, onFailed);
 
             function onSuccess(jsonData) {
@@ -250,7 +226,6 @@ Update: function (form, id) {
                 Message.Exception(xhr);
             }
         },
-
 
         LoadDataTable: function (data, refresh) {
             if (refresh == "0") {
@@ -264,31 +239,24 @@ Update: function (form, id) {
                             text: '<i class="fa fa-file-pdf"></i> PDF',
                             className: 'btn btn-sm',
                             extend: 'pdfHtml5',
-                            exportOptions: {
-                                columns: [2, 3, 4, 5]
-                            },
-                            title: 'Anthropometry physical therapy List' // cambiar
+                            exportOptions: { columns: [2, 3, 4, 5] },
+                            title: 'Anthropometry physical therapy List'
                         },
                         {
                             text: '<i class="fa fa-print"></i> Print',
                             className: 'btn btn-sm',
                             extend: 'print',
-                            exportOptions: {
-                                columns: [2, 3, 4, 5]
-                            },
-                            title: 'Anthropometry physical therapy List'// cambiar
+                            exportOptions: { columns: [2, 3, 4, 5] },
+                            title: 'Anthropometry physical therapy List'
                         },
                         {
                             text: '<i class="fa fa-file-excel"></i> Excel',
                             className: 'btn btn-sm',
                             extend: 'excelHtml5',
-                            exportOptions: {
-                                columns: [2, 3, 4, 5]
-                            },
-                            title: 'Anthropometry physical therapy List'// cambiar
+                            exportOptions: { columns: [2, 3, 4, 5] },
+                            title: 'Anthropometry physical therapy List'
                         }
                     ],
-
                     scrollY: "350px",
                     scrollX: true,
                     scrollCollapse: true,
@@ -301,8 +269,8 @@ Update: function (form, id) {
                         {
                             data: null,
                             name: '',
-                            'orderable': false,
-                            'searchable': false,
+                            orderable: false,
+                            searchable: false,
                             title: '#SL',
                             width: 8,
                             render: function () {
@@ -317,28 +285,9 @@ Update: function (form, id) {
                                 return EventManager.DataTableCommonButton();
                             }
                         },
-                        {
-                            data: 'fecha',
-                            name: 'Fecha',
-                            title: 'Fecha'
-                        },
-                        {
-                            data: 'customer_name',
-                            name: 'customer_name',
-                            title: 'customer name'
-                        },
-                        {
-                            data: 'name_user',
-                            name: 'name_user',
-                            title: 'Encargado'
-                        },
-                       /** 
-                        {
-                            data: 'observaciones',
-                            name: 'Observaciones',
-                            title: 'Observaciones'
-                        }
-                             **/
+                        { data: 'fecha', name: 'Fecha', title: 'Fecha' },
+                        { data: 'customer_name', name: 'customer_name', title: 'customer name' },
+                        { data: 'name_user', name: 'name_user', title: 'Encargado' }
                     ],
                     fixedColumns: false,
                     data: data
