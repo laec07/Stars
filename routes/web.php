@@ -289,14 +289,14 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('sensitivitys-delete', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'deleteformSensitivitys'])->name('sensitivitys.delete'); // delete
              # Find Evaluacion sencibilidad Daniel's 
 
-            
-            # Evaluacion De Dolor Daniel's
+                        # Evaluacion De Dolor Daniel's
             Route::get('fis-evdolors', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'formEvDolors'])->name('evdolors.info'); // muestra la vista
             Route::get('get-evdolors', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'getAllformEvDolors'])->name('evdolors.get'); // muestra datos de la tabla index
             Route::post('evdolors-create', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'createformEvDolors'])->name('evdolors.create'); // save
             Route::post('evdolors-update', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'updateformEvDolors'])->name('evdolors.update'); // update
             Route::post('evdolors-delete', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'deleteformEvDolors'])->name('evdolors.delete'); // delete
-            # Evaluacion De Dolor Daniel's
+            # Find Evaluacion De Dolor Daniel's
+
 
              # Antropometría terapia física Daniel's
             Route::get('fis-antropometrias', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'formAntropometrias'])->name('antropometrias.info'); // muestra la vista
@@ -304,7 +304,7 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('antropometrias-create', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'createformAntropometrias'])->name('antropometrias.create'); // save
             Route::post('antropometrias-update', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'updateformAntropometrias'])->name('antropometrias.update'); // update
             Route::post('antropometrias-delete', [\App\Http\Controllers\FormFisios\FisAntropometriasController::class, 'deleteformAntropometrias'])->name('antropometrias.delete'); // delete
-            # Antropometría terapia física Daniel's
+            # Find Antropometría terapia física Daniel's
 
              # Antropometría Daniel's
             Route::get('fis-antropoms', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'formAntropoms'])->name('antropoms.info'); // muestra la vista
@@ -312,9 +312,15 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('antropoms-create', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'createformAntropoms'])->name('antropoms.create'); // save
             Route::post('antropoms-update', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'updateformAntropoms'])->name('antropoms.update'); // update
             Route::post('antropoms-delete', [\App\Http\Controllers\FormFisios\FisAntropomsController::class, 'deleteformAntropoms'])->name('antropoms.delete'); // delete
-            # Antropometría Daniel's
-           
-
+            # Find Antropometría Daniel's
+            
+            # Evaluacion De La Piel Daniel's
+            Route::get('fis-evpiels', [\App\Http\Controllers\FormFisios\FisEvPielsController::class, 'formEvPiels'])->name('evpiels.info'); // muestra la vista
+            Route::get('get-evpiels', [\App\Http\Controllers\FormFisios\FisEvPielsController::class, 'getAllformEvPiels'])->name('evpiels.get'); // muestra datos de la tabla index
+            Route::post('evpiels-create', [\App\Http\Controllers\FormFisios\FisEvPielsController::class, 'createformEvPiels'])->name('evpiels.create'); // save
+            Route::post('evpiels-update', [\App\Http\Controllers\FormFisios\FisEvPielsController::class, 'updateformEvPiels'])->name('evpiels.update'); // update
+            Route::post('evpiels-delete', [\App\Http\Controllers\FormFisios\FisEvPielsController::class, 'deleteformEvPiels'])->name('evpiels.delete'); // delete
+              # Find Evaluacion De La Piel Daniel's
 
 
 
