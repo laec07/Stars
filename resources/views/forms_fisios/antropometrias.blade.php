@@ -68,176 +68,147 @@
                         </div>   
 
                         <div class="table-responsive">
-                             <div class="form-group">
-                                <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%; color: #000; font-weight: bold;">
-                        <!-- EQUILIBRIO SENTADO -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">EQUILIBRIO SENTADO</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Se inclina o desliza en la silla</td>
-                            <td><input type="checkbox" name="equi_s" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Firme y seguro</td>
-                            <td><input type="checkbox" name="equi_f" value="1"></td>
-                        </tr>
+                        <div class="form-group">
+                            <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%; color: #000; font-weight: bold;">
+                            
 
-                        <!-- LEVANTARSE -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">LEVANTARSE</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Incapaz sin ayuda</td>
-                            <td><input type="checkbox" name="lev_i" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Capaz utilizando los brazos con ayuda</td>
-                            <td><input type="checkbox" name="lev_c" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Capaz de levantar los brazos</td>
-                            <td><input type="checkbox" name="lev_ca" value="1"></td>
-                        </tr>
 
-                        <!-- INTENTO DE LEVANTARSE -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">INTENTO DE LEVANTARSE</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Incapaz sin ayuda</td>
-                            <td><input type="checkbox" name="int_i" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Capaz pero necesita más de un intento</td>
-                            <td><input type="checkbox" name="int_c" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Capaz de levantarse con un intento</td>
-                            <td><input type="checkbox" name="int_ca" value="1"></td>
-                        </tr>
+                                    
+                                    <!-- EQUILIBRIO SENTADO -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">EQUILIBRIO SENTADO</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select id="equi_s" name="equi_s" class="form-control puntaje">
+                                                <option value="0">0 - Se inclina o desliza en la silla</option>
+                                                <option value="1">1 - Firme y seguro</option>
+                                            </select>
+                                        </td>
+                                    </tr>   
+                                    <!-- LEVANTARSE -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">LEVANTARSE</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="lev_i" class="form-control puntaje">
+                                                <option value="0">0 - Incapaz sin ayuda</option>
+                                                <option value="1">1 - Con ayuda de brazos</option>
+                                                <option value="2">2 - Sin ayuda</option>
+                                            </select>
+                                        </td>
+                                    </tr>
 
-                        <!-- EQUILIBRIO INMEDIATO AL LEVANTARSE -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">EQUILIBRIO INMEDIATO AL LEVANTARSE</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Inestable (se tambalea, mueve los pies, marcando balanceo del tronco)</td>
-                            <td><input type="checkbox" name="equil_i" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Estable, pero usa andador, bastón, muletas u otros objetos de soporte</td>
-                            <td><input type="checkbox" name="equil_e" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Estable sin usar bastón u otros soportes</td>
-                            <td><input type="checkbox" name="equil_es" value="1"></td>
-                        </tr>
+                                    <!-- INTENTO DE LEVANTARSE -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">INTENTO DE LEVANTARSE</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="int_i" class="form-control puntaje">
+                                                <option value="0">0 - Incapaz sin ayuda</option>
+                                                <option value="1">1 - Requiere más de un intento</option>
+                                                <option value="2">2 - Se levanta en un intento</option>
+                                            </select>
+                                        </td>
+                                    </tr>
 
-                        <!-- EQUILIBRIO EN BIPEDESTACIÓN -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">EQUILIBRIO EN BIPEDESTACIÓN</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Inestable</td>
-                            <td><input type="checkbox" name="equib_i" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Estable con aumento del área de sustentación</td>
-                            <td><input type="checkbox" name="equib_e" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Base de sustentación estrecha sin ningún soporte</td>
-                            <td><input type="checkbox" name="equib_b" value="1"></td>
-                        </tr>
+                                    <!-- EQUILIBRIO INMEDIATO -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">EQUILIBRIO INMEDIATO AL LEVANTARSE</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="equil_i" class="form-control puntaje">
+                                                <option value="0">0 - Inestable</option>
+                                                <option value="1">1 - Estable con soporte</option>
+                                                <option value="2">2 - Estable sin soporte</option>
+                                            </select>
+                                        </td>
+                                    </tr>
 
-                        <!-- EMPUJÓN -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">EMPUJÓN</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Tiende a caerse</td>
-                            <td><input type="checkbox" name="em_t" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Se tambalea, se sujeta, pero se mantiene solo</td>
-                            <td><input type="checkbox" name="em_s" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Firme</td>
-                            <td><input type="checkbox" name="em_f" value="1"></td>
-                        </tr>
+                                    <!-- EQUILIBRIO EN BIPEDESTACIÓN -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">EQUILIBRIO EN BIPEDESTACIÓN</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="equib_i" class="form-control puntaje">
+                                                <option value="0">0 - Inestable</option>
+                                                <option value="1">1 - Estable con base amplia</option>
+                                                <option value="2">2 - Base estrecha sin soporte</option>
+                                            </select>
+                                        </td>
+                                    </tr>
 
-                        <!-- OJOS CERRADOS -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">OJOS CERRADOS</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Inestable</td>
-                            <td><input type="checkbox" name="oj_i" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Estable</td>
-                            <td><input type="checkbox" name="oj_e" value="1"></td>
-                        </tr>
+                                    <!-- EMPUJÓN -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">EMPUJÓN</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="em_t" class="form-control puntaje">
+                                                <option value="0">0 - Tiende a caerse</option>
+                                                <option value="1">1 - Se tambalea pero se mantiene</option>
+                                                <option value="2">2 - Firme</option>
+                                            </select>
+                                        </td>
+                                    </tr>
 
-                        <!-- GIRO DE 360° -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">GIRO DE 360°</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Pasos discontinuos</td>
-                            <td><input type="checkbox" name="gir_p" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Pasos continuos</td>
-                            <td><input type="checkbox" name="gir_pa" value="1"></td>
-                        </tr>
+                                    <!-- OJOS CERRADOS -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">OJOS CERRADOS</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="oj_i" class="form-control puntaje">
+                                                <option value="0">0 - Inestable</option>
+                                                <option value="1">1 - Estable</option>
+                                            </select>
+                                        </td>
+                                    </tr>
 
-                        <!-- SENTARSE -->
-                        <tr style="background-color: #f59b9b;">
-                            <th colspan="3">SENTARSE</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>Inseguro (calcula mal distancia, cae en la silla)</td>
-                            <td><input type="checkbox" name="se_i" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>Usa los brazos o no tiene un movimiento suave</td>
-                            <td><input type="checkbox" name="se_u" value="1"></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Seguro, movimiento suave</td>
-                            <td><input type="checkbox" name="se_s" value="1"></td>
-                        </tr>
-                        </table>
+                                    <!-- GIRO DE 360° -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">GIRO DE 360°</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="gir_p" class="form-control puntaje">
+                                                <option value="0">0 - Pasos discontinuos</option>
+                                                <option value="1">1 - Pasos continuos</option>
+                                            </select>
+                                        </td>
+                                    </tr>
 
+                                    <!-- SENTARSE -->
+                                    <tr class="bg-danger text-white">
+                                        <th colspan="3">SENTARSE</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <select name="se_i" class="form-control puntaje">
+                                                <option value="0">0 - Inseguro</option>
+                                                <option value="1">1 - Usa brazos o movimiento no suave</option>
+                                                <option value="2">2 - Seguro y movimiento suave</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+
+                                    <!-- TOTAL mostrado en pantalla -->
+                                    <tr style="background-color: #930a8d; font-size: 18px; color: white;">
+                                        <td colspan="2" align="left">TOTAL</td>
+                                        <td id="total_puntaje">0 / 15</td>
+                                    </tr>
+                                    
+                            </table>
+                                 <!-- Campo oculto para enviar el total -->
+                                    <input type="hidden" name="total_puntaje" id="input_total_puntaje" value="0">
                         </div>
-                            </div>
+                        </div>
+                        
+
                          <!--
                         <div class="form-group control-group form-inline ">
                             <label>{{translate('Observaciones')}}</label>
@@ -280,8 +251,3 @@
 
 @endsection
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-   
-});
-</script>
