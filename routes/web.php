@@ -289,7 +289,7 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('sensitivitys-delete', [\App\Http\Controllers\FormFisios\FisSensitivitysController::class, 'deleteformSensitivitys'])->name('sensitivitys.delete'); // delete
              # Find Evaluacion sencibilidad Daniel's 
 
-                        # Evaluacion De Dolor Daniel's
+            # Evaluacion De Dolor Daniel's
             Route::get('fis-evdolors', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'formEvDolors'])->name('evdolors.info'); // muestra la vista
             Route::get('get-evdolors', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'getAllformEvDolors'])->name('evdolors.get'); // muestra datos de la tabla index
             Route::post('evdolors-create', [\App\Http\Controllers\FormFisios\FisEvDolorsController::class, 'createformEvDolors'])->name('evdolors.create'); // save
@@ -321,6 +321,15 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('evpiels-update', [\App\Http\Controllers\FormFisios\FisEvPielsController::class, 'updateformEvPiels'])->name('evpiels.update'); // update
             Route::post('evpiels-delete', [\App\Http\Controllers\FormFisios\FisEvPielsController::class, 'deleteformEvPiels'])->name('evpiels.delete'); // delete
               # Find Evaluacion De La Piel Daniel's
+
+            # Chequeo Muscular Daniel's
+            Route::get('fis-cheqs', [\App\Http\Controllers\FormFisios\FisCheqsController::class, 'formCheqs'])->name('cheqs.info'); // muestra la vista
+            Route::get('get-cheqs', [\App\Http\Controllers\FormFisios\FisCheqsController::class, 'getAllformCheqs'])->name('cheqs.get'); // muestra datos de la tabla index
+            Route::post('cheqs-create', [\App\Http\Controllers\FormFisios\FisCheqsController::class, 'createformCheqs'])->name('cheqs.create'); // save
+            Route::post('cheqs-update', [\App\Http\Controllers\FormFisios\FisCheqsController::class, 'updateformCheqs'])->name('cheqs.update'); // update
+            Route::post('cheqs-delete', [\App\Http\Controllers\FormFisios\FisCheqsController::class, 'deleteformCheqs'])->name('cheqs.delete'); // delete
+            # Find Cheque Muscular Daniel's
+
 
 
 
