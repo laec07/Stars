@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
-class FisEvPiels extends Model
+class FisCheqs extends Model
 {
     use HasFactory;
 
-    protected $table = 'fis_evpiels';
+    protected $table = 'fis_cheqs';
 
     protected $primaryKey = 'id';
 
@@ -19,13 +19,10 @@ class FisEvPiels extends Model
         'id',
         'patient_id',
         'user_id',
-        'fecha', "zonas",
-        'estado_piel_izquierdo_anterior',
-        'estado_piel_izquierdo_posterior',
-        'estado_piel_derecho_anterior',
-        'estado_piel_derecho_posterior',
-        'Observaciones', 'Campopersonalizado1',
-        'Campopersonalizado2', 'Campopersonalizado3', 'Campopersonalizado4',
+        'fecha',
+        'escala',
+        'observaciones', 'diagnostico',
+        'Campopersonalizado1', 'Campopersonalizado2', 'Campopersonalizado3',
         'status', 'created_by', 'updated_by'
     ];
     protected static function booted()
