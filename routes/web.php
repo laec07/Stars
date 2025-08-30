@@ -330,7 +330,13 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('cheqs-delete', [\App\Http\Controllers\FormFisios\FisCheqsController::class, 'deleteformCheqs'])->name('cheqs.delete'); // delete
             # Find Cheque Muscular Daniel's
 
-
+            # Evaluación de la alineación postural Daniel's
+            Route::get('fis-evalineps', [\App\Http\Controllers\FormFisios\FisEvAlinepsController::class, 'formEvAlineps'])->name('evalineps.info'); // muestra la vista
+            Route::get('get-evalineps', [\App\Http\Controllers\FormFisios\FisEvAlinepsController::class, 'getAllformEvAlineps'])->name('evalineps.get'); // muestra datos de la tabla index
+            Route::post('evalineps-create', [\App\Http\Controllers\FormFisios\FisEvAlinepsController::class, 'createformEvAlineps'])->name('evalineps.create'); // save
+            Route::post('evalineps-update', [\App\Http\Controllers\FormFisios\FisEvAlinepsController::class, 'updateformEvAlineps'])->name('evalineps.update'); // update
+            Route::post('evalineps-delete', [\App\Http\Controllers\FormFisios\FisEvAlinepsController::class, 'deleteformEvAlineps'])->name('evalineps.delete'); // delete
+            # Find Evaluación de la alineación postural Daniel's
 
 
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
