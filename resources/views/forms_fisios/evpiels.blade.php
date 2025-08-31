@@ -69,54 +69,67 @@
     <input type="hidden" name="id" id="id" value="0">
 
     <!-- Tabla de estado de la piel -->
-    <div class="table-responsive">
-        <table class="table table-bordered text-center">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Hemi</th>
-                    <th>Plano</th>
-                    <th>Estado de la piel</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Izquierdo</td>
-                    <td>Anterior</td>
-                    <td>
-                        <input type="text" id="estado_izquierdo_anterior" name="estado_piel[izquierdo_anterior]" class="form-control">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Izquierdo</td>
-                    <td>Posterior</td>
-                    <td>
-                        <input type="text" id="estado_izquierdo_posterior" name="estado_piel[izquierdo_posterior]" class="form-control">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Derecho</td>
-                    <td>Anterior</td>
-                    <td>
-                        <input type="text" id="estado_derecho_anterior" name="estado_piel[derecho_anterior]" class="form-control">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Derecho</td>
-                    <td>Posterior</td>
-                    <td>
-                        <input type="text" id="estado_derecho_posterior" name="estado_piel[derecho_posterior]" class="form-control">
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Observaciones -->
-    <div class="form-group mt-3">
-        <label for="observaciones"><b>Observaciones</b></label>
-        <textarea id="observaciones" name="observaciones" class="form-control" rows="3"></textarea>
-    </div>
+<div class="table-responsive">
+    <table class="table table-bordered text-center">
+        <thead class="thead-dark">
+            <tr>
+                <th>Hemi</th>
+                <th>Plano</th>
+                <th>Estado de la piel</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Izquierdo</td>
+                <td>Anterior</td>
+                <td>
+                    <input type="text" id="estado_izquierdo_anterior"
+                           name="estado_piel_izquierdo_anterior"
+                           class="form-control">
+                </td>
+            </tr>
+            <tr>
+                <td>Izquierdo</td>
+                <td>Posterior</td>
+                <td>
+                    <input type="text" id="estado_izquierdo_posterior"
+                           name="estado_piel_izquierdo_posterior"
+                           class="form-control">
+                </td>
+            </tr>
+            <tr>
+                <td>Derecho</td>
+                <td>Anterior</td>
+                <td>
+                    <input type="text" id="estado_derecho_anterior"
+                           name="estado_piel_derecho_anterior"
+                           class="form-control">
+                </td>
+            </tr>
+            <tr>
+                <td>Derecho</td>
+                <td>Posterior</td>
+                <td>
+                    <input type="text" id="estado_derecho_posterior"
+                           name="estado_piel_derecho_posterior"
+                           class="form-control">
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
+
+            <div class="form-group control-group form-inline ">
+            <label>Diagnóstico: </label>
+            <input type="text" id="diagnostico" name="diagnostico" class="form-control input-full" >
+            </div>
+
+            <!-- Observaciones -->
+            <div class="form-group mt-3">
+                <label for="observaciones"><b>Observaciones</b></label>
+                <textarea id="observaciones" name="observaciones" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
 
                         
                       

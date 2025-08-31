@@ -16,7 +16,6 @@ class FisEvPiels extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'id',
         'patient_id',
         'user_id',
         'fecha', "zonas",
@@ -24,8 +23,9 @@ class FisEvPiels extends Model
         'estado_piel_izquierdo_posterior',
         'estado_piel_derecho_anterior',
         'estado_piel_derecho_posterior',
-        'Observaciones', 'Campopersonalizado1',
-        'Campopersonalizado2', 'Campopersonalizado3', 'Campopersonalizado4',
+        'diagnostico','observaciones', 
+        'Campopersonalizado1','Campopersonalizado2', 
+        'Campopersonalizado3', 'Campopersonalizado4',
         'status', 'created_by', 'updated_by'
     ];
     protected static function booted()
