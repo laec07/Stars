@@ -32,74 +32,100 @@
             }
         });
 
-        // === 🚀 Canvas para mapeo de la silueta ===
-const canvas = document.getElementById("miCanvas");
-if (canvas) {
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-    img.src = "/img/Evpiels.png"; // ruta relativa desde public/
 
-    const seleccionadas = []; // hasta 2 zonas seleccionadas
 
-    img.onload = () => {
-        dibujar();
-    };
 
-    function dibujar() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    });
 
-        // repintar zonas seleccionadas
-        seleccionadas.forEach(zona => {
-            ctx.fillStyle = zona.color;
-            ctx.fillRect(zona.x, zona.y, zona.w, zona.h);
-        });
-    }
+    // === 🚀 Canvas para mapeo de la silueta ===
+        (function () {
+            const canvas = document.getElementById("miCanvas");
+            if (!canvas) return;
 
-    canvas.addEventListener("click", (e) => {
-        const x = e.offsetX;
-        const y = e.offsetY;
-        const ancho = canvas.width;
-        const alto = canvas.height;
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            img.src = "/img/Evpiels.png"; // ruta relativa desde public/
+            const seleccionadas = []; // zonas seleccionadas
 
-        const figuraAncho = ancho / 2; // cada figura ocupa la mitad
-        const mitadFigura = figuraAncho / 2;
+            img.onload = () => dibujar();
 
-        let zona = null;
-
-        if (x < figuraAncho) {
-            // FIGURA IZQUIERDA
-            zona = (x < mitadFigura)
-                ? {id: "izquierdo_posterior", x: 0, y: 0, w: mitadFigura, h: alto, color: "rgba(255,0,0,0.3)"}
-                : {id: "izquierdo_anterior", x: mitadFigura, y: 0, w: mitadFigura, h: alto, color:  "rgba(255,0,0,0.3)"};
-        } else {
-            // FIGURA DERECHA
-            zona = (x < figuraAncho + mitadFigura)
-                ? {id: "derecho_posterior", x: figuraAncho, y: 0, w: mitadFigura, h: alto, color: "rgba(255,0,0,0.3)"}
-                : {id: "derecho_anterior", x: figuraAncho + mitadFigura, y: 0, w: mitadFigura, h: alto, color: "rgba(255,0,0,0.3)"};
-        }
-
-        if (zona) {
-            const index = seleccionadas.findIndex(z => z.id === zona.id);
-            if (index >= 0) {
-                // desmarcar si ya estaba
-                seleccionadas.splice(index, 1);
-                document.getElementById("estado_" + zona.id).value = "";
-            } else {
-                if (seleccionadas.length < 2) {
-                    seleccionadas.push(zona);
-                    document.getElementById("estado_" + zona.id).value = "Alteración detectada";
-                } else {
-                    alert("Solo puedes seleccionar 2 zonas a la vez.");
-                }
+            function dibujar() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                seleccionadas.forEach(zona => {
+                    ctx.fillStyle = zona.color;
+                    ctx.fillRect(zona.x, zona.y, zona.w, zona.h);
+                });
             }
-            dibujar();
-        }
-    });
-}
-// === 🚀 Fin Canvas ===
 
-    });
+            function cargarZonasDesdeInputs() {
+                seleccionadas.length = 0;
+                const alto = canvas.height;
+                const ancho = canvas.width;
+                const figuraAncho = ancho / 2;
+                const mitadFigura = figuraAncho / 2;
+
+                const zonasConfig = {
+                    "estado_izquierdo_posterior": {x: 0, y: 0, w: mitadFigura, h: alto},
+                    "estado_izquierdo_anterior": {x: mitadFigura, y: 0, w: mitadFigura, h: alto},
+                    "estado_derecho_posterior": {x: figuraAncho, y: 0, w: mitadFigura, h: alto},
+                    "estado_derecho_anterior": {x: figuraAncho + mitadFigura, y: 0, w: mitadFigura, h: alto}
+                };
+
+                for (let id in zonasConfig) {
+                    const input = document.getElementById(id);
+                    if (input && input.value && input.value.trim() !== "") {
+                        seleccionadas.push({
+                            id: id.replace("estado_", ""),
+                            ...zonasConfig[id],
+                            color: "rgba(255,0,0,0.3)"
+                        });
+                    }
+                }
+                dibujar();
+            }
+
+            canvas.addEventListener("click", (e) => {
+                const x = e.offsetX;
+                const y = e.offsetY;
+                const ancho = canvas.width;
+                const alto = canvas.height;
+                const figuraAncho = ancho / 2;
+                const mitadFigura = figuraAncho / 2;
+
+                let zona = null;
+                if (x < figuraAncho) {
+                    zona = (x < mitadFigura)
+                        ? {id: "izquierdo_posterior", x: 0, y: 0, w: mitadFigura, h: alto, color: "rgba(255,0,0,0.3)"}
+                        : {id: "izquierdo_anterior", x: mitadFigura, y: 0, w: mitadFigura, h: alto, color: "rgba(255,0,0,0.3)"};
+                } else {
+                    zona = (x < figuraAncho + mitadFigura)
+                        ? {id: "derecho_posterior", x: figuraAncho, y: 0, w: mitadFigura, h: alto, color: "rgba(255,0,0,0.3)"}
+                        : {id: "derecho_anterior", x: figuraAncho + mitadFigura, y: 0, w: mitadFigura, h: alto, color: "rgba(255,0,0,0.3)"};
+                }
+
+                if (!zona) return;
+
+                const index = seleccionadas.findIndex(z => z.id === zona.id);
+                if (index >= 0) {
+                    // desmarcar
+                    seleccionadas.splice(index, 1);
+                    document.getElementById("estado_" + zona.id).value = "";
+                } else {
+                    if (seleccionadas.length < 2) {
+                        seleccionadas.push(zona);
+                        document.getElementById("estado_" + zona.id).value = "Alteración detectada";
+                    } else {
+                        alert("Solo puedes seleccionar 2 zonas a la vez.");
+                    }
+                }
+                dibujar();
+            });
+
+            // función pública para recargar zonas al editar paciente
+            window.recargarCanvas = cargarZonasDesdeInputs;
+        })();
+        // === 🚀 Fin Canvas ===
 
     // Show edit info modal
     $(document).on('click', '.dTableEdit', function () {
@@ -119,11 +145,13 @@ if (canvas) {
             }
         });
 
-
+ // 🔥 Recargar canvas con zonas guardadas
+            recargarCanvas();
 
         $('#id').val(_id);
         $('#frmModal1').modal('show');
     });
+    // Fin de Show edit info modal
 
     // Limpiar formulario al cerrar modal
     $('#frmModal1').on('hidden.bs.modal', function () {
@@ -141,6 +169,10 @@ if (canvas) {
             $("#inputForm").trigger('reset');
             $('#input_total_puntaje').val(0);
             $('#total_puntaje').text('0 / 15');
+            // limpiar canvas
+                if (window.recargarCanvas) {
+                    recargarCanvas();
+                }
         },
 
         Save: function (form) {
@@ -327,7 +359,9 @@ if (canvas) {
                         },
                         { data: 'fecha', name: 'Fecha', title: 'Fecha' },
                         { data: 'customer_name', name: 'customer_name', title: 'customer name' },
-                        { data: 'name_user', name: 'name_user', title: 'Encargado' }
+                        { data: 'name_user', name: 'name_user', title: 'Encargado' },
+                        { data: 'diagnostico', name: 'diagnostico', title: 'Diagnostico' },
+                        { data: 'observaciones', name: 'observaciones', title: 'Observaciones' }
                     ],
                     fixedColumns: false,
                     data: data
