@@ -338,6 +338,13 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('evalineps-delete', [\App\Http\Controllers\FormFisios\FisEvAlinepsController::class, 'deleteformEvAlineps'])->name('evalineps.delete'); // delete
             # Find Evaluación de la alineación postural Daniel's
 
+            # Goniometry In Physiotherapy Daniel's
+            Route::get('fis-goniometrias', [\App\Http\Controllers\FormFisios\FisGoniometriasController::class, 'formGoniometrias'])->name('goniometrias.info'); // muestra la vista
+            Route::get('get-goniometrias', [\App\Http\Controllers\FormFisios\FisGoniometriasController::class, 'getAllformGoniometrias'])->name('goniometrias.get'); // muestra datos de la tabla index
+            Route::post('goniometrias-create', [\App\Http\Controllers\FormFisios\FisGoniometriasController::class, 'createformGoniometrias'])->name('goniometrias.create'); // save
+            Route::post('goniometrias-update', [\App\Http\Controllers\FormFisios\FisGoniometriasController::class, 'updateformGoniometrias'])->name('goniometrias.update'); // update
+            Route::post('goniometrias-delete', [\App\Http\Controllers\FormFisios\FisGoniometriasController::class, 'deleteformGoniometrias'])->name('goniometrias.delete'); // delete
+            # Goniometry In Physiotherapy Daniel's
 
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
             Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');

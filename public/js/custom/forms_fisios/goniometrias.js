@@ -36,54 +36,39 @@
 
     // Show edit info modal
     $(document).on('click', '.dTableEdit', function () {
-    var rowData = dTable.row($(this).closest('tr')).data(); // usar closest('tr')
-    console.log(rowData);
-    _id = rowData.id;
+        var rowData = dTable.row($(this).parent()).data();
+        console.log(rowData);
+        _id = rowData.id;
+        
+        //Mostrar y ocultar nombre paciente y busqueda
+        patientDiv.style.display = 'none';
+        NompatientDiv.style.display = 'block';
 
-    // Mostrar y ocultar nombre paciente y busqueda
-    patientDiv.style.display = 'none';
-    NompatientDiv.style.display = 'block';
+        // Definir campos que son checkbox
+            const checkboxFields = [];
 
-    // Cargar paciente seleccionado
-    $('#patient_id').val(rowData.patient_id).selectpicker('refresh');
-    $('#customer_name').val(rowData.customer_name);
-
-    // Cargar inputs de la tabla de alineación
-        var campos = ['cabeza','hombros','codos','torax','omoplatos','columna','abdomen','pelvis','muslos','rodillas','piernas','pies'];
-        var posiciones = ['ld', 'po', 'an', 'li']; // lateral derecho, posterior, anterior, lado izquierdo
-        campos.forEach(function(campo){
-            posiciones.forEach(function(pos){
-                var inputName = pos + '_' + campo;
-                $('input[name="'+inputName+'"]').val(rowData[inputName] || '');
+            ['c', 't', 'l', 's'].forEach(prefix => {
+                for (let i = 1; i <= 12; i++) {
+                    ['zn', 'zs', 'za'].forEach(suffix => {
+                        checkboxFields.push(`${prefix}${i}_${suffix}`);
+                    });
+                }
             });
-        });
 
-        // Cargar diagnostico y observaciones
-        $('#diagnostico').val(rowData.diagnostico || '');
-        $('#observaciones').val(rowData.observaciones || '');
-
-    // Mostrar imágenes existentes y mantener input oculto para actualizar
-        for(var i=1; i<=4; i++){
-            var fotoInput = $('input[name="foto'+i+'"]');
-            // eliminar preview anterior si existe
-            $('#fotoPreview'+i).remove();
-            if(rowData['foto'+i]){
-                // agregar preview y campo oculto
-                fotoInput.after(`
-                    <img id="fotoPreview${i}" src="/storage/${rowData['foto'+i]}" 
-                         class="img-thumbnail shadow-sm mt-2" style="max-height:100px;">
-                    <input type="hidden" name="foto${i}_old" value="${rowData['foto'+i]}">
-                `);
-            } else {
-                // Si no hay foto, agregar img oculto para preview futuro
-                fotoInput.after(`<img id="fotoPreview${i}" class="img-thumbnail shadow-sm mt-2" style="max-height:100px; display:none;">`);
-            }
-        }
-
-    $('#id').val(_id);
-    $('#frmModal1').modal('show');
-});
-
+        // Asignación automática a inputs que coincidan con los nombres de las claves
+            Object.keys(rowData).forEach(function (key) {
+                const input = $('#' + key);
+                if (input.length) {
+                    if (checkboxFields.includes(key)) {
+                        input.prop('checked', rowData[key] == 1); // ✅ checkbox
+                    } else {
+                        input.val(rowData[key]); // ✅ campos normales
+                    }
+                }
+            });
+        $('#id').val(_id);
+        $('#frmModal1').modal('show');
+    });
 
 
     //delete
@@ -98,79 +83,88 @@
             $("#inputForm").trigger('reset');
         },
 
-      Save: function (form) {
-    if (Message.Prompt()) {
-        JsManager.StartProcessBar();
+        Save: function (form) {
+            if (Message.Prompt()) {
+                 $(form).find('input[type=checkbox]').each(function () {
+                    if ($(this).is(':checked')) {
+                        var hiddenInput = $(form).find('input[type=hidden][name="' + this.name + '"]');
+                        hiddenInput.remove(); // elimina el duplicado
+                    }
+                });
 
-        // Usar FormData en vez de serialize()
-        var formData = new FormData(form[0]);
+                JsManager.StartProcessBar();
+                var jsonParam = form.serialize();
+                var serviceUrl = "goniometrias-create";    // cambiar
+                JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
-        var serviceUrl = "evalineps-create";
-        JsManager.SendJsonWithFile("POST", serviceUrl, formData, onSuccess, onFailed);
+                function onSuccess(jsonData) {
+                    if (jsonData.status == "1") {
+                        Message.Success("save");
+                        Manager.ResetForm();
+                        Manager.GetDataList(1); //reload datatable
+                    } else {
+                        Message.Error("save");
+                    }
+                    JsManager.EndProcessBar();
+                }
 
-        function onSuccess(jsonData) {
-            if (jsonData.status == "1") {
-                Message.Success("save");
-                Manager.ResetForm();
-                Manager.GetDataList(1);
-            } else {
-                Message.Error("save");
+                function onFailed(xhr, status, err) {
+                    JsManager.EndProcessBar();
+                    Message.Exception(xhr);
+                }
             }
-            JsManager.EndProcessBar();
-        }
-        function onFailed(xhr) {
-            JsManager.EndProcessBar();
-            Message.Exception(xhr);
-        }
-        }
-    },
-
+        },
         Update: function (form, id) {
-         if (Message.Prompt()) {
-        JsManager.StartProcessBar();
+            if (Message.Prompt()) {
+                $(form).find('input[type=checkbox]').each(function () {
+                    if ($(this).is(':checked')) {
+                        var hiddenInput = $(form).find('input[type=hidden][name="' + this.name + '"]');
+                        hiddenInput.remove(); // elimina el duplicado
+                    }
+                });
+                JsManager.StartProcessBar();
+                var jsonParam = form.serialize();
+                var serviceUrl = "goniometrias-update";    // cambiar
+                JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
-        // Usar FormData en vez de serialize()
-        var formData = new FormData(form[0]);
-        formData.append("id", id); // asegurar que viaja el ID
+                function onSuccess(jsonData) {
+                    if (jsonData.status == "1") {
+                        Message.Success("update");
+                        _id = null;
+                        Manager.ResetForm();
+                        Manager.GetDataList(1); //reload datatable
+                    } else {
+                        Message.Error("update");
+                    }
+                    JsManager.EndProcessBar();
 
-        var serviceUrl = "evalineps-update";
-        JsManager.SendJsonWithFile("POST", serviceUrl, formData, onSuccess, onFailed);
+                }
 
-        function onSuccess(jsonData) {
-            if (jsonData.status == "1") {
-                Message.Success("update");
-                _id = null;
-                Manager.ResetForm();
-                Manager.GetDataList(1);
-            } else {
-                Message.Error("update");
+                function onFailed(xhr, status, err) {
+                    JsManager.EndProcessBar();
+                    Message.Exception(xhr);
+                }
             }
-            JsManager.EndProcessBar();
-        }
-        function onFailed(xhr) {
-            JsManager.EndProcessBar();
-            Message.Exception(xhr);
-        }
-        }
-    },
-
+        },
         Delete: function (id) {
             if (Message.Prompt()) {
                 JsManager.StartProcessBar();
                 var jsonParam = { id: id };
-                var serviceUrl = "evalineps-delete";
+                var serviceUrl = "goniometrias-delete";    // cambiar
                 JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
 
                 function onSuccess(jsonData) {
                     if (jsonData.status == "1") {
                         Message.Success("delete");
-                        Manager.GetDataList(1);
+                        Manager.GetDataList(1); //reload datatable
                     } else {
                         Message.Error("delete");
                     }
                     JsManager.EndProcessBar();
+
                 }
-                function onFailed(xhr) {
+
+                function onFailed(xhr, status, err) {
                     JsManager.EndProcessBar();
                     Message.Exception(xhr);
                 }
@@ -212,7 +206,7 @@
         },
         GetDataList: function (refresh) {
             var jsonParam = '';
-            var serviceUrl = "get-evalineps"; // cambiar
+            var serviceUrl = "get-goniometrias"; // cambiar
             JsManager.SendJsonAsyncON('GET', serviceUrl, jsonParam, onSuccess, onFailed);
 
             function onSuccess(jsonData) {
@@ -240,7 +234,7 @@
                             exportOptions: {
                                 columns: [2, 3, 4, 5]
                             },
-                            title: 'Evaluation of postural alignment List' // cambiar
+                            title: 'Goniometry In Physiotherapy List' // cambiar
                         },
                         {
                             text: '<i class="fa fa-print"></i> Print',
@@ -249,7 +243,7 @@
                             exportOptions: {
                                 columns: [2, 3, 4, 5]
                             },
-                            title: 'Evaluation of postural alignment List'// cambiar
+                            title: 'Goniometry In Physiotherapy List'// cambiar
                         },
                         {
                             text: '<i class="fa fa-file-excel"></i> Excel',
@@ -258,7 +252,7 @@
                             exportOptions: {
                                 columns: [2, 3, 4, 5]
                             },
-                            title: 'Evaluation of postural alignment List'// cambiar
+                            title: 'Goniometry In Physiotherapy List'// cambiar
                         }
                     ],
 
@@ -307,36 +301,14 @@
                         },
                         {
                             data: 'diagnostico',
-                            name: 'diagnostico',
+                            name: 'Diagnostico',
                             title: 'Diagnopstico'
                         },
                         {
                             data: 'observaciones',
-                            name: 'observaciones',
+                            name: 'Observaciones',
                             title: 'Observaciones'
-                        },
-                        {
-    data: 'foto1',
-    name: 'foto1',
-    title: 'Documento',
-    render: function (data, type, row) {
-        if (data) {
-            let url = `/storage/${data}`;
-            return `
-                <a href="${url}" target="_blank" class="btn btn-sm btn-info me-1" title="Ver">
-                    <i class="fas fa-eye"></i>
-                </a>
-                <a href="${url}" download class="btn btn-sm btn-primary" title="Descargar">
-                    <i class="fas fa-download"></i>
-                </a>
-            `;
-        } else {
-            return '<span class="text-muted">Sin archivo</span>';
-        }
-    }
-}
-
-
+                        }
                     ],
                     fixedColumns: false,
                     data: data

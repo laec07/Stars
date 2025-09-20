@@ -1,0 +1,35 @@
+.divSelectedService{
+    color: #fff;
+    border-radius: 2px;
+    text-align: left;
+    padding: 4px 15px;
+    background: #007bff;
+    margin-left: 4px;
+
+    
+}
+
+.input-grados {
+    max-width: 100%;
+    box-sizing: border-box;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.table {
+    table-layout: fixed;
+    width: 100%;
+}
+.col-md-3 {
+    overflow: hidden;
+}
+.table td {
+    padding: 4px;
+    vertical-align: middle;
+}
+
+
+img {
+    object-fit: contain;
+}
+
