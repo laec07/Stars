@@ -139,22 +139,31 @@
 
                         <hr>
 
-                        <!-- Fotos -->
-                        <h5>Imágenes</h5>
+                       <h5>Imágenes</h5>
                         <div class="row">
                             @for($i=1; $i<=4; $i++)
                                 <div class="col-md-3 mb-3">
                                     <label>Foto {{ $i }}</label>
                                     <input type="file" name="foto{{ $i }}" class="form-control form-control-sm" accept="image/*">
+
                                     @if(isset($eval) && $eval->{'foto'.$i})
                                         <input type="hidden" name="foto{{ $i }}_old" value="{{ $eval->{'foto'.$i} }}">
-                                        <img id="fotoPreview{{ $i }}" src="{{ asset('storage/'.$eval->{'foto'.$i}) }}" class="img-thumbnail mt-2" style="max-height:100px;">
+
+                                        <!-- Vista previa -->
+                                        <img id="fotoPreview{{ $i }}" 
+                                            src="{{ Storage::url($eval->{'foto'.$i}) }}" 
+                                            class="img-thumbnail mt-2" 
+                                            style="max-height:100px; display:block;">
                                     @else
-                                        <img id="fotoPreview{{ $i }}" class="img-thumbnail mt-2" style="max-height:100px; display:none;">
+                                        <img id="fotoPreview{{ $i }}" 
+                                            class="img-thumbnail mt-2" 
+                                            style="max-height:100px; display:none;">
                                     @endif
                                 </div>
                             @endfor
-                        </div>  
+                        </div>
+
+ 
                         
                         <br>
                         <br>
