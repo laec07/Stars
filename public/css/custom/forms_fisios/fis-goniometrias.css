@@ -11,9 +11,12 @@
 
 .input-grados {
     max-width: 100%;
-    box-sizing: border-box;
-    font-size: 0.9rem;
+    box-sizing: border-box;     /* Asegura que padding no rompa el layout */
+    font-size: 0.9rem;          /* Tamaño de fuente legible */
     text-align: center;
+    padding: 0.25em 0.5em;      /* Espacio interno para que el texto no se corte */ 
+    min-width: 50px;            /* Asegura un ancho mínimo */
+    
 }
 
 .table {

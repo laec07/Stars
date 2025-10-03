@@ -111,10 +111,10 @@
                                             <td>EXT</td>
                                         </tr>
                                         <tr>
-                                        <td><input type="number" id="hombro_flex_izq" name="hombro_flex_izq" class="form-control form-control-sm input-grados  input-grados" placeholder="grados"></td>
-                                        <td><input type="number" id="hombro_ext_izq"  name="hombro_ext_izq"  class="form-control form-control-sm input-grados  input-grados" placeholder="grados"></td>
-                                        <td><input type="number" id="hombro_flex_der" name="hombro_flex_der" class="form-control form-control-sm input-grados  input-grados" placeholder="grados"></td>
-                                        <td><input type="number" id="hombro_ext_der"  name="hombro_ext_der"  class="form-control form-control-sm input-grados  input-grados" placeholder="grados"></td>
+                                        <td><input  id="hombro_flex_izq" name="hombro_flex_izq" class="form-control  input-grados  input-grados" placeholder="grados"></td>
+                                        <td><input  id="hombro_ext_izq"  name="hombro_ext_izq"  class="form-control  input-grados  input-grados" placeholder="grados"></td>
+                                        <td><input  id="hombro_flex_der" name="hombro_flex_der" class="form-control  input-grados  input-grados" placeholder="grados"></td>
+                                        <td><input  id="hombro_ext_der"  name="hombro_ext_der"  class="form-control  input-grados  input-grados" placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -168,10 +168,10 @@
                                             <td>ABD</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="hombro_ad_izq"  name="hombro_ad_izq"  class="form-control form-control-sm input-grados "  placeholder="grados"></td>
-                                            <td><input type="number" id="hombro_abd_izq" name="hombro_abd_izq" class="form-control form-control-sm input-grados "  placeholder="grados"></td>
-                                            <td><input type="number" id="hombro_ad_der"  name="hombro_ad_der"  class="form-control form-control-sm input-grados "  placeholder="grados"></td>
-                                            <td><input type="number" id="hombro_abd_der" name="hombro_abd_der" class="form-control form-control-sm input-grados "  placeholder="grados"></td>
+                                            <td><input  id="hombro_ad_izq"  name="hombro_ad_izq"  class="form-control  input-grados "  placeholder="grados"></td>
+                                            <td><input  id="hombro_abd_izq" name="hombro_abd_izq" class="form-control  input-grados "  placeholder="grados"></td>
+                                            <td><input  id="hombro_ad_der"  name="hombro_ad_der"  class="form-control  input-grados "  placeholder="grados"></td>
+                                            <td><input  id="hombro_abd_der" name="hombro_abd_der" class="form-control  input-grados "  placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -225,10 +225,10 @@
                                             <td>Rot. Ext.</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="hombro_rot_int_izq" name="hombro_rot_int_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="hombro_rot_ext_izq" name="hombro_rot_ext_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="hombro_rot_int_der" name="hombro_rot_int_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="hombro_rot_ext_der" name="hombro_rot_ext_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="hombro_rot_int_izq" name="hombro_rot_int_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="hombro_rot_ext_izq" name="hombro_rot_ext_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="hombro_rot_int_der" name="hombro_rot_int_der" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="hombro_rot_ext_der" name="hombro_rot_ext_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -278,10 +278,10 @@
                                             <td>FLEX</td><td>EXT</td><td>FLEX</td><td>EXT</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="codo_flex_izq" name="codo_flex_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="codo_ext_izq" name="codo_ext_izq"   class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="codo_flex_der" name="codo_flex_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="codo_ext_der" name="codo_ext_der"   class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_flex_izq" name="codo_flex_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_ext_izq" name="codo_ext_izq"   class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_flex_der" name="codo_flex_der" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_ext_der" name="codo_ext_der"   class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -326,10 +326,10 @@
                                             <td>PRO</td><td>SUP</td><td>PRO</td><td>SUP</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="codo_pro_izq" name="codo_pro_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="codo_sup_izq" name="codo_sup_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="codo_pro_der" name="codo_pro_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="codo_sup_der" name="codo_sup_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_pro_izq" name="codo_pro_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_sup_izq" name="codo_sup_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_pro_der" name="codo_pro_der" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="codo_sup_der" name="codo_sup_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -384,10 +384,10 @@
                                             <td>FLEX-P</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="muneca_flex_dorsal_izq" name="muneca_flex_dorsal_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="muneca_flex_palmar_izq" name="muneca_flex_palmar_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="muneca_flex_dorsal_der" name="muneca_flex_dorsal_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="muneca_flex_palmar_der" name="muneca_flex_palmar_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_flex_dorsal_izq" name="muneca_flex_dorsal_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_flex_palmar_izq" name="muneca_flex_palmar_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_flex_dorsal_der" name="muneca_flex_dorsal_der" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_flex_palmar_der" name="muneca_flex_palmar_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -438,10 +438,10 @@
                                             <td>Desv. Radial</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="muneca_desv_radial_izq"  name="muneca_desv_radial_izq"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="muneca_desv_cubital_izq" name="muneca_desv_cubital_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="muneca_desv_radial_der"  name="muneca_desv_radial_der"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="muneca_desv_cubital_der" name="muneca_desv_cubital_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_desv_radial_izq"  name="muneca_desv_radial_izq"  class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_desv_cubital_izq" name="muneca_desv_cubital_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_desv_radial_der"  name="muneca_desv_radial_der"  class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="muneca_desv_cubital_der" name="muneca_desv_cubital_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -497,10 +497,10 @@
                                             <td>EX</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="cadera_flex_recta_izq" name="cadera_flex_recta_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_flex_recta_der" name="cadera_flex_recta_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_ex_recta_izq"   name="cadera_ex_recta_izq"   class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_ex_recta_der"   name="cadera_ex_recta_der"   class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_flex_recta_izq" name="cadera_flex_recta_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_flex_recta_der" name="cadera_flex_recta_der" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ex_recta_izq"   name="cadera_ex_recta_izq"   class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ex_recta_der"   name="cadera_ex_recta_der"   class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -548,10 +548,10 @@
                                             <td>EXT</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="cadera_flex_flexionada_izq" name="cadera_flex_flexionada_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_ext_flexionada_izq"  name="cadera_ext_flexionada_izq"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_flex_flexionada_der" name="cadera_flex_flexionada_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_ext_flexionada_der"  name="cadera_ext_flexionada_der"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_flex_flexionada_izq" name="cadera_flex_flexionada_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ext_flexionada_izq"  name="cadera_ext_flexionada_izq"  class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_flex_flexionada_der" name="cadera_flex_flexionada_der" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ext_flexionada_der"  name="cadera_ext_flexionada_der"  class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -594,8 +594,8 @@
                                             <td>EXT</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="cadera_ext_izq" name="cadera_ext_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_ext_der" name="cadera_ext_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ext_izq" name="cadera_ext_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ext_der" name="cadera_ext_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -643,10 +643,10 @@
                                             <td>AD</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="cadera_ad_izq"  name="cadera_ad_izq"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_abd_izq" name="cadera_abd_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_ad_der"  name="cadera_ad_der"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_abd_der" name="cadera_abd_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ad_izq"  name="cadera_ad_izq"  class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_abd_izq" name="cadera_abd_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_ad_der"  name="cadera_ad_der"  class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_abd_der" name="cadera_abd_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -694,10 +694,10 @@
                                             <td>ROT EXT</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="cadera_rot_int_izq"  name="cadera_rot_int_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_rot_ext_izq"  name="cadera_rot_ext_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_rot_int_der"  name="cadera_rot_int_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="cadera_rot_ext_der"  name="cadera_rot_ext_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_rot_int_izq"  name="cadera_rot_int_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_rot_ext_izq"  name="cadera_rot_ext_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_rot_int_der"  name="cadera_rot_int_der" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="cadera_rot_ext_der"  name="cadera_rot_ext_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -752,8 +752,8 @@
                                             <td>FLEXIÓN</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="rodilla_flex_izq" name="rodilla_flex_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="rodilla_flex_der" name="rodilla_flex_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="rodilla_flex_izq" name="rodilla_flex_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="rodilla_flex_der" name="rodilla_flex_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -802,8 +802,8 @@
                                             <td>EXTENSIÓN</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="number" id="rodilla_ext_izq" name="rodilla_ext_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                            <td><input type="number" id="rodilla_ext_der" name="rodilla_ext_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                            <td><input  id="rodilla_ext_izq" name="rodilla_ext_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                            <td><input  id="rodilla_ext_der" name="rodilla_ext_der" class="form-control  input-grados " placeholder="grados"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -860,10 +860,10 @@
                                     <td>FL Dorsal</td>
                                 </tr>
                                 <tr>
-                                    <td><input type="number" id="tobillo_flex_plantar_izq" name="tobillo_flex_plantar_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                    <td><input type="number" id="tobillo_flex_dorsal_izq"  name="tobillo_flex_dorsal_izq"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                    <td><input type="number" id="tobillo_flex_plantar_der" name="tobillo_flex_plantar_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                    <td><input type="number" id="tobillo_flex_dorsal_der"  name="tobillo_flex_dorsal_der"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_flex_plantar_izq" name="tobillo_flex_plantar_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_flex_dorsal_izq"  name="tobillo_flex_dorsal_izq"  class="form-control  input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_flex_plantar_der" name="tobillo_flex_plantar_der" class="form-control  input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_flex_dorsal_der"  name="tobillo_flex_dorsal_der"  class="form-control  input-grados " placeholder="grados"></td>
                                 </tr>
 
                             </tbody>
@@ -913,10 +913,10 @@
                                     <td>EV</td>
                                 </tr>
                                 <tr>
-                                    <td><input type="number" id="tobillo_inversion_izq" name="tobillo_inversion_izq" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                    <td><input type="number" id="tobillo_eversion_izq"  name="tobillo_eversion_izq"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                    <td><input type="number" id="tobillo_inversion_der" name="tobillo_inversion_der" class="form-control form-control-sm input-grados " placeholder="grados"></td>
-                                    <td><input type="number" id="tobillo_eversion_der"  name="tobillo_eversion_der"  class="form-control form-control-sm input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_inversion_izq" name="tobillo_inversion_izq" class="form-control  input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_eversion_izq"  name="tobillo_eversion_izq"  class="form-control  input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_inversion_der" name="tobillo_inversion_der" class="form-control  input-grados " placeholder="grados"></td>
+                                    <td><input  id="tobillo_eversion_der"  name="tobillo_eversion_der"  class="form-control  input-grados " placeholder="grados"></td>
                                 </tr>
                                 </tbody>
                         </table>
