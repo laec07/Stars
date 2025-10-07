@@ -346,6 +346,15 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('goniometrias-delete', [\App\Http\Controllers\FormFisios\FisGoniometriasController::class, 'deleteformGoniometrias'])->name('goniometrias.delete'); // delete
             # Goniometry In Physiotherapy Daniel's
 
+            # Ficha Clinica Daniel's
+            Route::get('get-ficha', [\App\Http\Controllers\FormFisios\FichaController::class, 'getAllformFicha'])->name('ficha.get'); // muestra datos de la tabla index
+            Route::get('fis-ficha', [\App\Http\Controllers\FormFisios\FichaController::class, 'formFicha'])->name('ficha.info'); // muestra la vista
+            Route::post('ficha-create', [\App\Http\Controllers\FormFisios\FichaController::class, 'createformFicha'])->name('ficha.create'); // save
+            Route::post('ficha-update', [\App\Http\Controllers\FormFisios\FichaController::class, 'updateformFicha'])->name('ficha.update'); // update
+            Route::post('ficha-delete', [\App\Http\Controllers\FormFisios\FichaController::class, 'deleteformFicha'])->name('ficha.delete'); // delete
+            Route::get('fis-ficha_form', [\App\Http\Controllers\FormFisios\FichaController::class, 'formFicha_form'])->name('ficha.form'); // muestra la vista
+            # Fin Ficha Clinica Daniel's
+
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
             Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
             Route::post('patient-delete', [\App\Http\Controllers\Patient\PatientController::class, 'patientDelete'])->name('patient.delete');
