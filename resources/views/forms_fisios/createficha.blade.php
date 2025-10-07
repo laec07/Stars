@@ -20,9 +20,7 @@
                                 {{translate('Ficha Clinica')}}
                             </span>
                         </h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+
                     </div>
 
                     <!-- Necesrio en todos los formularios -->
@@ -54,7 +52,7 @@
                                <strong>Instrucciones:</strong> 
                                 <!-- Div para agregar instrucciones -->
                                 <div class="d-flex flex-column flex-md-row flex-wrap justify-content-center gap-2">
-
+                                    <p class="mb-0">Complete todos los campos del formulario con la información del paciente y su condición actual.</p>
                                 </div>
                                 <!-- Div para agregar instrucciones -->
                             </div>
@@ -210,7 +208,7 @@
         </div>
 
         {{-- ==================EVOLUCIÓN / NOTAS DE SESIÓN ================== --}}
-        <h5 class="caja-titulo">Evolución / Notas de sesión</h5>
+        <!-- <h5 class="caja-titulo">Evolución / Notas de sesión</h5>
         <p class="text-muted fst-italic">
             (Este campo se llena cada tres tratamientos. El paciente ha mejorado en su rango de movimiento, revisar chequeo articular.)
         </p>
@@ -234,10 +232,10 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
+        </div> -->
 
         {{-- ==================ALTA Y RECOMENDACIONES ================== --}}
-        <h5 class="caja-titulo">Alta y recomendaciones</h5>
+        <!-- <h5 class="caja-titulo">Alta y recomendaciones</h5>
         <div class="row mb-3">
             <div class="col-md-4">
                 <label class="form-label">Fecha de alta</label>
@@ -252,7 +250,7 @@
         <div class="mb-4">
             <label class="form-label">Firma</label>
             <input type="text" name="firma" class="form-control">
-        </div>
+        </div> -->
 
         
                             
@@ -260,7 +258,7 @@
                         
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{translate('Close')}}</button>
+                        <!-- <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{translate('Close')}}</button> -->
                         <button type="submit" class="btn btn-success btn-sm">{{translate('Save Change')}}</button>
                     </div>
                 </form>

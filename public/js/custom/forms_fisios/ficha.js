@@ -5,7 +5,7 @@
     var initTelephone;
     $(document).ready(function () {
 
-        //load datatable
+        //load datatable 
         Manager.GetDataList(0);
         Manager.LoadUserDropdown();
         Manager.LoadPatientDropDown();
@@ -13,12 +13,14 @@
         //generate datatabe serial no
         dTableManager.dTableSerialNumber(dTable);
 
+        patientDiv.style.display = 'block';
+        NompatientDiv.style.display = 'none';
+
         //add  modal
         $("#btnAdd").on("click", function () {
             _id = null;
             //Mostrar y ocultar nombre paciente y busqueda
-            patientDiv.style.display = 'block';
-            NompatientDiv.style.display = 'none';
+            
             Manager.ResetForm();
             $("#frmModal1").modal('show');
         });
@@ -34,15 +36,142 @@
         });
     });
 
+// Evento para imprimir la ficha técnica con el formato del formulario de edición laestrada
+    $(document).on('click', '.dTableView', function () {
+        var rowData = dTable.row($(this).closest('tr')).data();
+        if (!rowData) return;
+
+        // Clona el modal de edición
+        var modalClone = $('#frmModal1').clone();
+
+        // Oculta elementos no imprimibles
+        modalClone.find('.modal-header, .modal-footer, .alert, button, .input-group-append').remove();
+        // Ocultar búsqueda paciente, mostrar solo nombre
+        modalClone.find('#patientDiv').hide();
+        modalClone.find('#NompatientDiv').hide();
+        modalClone.find('#DatosImpresion').show();
+
+        // Asigna los valores de rowData a los campos del formulario clonado
+        const checkboxFields = [
+            'modalidades_ejercicio_terapeutico',
+            'modalidades_electroterapia',
+            'modalidades_masoterapia',
+            'modalidades_estiramientos',
+            'modalidades_tecaterapia',
+            'modalidades_puncion_seca',
+            'modalidades_electropuncion'
+        ];
+        ['c', 't', 'l', 's'].forEach(prefix => {
+            for (let i = 1; i <= 12; i++) {
+                ['zn', 'zs', 'za'].forEach(suffix => {
+                    checkboxFields.push(`${prefix}${i}_${suffix}`);
+                });
+            }
+        });
+
+        Object.keys(rowData).forEach(function (key) {
+            var input = modalClone.find('[name="' + key + '"]');
+            if (input.length) {
+                if (checkboxFields.includes(key)) {
+                    input.prop('checked', rowData[key] == 1);
+                } else {
+                    input.val(rowData[key]);
+                }
+            }
+        });
+
+        // Convierte todos los inputs, selects y textareas en texto subrayado
+        modalClone.find('input, select, textarea').each(function () {
+            var $el = $(this);
+            if ($el.is('input[type="hidden"]')) {
+                $el.remove();
+                return;
+            }
+            var text;
+            if ($el.is(':checkbox')) {
+                text = $el.is(':checked') ? '✔' : '✘';
+            } else {
+                text = $el.val() || '';
+            }
+            $el.replaceWith($('<span style="border-bottom:1px solid #222;min-width:120px;display:inline-block;padding:2px 6px;">').text(text));
+        });
+
+        // Aplica formato de ficha técnica
+        var htmlPrint = `
+        <html>
+        <head>
+            <title>Ficha Técnica</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 30px;
+                    background: #fff;
+                }
+                .modal-content {
+                    width: 100%;
+                    max-width: 900px;
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                .modal-title, legend, h4, h5 {
+                    font-size: 1.4em;
+                    font-weight: bold;
+                    color: #2a3f54;
+                    margin-bottom: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+                label {
+                    font-weight: bold;
+                    color: #333;
+                    min-width: 160px;
+                    display: inline-block;
+                }
+                span[style*="border-bottom"] {
+                    font-size: 1em;
+                    color: #222;
+                    margin-bottom: 6px;
+                }
+                .form-group, .row, .col-md-6, .col-md-12 {
+                    margin-bottom: 8px !important;
+                }
+                .form-control, .form-select {
+                    display: none !important;
+                }
+            </style>
+        </head>
+        <body>
+            ${modalClone.find('.modal-content')[0].outerHTML}
+        </body>
+        </html>
+        `;
+
+        // Abre la ventana de impresión
+        var ventana = window.open('', '', 'width=900,height=700');
+        ventana.document.write(htmlPrint);
+        ventana.document.close();
+        ventana.focus();
+
+        ventana.onload = function () {
+            ventana.print();
+            ventana.close();
+        };
+    });
+    // final evento imprimir ficha técnica laestrada
+
+
     // Show edit info modal
     $(document).on('click', '.dTableEdit', function () {
         var rowData = dTable.row($(this).parent()).data();
         console.log(rowData);
         _id = rowData.id;
         
+
         //Mostrar y ocultar nombre paciente y busqueda
         patientDiv.style.display = 'none';
         NompatientDiv.style.display = 'block';
+        DatosImpresion.style.display = 'none';
 
         // Definir campos que son checkbox
             const checkboxFields = [
@@ -318,9 +447,9 @@
                             title: 'Encargado'
                         },
                         {
-                            data: 'observaciones',
-                            name: 'Observaciones',
-                            title: 'Observaciones'
+                            data: 'motivo_consulta',
+                            name: 'Motivo Consulta',
+                            title: 'Motivo Consulta'
                         }
                     ],
                     fixedColumns: false,

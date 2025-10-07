@@ -52,6 +52,16 @@
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
                             </div>
                         </div>
+                        <div class="col-md-12" id='DatosImpresion'>
+                            <label>Fecha de evaluación:</label>
+                            <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
+                            <label>Paciente:</label>
+                            <input type="text" id="customer_name2" name="customer_name2" class="form-control" readonly><br>
+                            <label>Edad:</label>
+                            <input type="text" id="age" name="age" class="form-control" readonly><br>
+                            <label>Encargado:</label>
+                            <input type="text" id="encargado" name="encargado" class="form-control" readonly>
+                        </div>
                     <!-- Necesrio en todos los formularios -->
 
                         <div class="container">
@@ -222,7 +232,7 @@
 </div>
 
         {{-- ==================EVOLUCIÓN / NOTAS DE SESIÓN ================== --}}
-        <h5 class="caja-titulo">Evolución / Notas de sesión</h5>
+        <!-- <h5 class="caja-titulo">Evolución / Notas de sesión</h5>
         <p class="text-muted fst-italic">
             (Este campo se llena cada tres tratamientos. El paciente ha mejorado en su rango de movimiento, revisar chequeo articular.)
         </p>
@@ -246,10 +256,10 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
+        </div> -->
 
         {{-- ==================ALTA Y RECOMENDACIONES ================== --}}
-        <h5 class="caja-titulo">Alta y recomendaciones</h5>
+        <!-- <h5 class="caja-titulo">Alta y recomendaciones</h5>
         <div class="row mb-3">
             <div class="col-md-4">
                 <label class="form-label">Fecha de alta</label>
@@ -264,7 +274,7 @@
         <div class="mb-4">
             <label class="form-label">Firma</label>
             <input type="text" name="firma" class="form-control">
-        </div>
+        </div> -->
 
         
                             
