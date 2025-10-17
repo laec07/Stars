@@ -151,61 +151,67 @@
             <textarea name="largo_plazo" class="form-control" rows="2"></textarea>
         </div>
 
-        {{-- ==================PLAN DE TRATAMIENTO ================== --}}
-        <h5 class="caja-titulo">Plan de tratamiento</h5>
-        <p class="fw-semibold">Modalidades:</p>
+            {{-- ================== PLAN DE TRATAMIENTO ================== --}}
+<h5 class="caja-titulo">Plan de tratamiento</h5>
+<p class="fw-semibold">Modalidades:</p>
 
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="modalidades_ejercicio_terapeutico" name="modalidades_ejercicio_terapeutico" value="1">
-                    <label class="form-check-label">Ejercicio terapéutico</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="modalidades_electroterapia" value="1">
-                    <label class="form-check-label">Electroterapia</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="modalidades_masoterapia" value="1">
-                    <label class="form-check-label">Masoterapia</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="modalidades_estiramientos" value="1">
-                    <label class="form-check-label">Estiramientos</label>
-                </div>
-            </div>
+@php
+    // Listas divididas en dos columnas
+    $modalidades_col1 = [
+        'modalidades_ejercicio_terapeutico' => 'Ejercicio terapéutico',
+        'modalidades_electroterapia'        => 'Electroterapia',
+        'modalidades_masoterapia'           => 'Masoterapia',
+        'modalidades_estiramientos'         => 'Estiramientos',
+    ];
 
-            <div class="col-md-6"> 
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="modalidades_tecaterapia" value="1">
-                    <label class="form-check-label">Tecarterapia</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="modalidades_puncion_seca" value="1">
-                    <label class="form-check-label">Punción seca</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="modalidades_electropuncion" value="1">
-                    <label class="form-check-label">Electropunción</label>
-                </div>
-            </div>
-        </div>
+    $modalidades_col2 = [
+        'modalidades_tecaterapia'   => 'Tecarterapia',
+        'modalidades_puncion_seca'  => 'Punción seca',
+        'modalidades_electropuncion'=> 'Electropunción',
+    ];
+@endphp
 
-        <div class="mb-3">
-            <label class="form-label">Otros tratamientos</label>
-            <textarea name="modalidades_otros" class="form-control" rows="2" placeholder="Escribir aquí los otros tratamientos..."></textarea>
-        </div>
+<div class="row mb-3">
+    {{-- Primera columna --}}
+    <div class="col-md-6">
+        @foreach ($modalidades_col1 as $name => $label)
+            <div class="form-check form-switch switch-wrapper">
+                <!-- Campo oculto para enviar "0" cuando no esté marcado -->
+                <input type="hidden" name="{{ $name }}" value="0">
+                <input type="checkbox" class="form-check-input" name="{{ $name }}" value="1">
+                <label class="form-check-label">{{ $label }}</label>
+            </div>
+        @endforeach
+    </div>
 
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <label class="form-label">Frecuencia (veces/semana)</label>
-                <input type="number" name="frecuencia_semana" class="form-control" value="1">
+    {{-- Segunda columna --}}
+    <div class="col-md-6">
+        @foreach ($modalidades_col2 as $name => $label)
+            <div class="form-check form-switch switch-wrapper">
+                <!-- Campo oculto para enviar "0" cuando no esté marcado -->
+                <input type="hidden" name="{{ $name }}" value="0">
+                <input type="checkbox" class="form-check-input" name="{{ $name }}" value="1">
+                <label class="form-check-label">{{ $label }}</label>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Duración estimada (semanas)</label>
-                <input type="number" name="duracion_semanas" class="form-control" value="10">
-            </div>
-        </div>
+        @endforeach
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Otros tratamientos</label>
+    <textarea name="modalidades_otros" class="form-control" rows="2" placeholder="Escribir aquí los otros tratamientos..."></textarea>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <label class="form-label">Frecuencia (veces/semana)</label>
+        <input type="number" name="frecuencia_semana" class="form-control" value="1">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Duración estimada (semanas)</label>
+        <input type="number" name="duracion_semanas" class="form-control" value="10">
+    </div>
+</div>
 
         {{-- ==================EVOLUCIÓN / NOTAS DE SESIÓN ================== --}}
         <!-- <h5 class="caja-titulo">Evolución / Notas de sesión</h5>
