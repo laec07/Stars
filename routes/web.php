@@ -355,6 +355,22 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::get('fis-ficha_form', [\App\Http\Controllers\FormFisios\FichaController::class, 'formFicha_form'])->name('ficha.form'); // muestra la vista
             # Fin Ficha Clinica Daniel's
 
+            # Ultrasonido Daniel's
+            Route::get('get-ultras', [\App\Http\Controllers\FormFisios\FisUltrasController::class, 'getAllformUltras'])->name('ultras.get'); // muestra datos de la tabla index
+            Route::get('fis-ultras', [\App\Http\Controllers\FormFisios\FisUltrasController::class, 'formUltras'])->name('ultras.info'); // muestra la vista
+            Route::post('ultras-create', [\App\Http\Controllers\FormFisios\FisUltrasController::class, 'createformUltras'])->name('ultras.create'); // save
+            Route::post('ultras-update', [\App\Http\Controllers\FormFisios\FisUltrasController::class, 'updateformUltras'])->name('ultras.update'); // update
+            Route::post('ultras-delete', [\App\Http\Controllers\FormFisios\FisUltrasController::class, 'deleteformUltras'])->name('ultras.delete'); // delete
+            # Ultrasonido Clinica Daniel's
+            
+            # Electrotherapy Daniel's
+            Route::get('get-electros', [\App\Http\Controllers\FormFisios\FisElectrosController::class, 'getAllformElectros'])->name('electros.get'); // muestra datos de la tabla index
+            Route::get('fis-electros', [\App\Http\Controllers\FormFisios\FisElectrosController::class, 'formElectros'])->name('electros.info'); // muestra la vista
+            Route::post('electros-create', [\App\Http\Controllers\FormFisios\FisElectrosController::class, 'createformElectros'])->name('electros.create'); // save
+            Route::post('electros-update', [\App\Http\Controllers\FormFisios\FisElectrosController::class, 'updateformElectros'])->name('electros.update'); // update
+            Route::post('electros-delete', [\App\Http\Controllers\FormFisios\FisElectrosController::class, 'deleteformElectros'])->name('electros.delete'); // delete
+            # Electrotherapy Clinica Daniel's
+
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
             Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
             Route::post('patient-delete', [\App\Http\Controllers\Patient\PatientController::class, 'patientDelete'])->name('patient.delete');
