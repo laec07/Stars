@@ -5,6 +5,7 @@ namespace App\Http\Controllers\FormFisios;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FormFisios\Ficha;
+use App\Models\FormFisios\FisSeguimientos;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,10 +35,13 @@ class FichaController extends Controller
     public function getAllformFicha()
     {
         try {
-            $data = Ficha::join('cmn_patients', 'fis_fichas.patient_id', '=', 'cmn_patients.id')
+           $data = Ficha::with('seguimientos') 
+                ->join('cmn_patients', 'fis_fichas.patient_id', '=', 'cmn_patients.id')
                 ->join('users', 'fis_fichas.user_id', '=', 'users.id')
-                ->select(
+                ->select(           
                     'fis_fichas.*',
+                    'fis_fichas.id as ficha_id',
+                    'fis_fichas.patient_id',
                     'cmn_patients.full_name as customer_name',
                     'cmn_patients.full_name as customer_name2',
                     'cmn_patients.dob as birth_date',
@@ -56,6 +60,7 @@ class FichaController extends Controller
                     } else {
                         $item->age = null;
                         $item->birth_date_formatted = null;
+                         $item->seguimientos = $item->seguimientos ?? [];
                     }return $item;
                 });
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
@@ -158,6 +163,71 @@ class FichaController extends Controller
             return $this->apiResponse(['status' => '403', 'data' => $e->getMessage()], 400);
         }
     }
+
+        /** Crear un nuevo seguimiento asociado a una ficha */
+    public function createSeguimiento(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'ficha_id' => 'required|integer|exists:fis_fichas,id',
+                'patient_id' => 'required|integer|exists:cmn_patients,id',
+                'fecha' => 'required|date',
+                'tratamiento_realizado' => 'nullable|string|max:1000',
+                'observaciones' => 'nullable|string|max:1000',
+                'evolucion' => 'nullable|string|max:1000',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => '422',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            // Crear registro
+            $seguimiento = FisSeguimientos::create([
+                'ficha_id' => $request->ficha_id,
+                'patient_id' => $request->patient_id,
+                'fecha' => $request->fecha,
+                'tratamiento_realizado' => $request->tratamiento_realizado,
+                'observaciones' => $request->observaciones,
+                'evolucion' => $request->evolucion,
+                
+            ]);
+
+            return response()->json([
+                'status' => '1',
+                'message' => 'Seguimiento guardado correctamente.',
+                'data' => $seguimiento
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => '403',
+                'message' => 'Error al guardar el seguimiento: ' . $e->getMessage(),
+            ], 403);
+        }
+    }
+
+    /** Obtener seguimientos de una ficha (para usar en DataTable) */
+public function getSeguimientosByFicha($fichaId)
+{
+    try {
+        // Validar que exista la ficha
+        $ficha = Ficha::findOrFail($fichaId);
+
+        // Obtener todos los seguimientos asociados
+        $seguimientos = FisSeguimientos::where('ficha_id', $fichaId)
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        return $this->apiResponse(['status' => '1', 'data' => $seguimientos], 200);
+    } catch (Exception $e) {
+        return $this->apiResponse(['status' => '403', 'data' => $e->getMessage()], 400);
+    }
+}
+
+
 
     /** Limpia y normaliza los datos antes de guardar */
     private function cleanRequestData(Request $request): array

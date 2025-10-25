@@ -166,6 +166,21 @@ function isValidEmail(email) {
                 '<button class="btn btn-info btn-datatable btn-round float-left dTableView" title="View / Print details">' +
                     '<i class="fas fa-print"></i>' +
                '</button>'; //LAESTRADA
+        },
+
+        DataTableCommonButton2: function () {
+            return '<button class="btn btn-primary btn-datatable btn-round float-left dTableEdit mr-2" title="Click to edit"><i class="fas fa-edit"></i></button>' +
+                '<button class="btn btn-danger btn-datatable btn-round float-left dTableDelete" title="Click to delete"><i class="far fa-trash-alt"></i></button>' +
+                '<button class="btn btn-info btn-datatable btn-round float-left dTableView" title="View / Print details">' +
+                    '<i class="fas fa-print"></i>' +
+               '</button>'+ //LAESTRADA
+               '<button class="btn btn-success btn-datatable btn-round float-left dTableSeguimiento mr-2" title="Agregar Seguimiento">' +
+                '<i class="fas fa-plus"></i>' +
+           '</button>'+
+                '<button class="btn btn-info btn-datatable btn-round float-left dTableVerSeguimiento mr-2" title="Ver Seguimiento">' +
+                    '<i class="fas fa-eye"></i>' +
+                '</button>';
+
         }
 
     };

@@ -353,6 +353,9 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('ficha-update', [\App\Http\Controllers\FormFisios\FichaController::class, 'updateformFicha'])->name('ficha.update'); // update
             Route::post('ficha-delete', [\App\Http\Controllers\FormFisios\FichaController::class, 'deleteformFicha'])->name('ficha.delete'); // delete
             Route::get('fis-ficha_form', [\App\Http\Controllers\FormFisios\FichaController::class, 'formFicha_form'])->name('ficha.form'); // muestra la vista
+            # Seguimiento Ficha Clinica            
+            Route::post('seguimiento-create', [\App\Http\Controllers\FormFisios\FichaController::class, 'createSeguimiento'])->name('seguimiento.create');
+            Route::post('seguimiento-update', [\App\Http\Controllers\FormFisios\FichaController::class, 'updateSeguimiento'])->name('seguimiento-update');
             # Fin Ficha Clinica Daniel's
 
             # Ultrasonido Daniel's
