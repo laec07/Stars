@@ -209,6 +209,73 @@ class FichaController extends Controller
         }
     }
 
+
+        /** Actualizar un seguimiento */
+    public function updateSeguimiento(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'ficha_id' => 'required|integer|exists:fis_fichas,id',
+                'patient_id' => 'required|integer|exists:cmn_patients,id',
+                'fecha' => 'required|date',
+                'tratamiento_realizado' => 'nullable|string|max:1000',
+                'observaciones' => 'nullable|string|max:1000',
+                'evolucion' => 'nullable|string|max:1000',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => '422',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $seguimiento = FisSeguimientos::findOrFail($id);
+
+            $seguimiento->update([
+                'ficha_id' => $request->ficha_id,
+                'patient_id' => $request->patient_id,
+                'fecha' => $request->fecha,
+                'tratamiento_realizado' => $request->tratamiento_realizado,
+                'observaciones' => $request->observaciones,
+                'evolucion' => $request->evolucion,
+            ]);
+
+            return response()->json([
+                'status' => '1',
+                'message' => 'Seguimiento actualizado correctamente.',
+                'data' => $seguimiento
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => '403',
+                'message' => 'Error al actualizar el seguimiento: ' . $e->getMessage(),
+            ], 403);
+        }
+    }
+
+    /** Eliminar un seguimiento */
+    public function deleteSeguimiento($id)
+    {
+        try {
+            $seguimiento = FisSeguimientos::findOrFail($id);
+            $seguimiento->delete();
+
+            return response()->json([
+                'status' => '1',
+                'message' => 'Seguimiento eliminado correctamente.'
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => '403',
+                'message' => 'Error al eliminar el seguimiento: ' . $e->getMessage(),
+            ], 403);
+        }
+    }
+
+
     /** Obtener seguimientos de una ficha (para usar en DataTable) */
 public function getSeguimientosByFicha($fichaId)
 {

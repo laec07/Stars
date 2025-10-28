@@ -5,37 +5,6 @@
     var initTelephone;
     $(document).ready(function () {
 
-        // Guardar seguimiento
-$("#formSeguimiento").on("submit", function(e) {
-    e.preventDefault();
-
-    var form = $(this);
-    JsManager.StartProcessBar();
-    var jsonParam = form.serialize();
-   
-    var serviceUrl = $('#seguimiento_id').val() ? "seguimiento-update" : "seguimiento-create";
-
-    JsManager.SendJson("POST", serviceUrl, jsonParam, onSuccess, onFailed);
-
-   function onSuccess(jsonData) {
-        JsManager.EndProcessBar();
-        if (jsonData.status == "1") {
-            Message.Success($('#seguimiento_id').val() ? "update" : "save");
-            $("#modalSeguimiento").modal('hide');
-            form.trigger('reset');
-            Manager.GetDataList(1); // recargar tabla principal
-        } else {
-            Message.Error($('#seguimiento_id').val() ? "update" : "save");
-        }
-    }
-
-    function onFailed(xhr, status, err) {
-        JsManager.EndProcessBar();
-        Message.Exception(xhr);
-    }
-});
-
-
         //load datatable 
         Manager.GetDataList(0);
         Manager.LoadUserDropdown();
@@ -248,15 +217,14 @@ $("#formSeguimiento").on("submit", function(e) {
      // ===========================
     // NUEVO BOTÓN: seguimiento
     // ===========================
-    $(document).on('click', '.dTableSeguimiento', function() {
-        var rowData = dTable.row($(this).closest('tr')).data();
-        var fichaId = rowData.id;
-        $('#formSeguimiento')[0].reset();
-        $('#seguimiento_id').val(''); // Nuevo seguimiento
-        $('#seguimiento_patient_id').val(rowData.patient_id);
-        $('#ficha_id').val(fichaId);
-        $('#modalSeguimiento').modal('show');
-    });     
+   $(document).on('click', '.dTableSeguimiento', function() {
+    var rowData = dTable.row($(this).closest('tr')).data();
+    $('#formSeguimiento')[0].reset();
+    $('#seguimiento_id').val('');
+    $('#seguimiento_patient_id').val(rowData.patient_id);
+    $('#ficha_id').val(rowData.id);
+    $('#modalSeguimiento').modal('show');
+});
 
     // ===========================
     // NUEVO BOTÓN: ver seguimiento
@@ -319,15 +287,14 @@ $(document).on('click', '.btnEditarSeguimiento', function() {
     var id = $(this).data('id');
     var seguimiento = null;
 
-    // Buscar seguimiento dentro de todas las filas del DataTable
+    // Buscar seguimiento en los datos del DataTable
     dTable.rows().data().each(function(row) {
-        if (row.seguimientos) {
+        if(row.seguimientos){
             seguimiento = row.seguimientos.find(s => s.id == id);
         }
     });
 
-    if (seguimiento) {
-        // Abrir modal de agregar/editar seguimiento
+    if(seguimiento){
         $('#formSeguimiento')[0].reset();
         $('#seguimiento_id').val(seguimiento.id);
         $('#ficha_id').val(seguimiento.ficha_id);
@@ -338,66 +305,60 @@ $(document).on('click', '.btnEditarSeguimiento', function() {
         $('[name="evolucion"]').val(seguimiento.evolucion);
 
         $('#modalSeguimiento').modal('show');
-        $('#modalVerSeguimiento').modal('hide'); // ocultar modal de ver
+        $('#modalVerSeguimiento').modal('hide'); 
     }
 });
+
 
     // ===========================
     // ELIMINAR SEGUIMIENTO
     // ===========================
 $(document).on('click', '.btnEliminarSeguimiento', function() {
-    var id = $(this).data('id');
-
-    if (Message.Prompt()) {
-        JsManager.StartProcessBar();
-        JsManager.SendJson("POST", "seguimiento-delete", {id: id}, function(jsonData){
-            JsManager.EndProcessBar();
-            if(jsonData.status == "1") {
-                Message.Success("delete");
-                Manager.GetDataList(1); // recargar tabla principal
-                $('#modalVerSeguimiento').modal('hide');
-            } else {
-                Message.Error("delete");
+            var id = $(this).data('id');
+            if (Message.Prompt()) {
+                JsManager.StartProcessBar();
+                JsManager.SendJson("POST", "seguimiento-delete/" + id, {}, function(jsonData) {
+                    JsManager.EndProcessBar();
+                    if (jsonData.status == "1") {
+                        Message.Success("delete");
+                        Manager.GetDataList(1);
+                        $('#modalVerSeguimiento').modal('hide');
+                    } else {
+                        Message.Error("delete");
+                    }
+                }, function(xhr, status, err) {
+                    JsManager.EndProcessBar();
+                    Message.Exception(xhr);
+                });
             }
-        }, function(xhr, status, err){
-            JsManager.EndProcessBar();
-            Message.Exception(xhr);
         });
-    }
-});
     // ===========================
     // GUARDAR / ACTUALIZAR SEGUIMIENTO
     // ===========================
     $("#formSeguimiento").on("submit", function(e) {
-        e.preventDefault();
+    e.preventDefault();
+    var form = $(this);
+    JsManager.StartProcessBar();
 
-        var form = $(this);
-        JsManager.StartProcessBar();
+    var seguimientoId = $('#seguimiento_id').val();
+    var serviceUrl = seguimientoId ? "seguimiento/update/" + seguimientoId : "seguimiento-create";
+    var method = seguimientoId ? "POST" : "POST"; // Laravel usa POST para ambos
 
-        var jsonParam = form.serialize();
-
-        // Diferenciar entre crear o actualizar
-        var serviceUrl = $('#seguimiento_id').val() ? "seguimiento-update" : "seguimiento-create";
-
-        JsManager.SendJson("POST", serviceUrl, jsonParam, function(jsonData) {
-            JsManager.EndProcessBar();
-
-            if (jsonData.status == "1") {
-                Message.Success($('#seguimiento_id').val() ? "update" : "save");
-                $('#modalSeguimiento').modal('hide');
-                form.trigger('reset');
-                Manager.GetDataList(1); // recargar tabla principal
-            } else {
-                Message.Error($('#seguimiento_id').val() ? "update" : "save");
-            }
-        }, function(xhr, status, err){
-            JsManager.EndProcessBar();
-            Message.Exception(xhr);
-        });
+    JsManager.SendJson(method, serviceUrl, form.serialize(), function(jsonData){
+        JsManager.EndProcessBar();
+        if(jsonData.status == "1") {
+            Message.Success(seguimientoId ? "update" : "save");
+            $('#modalSeguimiento').modal('hide');
+            form.trigger('reset');
+            Manager.GetDataList(1); // recargar tabla principal
+        } else {
+            Message.Error(seguimientoId ? "update" : "save");
+        }
+    }, function(xhr, status, err){
+        JsManager.EndProcessBar();
+        Message.Exception(xhr);
     });
-
-
-
+});
 
     var Manager = {
 
