@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Repository\UtilityRepository;
 use Exception;
 
 class FisEvAlinepsController extends Controller
@@ -61,12 +62,16 @@ class FisEvAlinepsController extends Controller
             $cleanData = $this->cleanRequestData($request);
             $cleanData['user_id'] = Auth::id();
 
-            // Guardar fotos
+            // Guardar fotos corrección laestrada
             for ($i = 1; $i <= 4; $i++) {
-            if ($request->hasFile("foto$i")) {
-                $cleanData["foto$i"] = $request->file("foto$i")->store('evalineps', 'public');
+                if ($request->hasFile("foto$i")) {
+                    // Obtener el archivo real
+                    $file = $request->file("foto$i");
+                    // Guardar el archivo usando UtilityRepository
+                    $cleanData["foto$i"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg']);
+                }
             }
-            }
+            
 
             FisEvAlineps::create($cleanData);
 

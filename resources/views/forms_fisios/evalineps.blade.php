@@ -151,7 +151,7 @@
 
                                         <!-- Vista previa -->
                                         <img id="fotoPreview{{ $i }}" 
-                                            src="{{ Storage::url($eval->{'foto'.$i}) }}" 
+                                            src="../{{ $eval->{'foto'.$i} }}" 
                                             class="img-thumbnail mt-2" 
                                             style="max-height:100px; display:block;">
                                     @else
