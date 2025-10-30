@@ -67,7 +67,7 @@
                     checkboxFields.push(`${prefix}${i}_${suffix}`);
                 });
             }
-        });
+        });       
 
         Object.keys(rowData).forEach(function (key) {
             var input = modalClone.find('[name="' + key + '"]');
@@ -164,7 +164,6 @@
     // Show edit info modal
     $(document).on('click', '.dTableEdit', function () {
         var rowData = dTable.row($(this).parent()).data();
-        console.log(rowData);
         _id = rowData.id;
         
 
@@ -214,6 +213,152 @@
         var rowData = dTable.row($(this).parent()).data();
         Manager.Delete(rowData.id);
     });
+
+     // ===========================
+    // NUEVO BOTÓN: seguimiento
+    // ===========================
+   $(document).on('click', '.dTableSeguimiento', function() {
+    var rowData = dTable.row($(this).closest('tr')).data();
+    $('#formSeguimiento')[0].reset();
+    $('#seguimiento_id').val('');
+    $('#seguimiento_patient_id').val(rowData.patient_id);
+    $('#ficha_id').val(rowData.id);
+    $('#modalSeguimiento').modal('show');
+});
+
+    // ===========================
+    // NUEVO BOTÓN: ver seguimiento
+    // ===========================
+$(document).on('click', '.dTableVerSeguimiento', function() {
+    var rowData = dTable.row($(this).closest('tr')).data();
+    var container = $('#seguimientoContent');
+    container.empty();
+
+    if (rowData.seguimientos && rowData.seguimientos.length > 0) {
+        var tableHtml = `
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Fecha</th>
+                        <th>Tratamiento</th>
+                        <th>Observaciones</th>
+                        <th>Evolución</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        rowData.seguimientos.forEach(function(seg, index) {
+            tableHtml += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${seg.fecha}</td>
+                    <td>${seg.tratamiento_realizado || ''}</td>
+                    <td>${seg.observaciones || ''}</td>
+                    <td>${seg.evolucion || ''}</td>
+                    <td>
+                            <button class="btn btn-warning btn-sm btnEditarSeguimiento" data-id="${seg.id}" data-ficha-id="${seg.ficha_id}" data-patient-id="${seg.patient_id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger btn-sm btnEliminarSeguimiento" data-id="${seg.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `
+                </tbody>
+            </table>
+        `;
+
+        container.html(tableHtml);
+    } else {
+        container.html('<p class="text-center text-muted">No hay seguimientos registrados para este paciente.</p>');
+    }
+
+    $('#modalVerSeguimiento').modal('show');
+});
+
+
+    // ===========================
+    // EDITAR SEGUIMIENTO
+    // ===========================
+$(document).on('click', '.btnEditarSeguimiento', function() {
+    var id = $(this).data('id');
+    var seguimiento = null;
+
+    // Buscar seguimiento en los datos del DataTable
+    dTable.rows().data().each(function(row) {
+        if(row.seguimientos){
+            seguimiento = row.seguimientos.find(s => s.id == id);
+        }
+    });
+
+    if(seguimiento){
+        $('#formSeguimiento')[0].reset();
+        $('#seguimiento_id').val(seguimiento.id);
+        $('#ficha_id').val(seguimiento.ficha_id);
+        $('#seguimiento_patient_id').val(seguimiento.patient_id);
+        $('[name="fecha"]').val(seguimiento.fecha);
+        $('[name="tratamiento_realizado"]').val(seguimiento.tratamiento_realizado);
+        $('[name="observaciones"]').val(seguimiento.observaciones);
+        $('[name="evolucion"]').val(seguimiento.evolucion);
+
+        $('#modalSeguimiento').modal('show');
+        $('#modalVerSeguimiento').modal('hide'); 
+    }
+});
+
+
+    // ===========================
+    // ELIMINAR SEGUIMIENTO
+    // ===========================
+$(document).on('click', '.btnEliminarSeguimiento', function() {
+            var id = $(this).data('id');
+            if (Message.Prompt()) {
+                JsManager.StartProcessBar();
+                JsManager.SendJson("POST", "seguimiento-delete/" + id, {}, function(jsonData) {
+                    JsManager.EndProcessBar();
+                    if (jsonData.status == "1") {
+                        Message.Success("delete");
+                        Manager.GetDataList(1);
+                        $('#modalVerSeguimiento').modal('hide');
+                    } else {
+                        Message.Error("delete");
+                    }
+                }, function(xhr, status, err) {
+                    JsManager.EndProcessBar();
+                    Message.Exception(xhr);
+                });
+            }
+        });
+    // ===========================
+    // GUARDAR / ACTUALIZAR SEGUIMIENTO
+    // ===========================
+    $("#formSeguimiento").on("submit", function(e) {
+    e.preventDefault();
+    var form = $(this);
+    JsManager.StartProcessBar();
+
+    var seguimientoId = $('#seguimiento_id').val();
+    var serviceUrl = seguimientoId ? "seguimiento/update/" + seguimientoId : "seguimiento-create";
+    var method = seguimientoId ? "POST" : "POST"; // Laravel usa POST para ambos
+
+    JsManager.SendJson(method, serviceUrl, form.serialize(), function(jsonData){
+        JsManager.EndProcessBar();
+        if(jsonData.status == "1") {
+            Message.Success(seguimientoId ? "update" : "save");
+            $('#modalSeguimiento').modal('hide');
+            form.trigger('reset');
+            Manager.GetDataList(1); // recargar tabla principal
+        } else {
+            Message.Error(seguimientoId ? "update" : "save");
+        }
+    }, function(xhr, status, err){
+        JsManager.EndProcessBar();
+        Message.Exception(xhr);
+    });
+});
 
     var Manager = {
 
@@ -428,7 +573,7 @@
                             title: 'Option',
                             width: 60,
                             render: function (data, type, row) {
-                                return EventManager.DataTableCommonButton();
+                                return EventManager.DataTableCommonButton2 ();
                             }
                         },
                         {

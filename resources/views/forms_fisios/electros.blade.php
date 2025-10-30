@@ -73,73 +73,68 @@
                             
 
                             @php
-    // Definimos las tres secciones y su tipo de corriente
-    $sections = [
-        [
-            'title' => 'PUNTOS MOTORES DE LA CARA',
-            'current_type' => 'Tens',
-        ],
-        [
-            'title' => 'PUNTOS MOTORES MUSCULARES',
-            'current_type' => 'Microcurrent',
-        ],
-        [
-            'title' => 'PUNTOS MOTORES NERVIOSOS',
-            'current_type' => 'Microcurrent',
-        ],
-    ];
+                    use Illuminate\Support\Str;
 
-    // Campos que se repiten en cada tabla (pares de etiqueta izquierda / derecha)
-    $fields = [
-        ['Waveform', 'Display'],
-        ['CC/CV', 'Method'],
-        ['Carrier Frecuencia', 'Channel Mode'],
-        ['Frecuencia (MHz)', 'Burst Freq'],
-        ['Vector Scan', 'Duty Cycle'],
-        ['Treatment Time', 'Anti-Fatigue'],
-        ['Cycle Time', 'Freq. Mod'],
-        ['Polarity', 'Amplish. Mod.'],
-        ['Ramp', 'Phase Duration'],
-    ];
-@endphp
+                    $sections = [
+                        ['title' => 'PUNTOS MOTORES DE LA CARA', 'key' => 'cara', 'current_type' => ''],
+                        ['title' => 'PUNTOS MOTORES MUSCULARES', 'key' => 'muscular', 'current_type' => ''],
+                        ['title' => 'PUNTOS MOTORES NERVIOSOS', 'key' => 'nervioso', 'current_type' => ''],
+                    ];
 
-@foreach ($sections as $section)
-    <table class="table table-bordered text-center align-middle mb-5" 
-           style="border: 2px solid #000; width: 100%; border-collapse: collapse;">
-        <tbody>
-            <!-- Título -->
-            <tr>
-                <td colspan="4" style="text-align: center; font-weight: bold; border: 2px solid #000;">
-                    {{ $section['title'] }} — Tipo de Corriente:
-                    <input type="text"
-                           name="current_type_{{ Str::slug($section['title'], '_') }}"
-                           value="{{ $section['current_type'] }}"
-                           class="form-control d-inline-block"
-                           style="width: 40%; display: inline-block; margin-left: 10px;">
-                </td>
-            </tr>
+                    $fields = [
+                        ['Waveform', 'Display'],
+                        ['CC/CV', 'Method'],
+                        ['Carrier Frecuencia', 'Channel Mode'],
+                        ['Frecuencia (MHz)', 'Burst Freq'],
+                        ['Vector Scan', 'Duty Cycle'],
+                        ['Treatment Time', 'Anti-Fatigue'],
+                        ['Cycle Time', 'Freq. Mod'],
+                        ['Polarity', 'Amplish. Mod.'],
+                        ['Ramp', 'Phase Duration'],
+                    ];
+                @endphp
 
-            <!-- Generar filas dinámicamente -->
-            @foreach ($fields as [$left, $right])
-                <tr>
-                    <td style="background-color: #f3f6f9;">{{ $left }}:</td>
-                    <td>
-                        <input type="text"
-                               name="{{ Str::slug($left, '_') }}_{{ Str::slug($section['title'], '_') }}"
-                               class="form-control">
-                    </td>
+                @foreach ($sections as $section)
+                    <table class="table table-bordered text-center align-middle mb-5 border-dark">
+                        <tbody>
+                            <!-- Título de sección -->
+                            <tr class="table-primary">
+                                <td colspan="4" class="fw-bold text-center">
+                                    {{ $section['title'] }} — Tipo de Corriente:
+                                    <input 
+                                        type="text"
+                                        name="sections[{{ $section['key'] }}][current_type]"
+                                        value="{{ $section['current_type'] }}"
+                                        class="form-control d-inline-block w-50 ms-2"
+                                    >
+                                </td>
+                            </tr>
 
-                    <td style="background-color: #f3f6f9;">{{ $right }}:</td>
-                    <td>
-                        <input type="text"
-                               name="{{ Str::slug($right, '_') }}_{{ Str::slug($section['title'], '_') }}"
-                               class="form-control">
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-@endforeach
+                            <!-- Campos dinámicos -->
+                            @foreach ($fields as [$left, $right])
+                                <tr>
+                                    <td class="bg-light fw-semibold text-start" style="width: 20%;">{{ $left }}:</td>
+                                    <td style="width: 30%;">
+                                        <input 
+                                            type="text"
+                                            name="sections[{{ $section['key'] }}][{{ Str::slug($left, '_') }}]"
+                                            class="form-control"
+                                        >
+                                    </td>
+
+                                    <td class="bg-light fw-semibold text-start" style="width: 20%;">{{ $right }}:</td>
+                                    <td style="width: 30%;">
+                                        <input 
+                                            type="text"
+                                            name="sections[{{ $section['key'] }}][{{ Str::slug($right, '_') }}]"
+                                            class="form-control"
+                                        >
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endforeach
 
         
                             

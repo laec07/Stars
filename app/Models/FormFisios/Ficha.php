@@ -69,10 +69,18 @@ class Ficha extends Model
         static::updating(function ($model) {
             $model->updated_by = Auth::id();
         });
+
+        
     }
     public function customer()
     {
         return $this->belongsTo(\App\Models\Customer\CmnCustomer::class, 'csm_id');
+    }
+
+         // Relación con seguimientos
+    public function seguimientos()
+    {
+        return $this->hasMany(FisSeguimientos::class, 'ficha_id');
     }
 
     public function user()

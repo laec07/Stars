@@ -7,41 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
-class FisElectros extends Model
+class FisSeguimientos extends Model
 {
     use HasFactory;
 
-    protected $table = 'fis_electros';
+    protected $table = 'fis_seguimientos';
 
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'id',
         'patient_id',
         'user_id',
+        'ficha_id',
         'fecha',
-        'seccion',
-        'current_type',
-        'waveform',
-        'display',
-        'cc_cv',
-        'method',
-        'carrier_frequency',
-        'channel_mode',
-        'frequency_mhz',
-        'burst_frequency',
-        'vector_scan',
-        'duty_cycle',
-        'treatment_time',
-        'anti_fatigue',
-        'cycle_time',
-        'frequency_modulation',
-        'polarity',
-        'amplitude_modulation',
-        'ramp',
-        'phase_duration',
-        'observaciones', 'diagnostico',
-        'Campopersonalizado1', 'Campopersonalizado2', 'Campopersonalizado3',
-        'status', 'created_by', 'updated_by'
+        'tratamiento_realizado',
+        'observaciones',
+        'evolucion',
+        'status',
+        'created_by',
+        'updated_by'
     ];
     protected static function booted()
     {
@@ -56,7 +41,15 @@ class FisElectros extends Model
         static::updating(function ($model) {
             $model->updated_by = Auth::id();
         });
+        
     }
+
+    // Relación con la ficha clínica (padre)
+    public function ficha()
+    {
+        return $this->belongsTo(Ficha::class, 'ficha_id');
+    }
+
     public function customer()
     {
         return $this->belongsTo(\App\Models\Customer\CmnCustomer::class, 'csm_id');
