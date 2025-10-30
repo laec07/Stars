@@ -321,7 +321,7 @@
     title: 'Documento',
     render: function (data, type, row) {
         if (data) {
-            let url = `/storage/${data}`;
+            let url = `/storage/app/public/${data}`;
             return `
                 <a href="${url}" target="_blank" class="btn btn-sm btn-info me-1" title="Ver">
                     <i class="fas fa-eye"></i>
