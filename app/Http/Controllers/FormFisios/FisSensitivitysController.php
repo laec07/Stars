@@ -5,6 +5,7 @@ namespace App\Http\Controllers\FormFisios;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FormFisios\FisSensitivitys;
+use App\Http\Controllers\FormFisios\UtilityFisioController;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +76,14 @@ class FisSensitivitysController extends Controller
                 return $value === '' ? null : $value;
             })->toArray();
 
-        FisSensitivitys::create($cleanData);
+        $form = FisSensitivitys::create($cleanData);
+
+        // Crear entrada en la bitácora laestradas
+        $tabla='fis_sensitivitys';
+        $patientId = $data->input('patient_id');
+        UtilityFisioController::logEntry($patientId, $tabla, $form->id,1);
+
+            return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
 
         return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
 
@@ -146,6 +154,10 @@ class FisSensitivitysController extends Controller
             $sensitivitys->status = 0;
             $sensitivitys->updated_by = Auth::id();
             $sensitivitys->save();
+
+            // Borrar entrada en la bitácora
+            $tabla='fis_sensitivitys';
+            UtilityFisioController::logDeleteByFields($sensitivitys->patient_id,$tabla,$data->id);
 
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FormFisios\FisEvAlineps;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\FormFisios\UtilityFisioController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -73,7 +74,12 @@ class FisEvAlinepsController extends Controller
             }
             
 
-            FisEvAlineps::create($cleanData);
+            $form = FisEvAlineps::create($cleanData);
+
+            // Crear entrada en la bitácora laestradas
+            $tabla='fis_evalineps';
+            $patientId = $request->input('patient_id');
+           UtilityFisioController::logEntry($patientId, $tabla, $form->id,1);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
 
@@ -150,6 +156,10 @@ class FisEvAlinepsController extends Controller
             $evalineps->status = 0;
             $evalineps->updated_by = Auth::id();
             $evalineps->save();
+
+            // Borrar entrada en la bitácora
+            $tabla='fis_evalineps';
+            UtilityFisioController::logDeleteByFields($evalineps->patient_id,$tabla,$request->id);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro desactivado exitosamente.'], 200);
 

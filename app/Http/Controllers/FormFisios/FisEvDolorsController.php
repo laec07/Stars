@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FormFisios\FisEvDolors;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\FormFisios\UtilityFisioController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -60,7 +61,12 @@ class FisEvDolorsController extends Controller
             $cleanData = $this->cleanRequestData($request);
             $cleanData['user_id'] = Auth::id();
 
-            FisEvDolors::create($cleanData);
+            $form = FisEvDolors::create($cleanData);
+
+            // Crear entrada en la bitácora laestradas
+            $tabla='fis_evdolors';
+            $patientId = $request->input('patient_id');
+           UtilityFisioController::logEntry($patientId, $tabla, $form->id,1);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
 
@@ -124,6 +130,10 @@ class FisEvDolorsController extends Controller
             $evdolors->status = 0;
             $evdolors->updated_by = Auth::id();
             $evdolors->save();
+
+            // Borrar entrada en la bitácora
+            $tabla='fis_evdolors';
+            UtilityFisioController::logDeleteByFields($evdolors->patient_id,$tabla,$request->id);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro desactivado exitosamente.'], 200);
 

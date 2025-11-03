@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FormFisios\FisUltras ;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\FormFisios\UtilityFisioController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -60,7 +61,12 @@ class FisUltrasController extends Controller
             $cleanData = $this->cleanRequestData($request);
             $cleanData['user_id'] = Auth::id();
 
-            FisUltras ::create($cleanData);
+            $form = FisUltras ::create($cleanData);
+
+            // Crear entrada en la bitácora laestradas
+            $tabla='fis_ultras';
+            $patientId = $request->input('patient_id');
+           UtilityFisioController::logEntry($patientId, $tabla, $form->id,1);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
 
@@ -124,6 +130,10 @@ class FisUltrasController extends Controller
             $ultras->status = 0;
             $ultras->updated_by = Auth::id();
             $ultras->save();
+
+            // Borrar entrada en la bitácora
+            $tabla='fis_antropometrias';
+            UtilityFisioController::logDeleteByFields($ultras->patient_id,$tabla,$request->id);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro desactivado exitosamente.'], 200);
 

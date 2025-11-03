@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Exception;
 use App\Models\FormFisios\FisCheqmus;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\FormFisios\UtilityFisioController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -60,9 +61,15 @@ class FisCheqmusController extends Controller
 
         ]);
             if (!$validator->fails()) {
-                FisCheqmus::create($data->only(
+              $form = FisCheqmus::create($data->only(
                     (new FisCheqmus())->getFillable()
                 ));
+
+            // Crear entrada en la bitácora laestrada
+            $tabla='fis_cheqmus';
+            $patientId = $data->input('patient_id');
+           UtilityFisioController::logEntry($patientId, $tabla, $form->Id,1);
+
                 return $this->apiResponse(['status' => '1', 'data' => ''], 200);
             }
 
@@ -123,6 +130,10 @@ class FisCheqmusController extends Controller
             $cheqMusc->status = 0;
             $cheqMusc->updated_by = Auth::id();
             $cheqMusc->save();
+
+            // Borrar entrada en la bitácora
+            $tabla='fis_cheqmus';
+            UtilityFisioController::logDeleteByFields($cheqMusc->patient_id,$tabla,$data->Id);
 
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {

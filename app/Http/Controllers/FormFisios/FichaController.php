@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FormFisios\Ficha;
 use App\Models\FormFisios\FisSeguimientos;
+use App\Http\Controllers\FormFisios\UtilityFisioController;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -86,9 +87,13 @@ class FichaController extends Controller
             $cleanData = $this->cleanRequestData($request);
             $cleanData['user_id'] = Auth::id();
 
-            Ficha::create($cleanData);
+            $ficha = Ficha::create($cleanData);
 
-            
+            // Crear entrada en la bitácora laestradas
+            $tabla='fis_fichas';
+            $patientId = $request->input('patient_id');
+           UtilityFisioController::logEntry($patientId, $tabla, $ficha->id,1);
+           
            return response()->json([
                 'status' => '1',
                 'redirect' => route('ficha.info'), 
@@ -156,7 +161,9 @@ class FichaController extends Controller
             $ficha->status = 0;
             $ficha->updated_by = Auth::id();
             $ficha->save();
-
+            // Borrar entrada en la bitácora
+            $tabla='fis_fichas';
+            UtilityFisioController::logDeleteByFields($ficha->patient_id,$tabla,$request->id);
             return $this->apiResponse(['status' => '1', 'data' => 'Registro desactivado exitosamente.'], 200);
 
         } catch (Exception $e) {

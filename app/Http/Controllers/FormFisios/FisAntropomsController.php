@@ -5,6 +5,7 @@ namespace App\Http\Controllers\FormFisios;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FormFisios\FisAntropoms;
+use App\Http\Controllers\FormFisios\UtilityFisioController;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +60,11 @@ class FisAntropomsController extends Controller
                 return $value === '' ? null : $value;
             })->toArray();
 
-        FisAntropoms::create($cleanData);
+        $form = FisAntropoms::create($cleanData);
+        // Crear entrada en la bitácora laestradas
+            $tabla='fis_antropoms';
+            $patientId = $data->input('patient_id');
+           UtilityFisioController::logEntry($patientId, $tabla, $form->id,1);
 
         return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
 
@@ -130,6 +135,10 @@ class FisAntropomsController extends Controller
             $antropoms->status = 0;
             $antropoms->updated_by = Auth::id();
             $antropoms->save();
+
+            // Borrar entrada en la bitácora
+            $tabla='fis_antropoms';
+            UtilityFisioController::logDeleteByFields($antropoms->patient_id,$tabla,$data->id);
 
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {
