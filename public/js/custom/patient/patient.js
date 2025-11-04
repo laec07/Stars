@@ -37,12 +37,12 @@
             $("#frmModal").modal('show');
         });
 
-        //save or update
+        //save or update 
         JsManager.JqBootstrapValidation('#inputForm', (form, event) => {
             event.preventDefault();
             var formData = new FormData(document.querySelector('#inputForm'));
                 formData.append("phone_no", initTelephone.getNumber());
-                if ($('#user_id').val() == null || $('#user_id').val() == '') {
+                if ($('#user_id').val() == null || $('#user_id').val() == 0) {
                     Manager.Save(formData);
                 } else {
                     Manager.Update(formData,_id);
