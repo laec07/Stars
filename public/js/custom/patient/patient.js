@@ -95,6 +95,7 @@
         $('#treated').val(rowData.treated);
         $('#has_study').val(rowData.has_study);
         $('#state').val(rowData.state);
+        $('#tax_number').val(rowData.tax_number);
         
          // ✅ Normalizar valor antes de asignarlo
         let streValue = rowData.stre ? rowData.stre.charAt(0).toUpperCase() + rowData.stre.slice(1).toLowerCase() : '';

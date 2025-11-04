@@ -22,6 +22,7 @@ class CmnPatient extends Model
         'treated',
         'has_study',
         'archivo',
+        'tax_number',
         'state',
         'status',
         'created_by',

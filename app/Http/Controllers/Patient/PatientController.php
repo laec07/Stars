@@ -57,6 +57,7 @@ class PatientController extends Controller
                 'treated' => $data->treated,
                 'has_study' => $data->has_study,
                 'archivo' => $rutaArchivo ?? null,
+                'tax_number' => $data->tax_number,
                 'state' => $data->state,
                 'email_verified_at' => Carbon::now(),
                 'is_sys_adm' => 0,
@@ -106,6 +107,7 @@ class PatientController extends Controller
                         'treated' => $data->treated,
                         'has_study' => $data->has_study,
                         'archivo' => $rutaArchivo ?? $patient->archivo, // mantiene el anterior si no se envía uno nuevo
+                        'tax_number' => $data->tax_number,
                         'state' => $data->state,
                         'is_sys_adm' => 0,
                         'status' => 1,

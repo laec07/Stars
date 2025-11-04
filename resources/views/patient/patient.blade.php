@@ -30,15 +30,16 @@
 
                             <div class="row">
                                 <div class="col-md-7">
-                                    <div class="form-group control-group form-inline controls">
+                                    <div class="form-group control-group form-inline controls ">
                                         <label>{{translate('Patient Name')}} *</label>
                                         <input type="text" id="full_name" name="full_name" placeholder="{{translate('Full name')}}" required data-validation-required-message="Patient name is required" class="form-control input-full" />
                                         <span class="help-block"></span>
                                     </div>
                                 </div>
-                                <div class="col-md-5">
-                                    <label>{{ translate('System User') }}</label>
-                                    <div class="form-control input-full" style="background-color: #e9ecef; pointer-events: none;">Patient</div>
+                                <div class="col-md-5 d-done">
+                                    <label>NIT/CUI</label>
+                                    <input type="text" id="tax_number" name="tax_number" placeholder="NIT/CUI"  class="form-control input-full" />
+                                    <!--<div type="hidden" class="form-control input-full" style="background-color: #e9ecef; pointer-events: none;">Patient</div>-->
                                     <input type="hidden" name="user_id" id="user_id" value="0">
                                     <span class="help-block"></span>
                                 </div>
