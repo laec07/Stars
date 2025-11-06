@@ -70,7 +70,7 @@
             if(rowData['foto'+i]){
                 // agregar preview y campo oculto
                 fotoInput.after(`
-                    <img id="fotoPreview${i}" src="/storage/${rowData['foto'+i]}" 
+                    <img id="fotoPreview${i}" src="${rowData['foto'+i]}" 
                          class="img-thumbnail shadow-sm mt-2" style="max-height:100px;">
                     <input type="hidden" name="foto${i}_old" value="${rowData['foto'+i]}">
                 `);
@@ -321,7 +321,8 @@
     title: 'Documento',
     render: function (data, type, row) {
         if (data) {
-            let url = `/storage/${data}`;
+            let url = `${data}`;
+            let path = data.startsWith('/') ? data.slice(1) : data;
             return `
                 <a href="${url}" target="_blank" class="btn btn-sm btn-info me-1" title="Ver">
                     <i class="fas fa-eye"></i>
