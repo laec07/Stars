@@ -125,7 +125,7 @@
                 <td style="background-color: #f3f6f9;">Freq. Mod:</td>
                 <td><input type="text" name="frequency_modulation" id="frequency_modulation" class="form-control"></td>
             </tr>
-            <tr>
+            <tr>  
                 <td style="background-color: #f3f6f9;">Polarity:</td>
                 <td><input type="text" name="polarity" id="polarity" class="form-control"></td>
                 <td style="background-color: #f3f6f9;">Amplish. Mod.:</td>

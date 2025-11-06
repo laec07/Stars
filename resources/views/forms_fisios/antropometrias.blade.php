@@ -10,7 +10,7 @@
 <link href="{{ dsAsset('css/custom/forms_fisios/fis-antropometrias.css')}}" rel="stylesheet" />
 @endpush
 <!-- Autor: laestrada -->
-<!-- Descripción: Formulario para chequo muscular -->
+<!-- Descripción: Formulario para Antropometria T.F. -->
 <div class="page-inner">
 
     <!--Modal add menu-->
@@ -209,13 +209,13 @@
                         </div>
                         
 
-                         <!--
+                        
                         <div class="form-group control-group form-inline ">
                             <label>{{translate('Observaciones')}}</label>
                             <textarea type="text" id="observaciones" name="observaciones"  class="form-control input-full"></textarea>
                             <span class="help-block"></span>
                         </div>
-                        -->
+                    
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{translate('Close')}}</button>

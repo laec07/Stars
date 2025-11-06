@@ -149,7 +149,10 @@
 </div>
                             
                       </div>
-
+                        <div class="form-group control-group form-inline ">
+                                <label>Diagnostico</label>
+                                <input type="text" id="diagnostico" name="diagnostico" class="form-control input-full" >
+                        </div>
 
                         <div class="form-group control-group form-inline ">
                             <label>{{translate('Observaciones')}}</label>

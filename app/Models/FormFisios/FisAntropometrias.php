@@ -40,6 +40,7 @@ class FisAntropometrias extends Model
         //SENTARSE
         'se_i',
         "total_puntaje",
+        'observaciones',
         'Campopersonalizado1', 'Campopersonalizado2',
         'Campopersonalizado3', 'Campopersonalizado4', 'Campopersonalizado5',
         'status', 'created_by', 'updated_by'

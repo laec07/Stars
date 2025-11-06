@@ -16,7 +16,7 @@ class FisEvDolors extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'id',
+        // 'id',
         'patient_id',
         'user_id',
         'fecha',
