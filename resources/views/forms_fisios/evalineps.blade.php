@@ -46,12 +46,12 @@
                                 </div>
                             </div>
                         </div>
+                         <!-- Datos para impresion -->
                         <div class="row mt-3">
                             <div class="col-md-12" id='NompatientDiv'>
                                 <label>Paciente</label>
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
                             </div>
-                            <!--
                             <div class="col-md-12" id='DatosImpresion'>
                                 <label>Fecha de evaluación:</label>
                                 <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
@@ -62,7 +62,6 @@
                                 <label>Encargado:</label>
                                 <input type="text" id="encargado" name="encargado" class="form-control" readonly>
                             </div>
-                        -->
                         </div>
                     <!-- Necesrio en todos los formularios -->
 

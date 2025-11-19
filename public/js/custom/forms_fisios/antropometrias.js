@@ -17,6 +17,7 @@
             _id = null;
             patientDiv.style.display = 'block';
             NompatientDiv.style.display = 'none';
+            DatosImpresion.style.display = 'none';
             Manager.ResetForm();
             $("#frmModal1").modal('show');
             calcularTotal(); // reinicia total
@@ -66,6 +67,7 @@
         //Mostrar y ocultar nombre paciente y busqueda
         patientDiv.style.display = 'none';
         NompatientDiv.style.display = 'block';
+        DatosImpresion.style.display = 'none';
 
         // Asignación automática de valores (inputs normales)
         Object.keys(rowData).forEach(key => {
@@ -88,6 +90,124 @@
     // Limpiar formulario al cerrar modal
     $('#frmModal1').on('hidden.bs.modal', function () {
         this.reset();
+    });
+
+
+     // Evento para imprimir datos sin mostrar el modal
+    $(document).on('click', '.dTableView', function () {
+        var rowData = dTable.row($(this).closest('tr')).data();
+        if (!rowData) return;
+
+        // Campos checkbox
+        const checkboxFields = [];
+        ['c', 't', 'l', 's'].forEach(prefix => {
+            for (let i = 1; i <= 12; i++) {
+                ['zn', 'zs', 'za'].forEach(suffix => {
+                    checkboxFields.push(`${prefix}${i}_${suffix}`);
+                });
+            }
+        });
+
+        // Clonar modal para manipular sin afectar el original ni mostrar
+        var modalClone = $('#frmModal1').clone();
+
+        // Ocultar búsqueda paciente, mostrar solo nombre
+        modalClone.find('#patientDiv').hide();
+        modalClone.find('#NompatientDiv').hide();
+        modalClone.find('#DatosImpresion').show();
+
+        // Asignar datos a inputs en clone
+        Object.keys(rowData).forEach(function (key) {
+            var input = modalClone.find('[name="' + key + '"]');
+            if (input.length) {
+                if (checkboxFields.includes(key)) {
+                    input.prop('checked', rowData[key] == 1);
+                } else {
+                    input.val(rowData[key]);
+                }
+            }
+        });
+
+        // Convertir inputs, selects y textarea a texto legible para imprimir
+        modalClone.find('input, select, textarea').each(function () {
+            var $el = $(this);
+            // Excluir inputs tipo hidden
+            if ($el.is('input[type="hidden"]')) {
+                $el.remove(); // O también puedes dejarlo invisible: $el.hide();
+                return; // Salir para este elemento
+            }
+            var text;
+            if ($el.is(':checkbox')) {
+                text = $el.is(':checked') ? '✔' : '✘';
+            } else {
+                text = $el.val() || '';
+            }
+            $el.replaceWith($('<span>').text(text));
+        });
+
+        // Quitar botones, alertas, instrucciones y elementos que no deben imprimirse
+        modalClone.find('.modal-header, .modal-footer, .alert, button, .input-group-append').remove();
+
+        // Preparar contenido HTML para la nueva ventana
+        var htmlPrint = `
+            <html>
+            <head>
+                <title>Imprimir Antropometria Healing Hands</title>
+                <style>
+                    body {
+                        display: flex;
+                        justify-content: center; /* centrar horizontalmente */
+                        padding: 20px;
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                    }
+                    .modal-content {
+                        width: 100%;
+                        max-width: 800px;
+                        border: none !important;
+                        box-shadow: none !important;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 1em;
+                    }
+                    .logo-top-right {
+                    position: absolute;
+                    top: 20px;
+                    right: 20px;
+                    width: 80px;
+                    height: auto;
+                    opacity: 0.8; /* semitransparente para no afectar letras */
+                    }       
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: center;
+                    }
+                    span {
+                        display: inline-block;
+                    }
+                </style>
+            </head>
+            <body>
+                <img src="/img/Logo.png" class="logo-top-right">
+                ${modalClone.find('.modal-content')[0].outerHTML}
+            </body>
+            </html>
+        `;
+
+        // Abrir nueva ventana, escribir contenido y lanzar impresión
+        var ventana = window.open('', '', 'width=900,height=700');
+        ventana.document.write(htmlPrint);
+        ventana.document.close();
+        ventana.focus();
+
+        // Esperar a que cargue para imprimir y cerrar
+        ventana.onload = function () {
+            ventana.print();
+            ventana.close();
+        };
     });
 
     //delete
@@ -269,8 +389,8 @@
                         {
                             data: null,
                             name: '',
-                            orderable: false,
-                            searchable: false,
+                            'orderable': false,
+                            'searchable': false,
                             title: '#SL',
                             width: 8,
                             render: function () {
@@ -285,9 +405,31 @@
                                 return EventManager.DataTableCommonButton();
                             }
                         },
-                        { data: 'fecha', name: 'Fecha', title: 'Fecha' },
-                        { data: 'customer_name', name: 'customer_name', title: 'customer name' },
-                        { data: 'name_user', name: 'name_user', title: 'Encargado' }
+                        {
+                            data: 'fecha',
+                            name: 'Fecha',
+                            title: 'Fecha'
+                        },
+                        {
+                            data: 'customer_name',
+                            name: 'customer_name',
+                            title: 'customer name'
+                        },
+                        {
+                            data: 'name_user',
+                            name: 'name_user',
+                            title: 'Encargado'
+                        },
+                        {
+                            data: 'diagnostico',
+                            name: 'diagnostico',
+                            title: 'Diagnostico'
+                        },
+                        {
+                            data: 'observaciones',
+                            name: 'observaciones',
+                            title: 'Observaciones'
+                        }
                     ],
                     fixedColumns: false,
                     data: data

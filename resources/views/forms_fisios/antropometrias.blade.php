@@ -46,10 +46,21 @@
                                 </div>
                             </div>
                         </div>
+                         <!-- Datos para impresion -->
                         <div class="row mt-3">
-                            <div class="col-md-12" id='NompatientDiv'>
+                            <div class="col-md-12" name ="NompatientDiv" id='NompatientDiv'>
                                 <label>Paciente</label>
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-12" name="DatosImpresion" id='DatosImpresion'>
+                                <label>Fecha de evaluación:</label>
+                                <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
+                                <label>Paciente:</label>
+                                <input type="text" id="customer_name" name="customer_name" class="form-control" readonly><br>
+                                <label>Edad:</label>
+                                <input type="text" id="age" name="age" class="form-control" readonly><br>
+                                <label>Encargado:</label>
+                                <input type="text" id="encargado" name="encargado" class="form-control" readonly>
                             </div>
                         </div>
                     <!-- Necesrio en todos los formularios -->
@@ -199,7 +210,7 @@
                                     <!-- TOTAL mostrado en pantalla -->
                                     <tr style="background-color: #930a8d; font-size: 18px; color: white;">
                                         <td colspan="2" align="left">TOTAL</td>
-                                        <td id="total_puntaje">0 / 15</td>
+                                        <td name ="total_puntaje" id="total_puntaje">0 / 15</td>
                                     </tr>
                                     
                             </table>
@@ -208,7 +219,10 @@
                         </div>
                         </div>
                         
-
+                        <div class="form-group control-group form-inline ">
+                                <label>Diagnostico:</label>
+                                <input type="text" id="diagnostico" name="diagnostico" class="form-control input-full" >
+                        </div>
                         
                         <div class="form-group control-group form-inline ">
                             <label>{{translate('Observaciones')}}</label>

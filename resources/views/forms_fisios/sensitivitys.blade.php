@@ -46,6 +46,7 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Datos para impresion -->
                         <div class="row mt-3">
                             <div class="col-md-12" id='NompatientDiv'>
                                 <label>Paciente</label>

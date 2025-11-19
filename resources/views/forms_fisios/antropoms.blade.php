@@ -46,19 +46,32 @@
                                 </div>
                             </div>
                         </div>
+                         <!-- Datos para impresion -->
                         <div class="row mt-3">
                             <div class="col-md-12" id='NompatientDiv'>
                                 <label>Paciente</label>
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
                             </div>
+                            <div class="col-md-12" id='DatosImpresion'>
+                                <label>Fecha de evaluación:</label>
+                                <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
+                                <label>Paciente:</label>
+                                <input type="text" id="customer_name2" name="customer_name2" class="form-control" readonly><br>
+                                <label>Edad:</label>
+                                <input type="text" id="age" name="age" class="form-control" readonly><br>
+                                <label>Encargado:</label>
+                                <input type="text" id="encargado" name="encargado" class="form-control" readonly>
+                            </div>
                         </div>
-                    <!-- Necesrio en todos los formularios -->
-
+                         <!-- Necesrio en todos los formularios -->
+                         <!-- Div para agregar instrucciones -->
                         <div class="container">
-                            <div class="alert alert-info text-center" role="alert">
-        <img src="{{ asset('img/antropometri.png') }}" alt="Anthropometry" 
-             class="img-fluid" style="max-height: 520px;">
-                  <!-- Div para agregar instrucciones -->
+                            <div class="alert alert-info text-center" role="alert" id="instructions">
+                             <h5 class="text-center mb-3">
+                                     
+                                <img src="{{ asset('img/antropometri.png') }}" alt="Anthropometry" class="img-fluid" style="max-height: 520px;">
+                                </h5> <br>
+                            <!-- Div para agregar instrucciones -->
                 
                             </div>
                         </div>   
@@ -127,7 +140,7 @@
 
                     {{-- Observaciones --}}
                     <div class="mb-3">
-                        <label>Observaciones</label>
+                        <label>Observaciones:</label>
                         <textarea name="observaciones" class="form-control" rows="3">{{ old('observaciones', isset($registro) ? $registro->observaciones : '') }}</textarea>
                     </div>
 
@@ -140,13 +153,13 @@
                                 value="{{ old('lug', isset($registro) ? $registro->lug : '') }}">
                         </div>
                         <div class="col-md-6">
-                            <label>Diámetro</label>
+                            <label>Diámetro:</label>
                             <input type="text" name="diam" class="form-control"
                                 value="{{ old('diam', isset($registro) ? $registro->diam : '') }}">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label>Observaciones</label>
+                        <label>Observaciones:</label>
                         <textarea name="observaciones2" class="form-control" rows="3">{{ old('observaciones2', isset($registro) ? $registro->observaciones2 : '') }}</textarea>
                     </div>
 

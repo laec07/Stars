@@ -19,6 +19,7 @@
             //Mostrar y ocultar nombre paciente y busqueda
             patientDiv.style.display = 'block';
             NompatientDiv.style.display = 'none';
+            modalClone.find('#DatosImpresion').show();
             Manager.ResetForm();
             $("#frmModal1").modal('show');
         });
@@ -43,6 +44,7 @@
         //Mostrar y ocultar nombre paciente y busqueda
         patientDiv.style.display = 'none';
         NompatientDiv.style.display = 'block';
+        modalClone.find('#DatosImpresion').show();
 
         // Definir campos que son checkbox
             const checkboxFields = [];
@@ -69,6 +71,137 @@
         $('#id').val(_id);
         $('#frmModal1').modal('show');
     });
+
+
+    // Evento para imprimir datos sin mostrar el modal
+    $(document).on('click', '.dTableView', function () {
+        var rowData = dTable.row($(this).closest('tr')).data();
+        if (!rowData) return;
+
+        // Campos checkbox
+        const checkboxFields = [];
+        ['c', 't', 'l', 's'].forEach(prefix => {
+            for (let i = 1; i <= 12; i++) {
+                ['zn', 'zs', 'za'].forEach(suffix => {
+                    checkboxFields.push(`${prefix}${i}_${suffix}`);
+                });
+            }
+        });
+
+        // Clonar modal para manipular sin afectar el original ni mostrar
+        var modalClone = $('#frmModal1').clone();
+
+        // Ocultar búsqueda paciente, mostrar solo nombre
+        modalClone.find('#patientDiv').hide();
+        modalClone.find('#NompatientDiv').hide();
+        modalClone.find('#DatosImpresion').show();
+
+        // Asignar datos a inputs en clone
+        Object.keys(rowData).forEach(function (key) {
+            var input = modalClone.find('#' + key);
+            if (input.length) {
+                if (checkboxFields.includes(key)) {
+                    input.prop('checked', rowData[key] == 1);
+                } else {
+                    input.val(rowData[key]);
+                }
+            }
+        });
+
+        // Convertir inputs, selects y textarea a texto legible para imprimir
+        modalClone.find('input, select, textarea').each(function () {
+            var $el = $(this);
+            // Excluir inputs tipo hidden
+            if ($el.is('input[type="hidden"]')) {
+                $el.remove(); // O también puedes dejarlo invisible: $el.hide();
+                return; // Salir para este elemento
+            }
+            var text;
+            if ($el.is(':checkbox')) {
+                text = $el.is(':checked') ? '✔' : '✘';
+            } else {
+                text = $el.val() || '';
+            }
+            $el.replaceWith($('<span>').text(text));
+        });
+
+        // Quitar botones, alertas, instrucciones y elementos que no deben imprimirse
+        modalClone.find('.modal-header, .modal-footer, .alert, button, .input-group-append').remove();
+    
+        // Preparar contenido HTML para la nueva ventana
+        var htmlPrint = `
+            <html>
+            <head>
+    <title>Imprimir Electroterapia </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #000;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .info-header {
+            margin-bottom: 20px;
+        }
+        .info-header p {
+            margin: 2px 0;
+            font-size: 14px;
+        }
+            .logo-top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: auto;
+            opacity: 0.8; /* semitransparente para no afectar letras */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 6px 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        span {
+            display: inline-block;
+        }
+    </style>
+</head>
+            <body>
+            <h2>Electroterapia Healing Hands</h2>
+           <img src="/img/Logo.png" class="logo-top-right">
+                ${modalClone.find('.modal-content')[0].outerHTML}
+            </body>
+            </html>
+        `;
+    // Abrir ventana nueva y disparar impresión
+    var ventana = window.open('', '', 'width=900,height=700');
+    ventana.document.write(htmlPrint);
+    ventana.document.close();
+    ventana.focus();
+
+    // Esperar a que cargue para imprimir y cerrar
+    ventana.onload = function () {
+        ventana.print();
+        ventana.close();
+    };
+});
 
 
     //delete

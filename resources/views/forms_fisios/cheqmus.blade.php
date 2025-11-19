@@ -46,10 +46,21 @@
                                 </div>
                             </div>
                         </div>
+                         <!-- Datos para impresion -->
                         <div class="row mt-3">
                             <div class="col-md-12" id='NompatientDiv'>
                                 <label>Paciente</label>
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-12" id='DatosImpresion'>
+                                <label>Fecha de evaluación:</label>
+                                <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
+                                <label>Paciente:</label>
+                                <input type="text" id="customer_name2" name="customer_name2" class="form-control" readonly><br>
+                                <label>Edad:</label>
+                                <input type="text" id="age" name="age" class="form-control" readonly><br>
+                                <label>Encargado:</label>
+                                <input type="text" id="encargado" name="encargado" class="form-control" readonly>
                             </div>
                         </div>
                     <!-- Necesrio en todos los formularios -->
@@ -427,12 +438,12 @@
                         </div>
 
                         <div class="form-group control-group form-inline ">
-                                <label>Diagnostico</label>
+                                <label>Diagnostico:</label>
                                 <input type="text" id="Diagnostico" name="Diagnostico" class="form-control input-full" >
                         </div>
 
                         <div class="form-group control-group form-inline ">
-                            <label>{{translate('Observaciones')}}</label>
+                            <label>{{translate('Observaciones:')}}</label>
                             <textarea type="text" id="Observaciones" name="Observaciones"  class="form-control input-full"></textarea>
                             <span class="help-block"></span>
                         </div>
