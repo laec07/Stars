@@ -8,6 +8,7 @@ use Exception;
 use App\Models\FormFisios\FisCheqmus;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class FisCheqmusController extends Controller
@@ -39,10 +40,25 @@ class FisCheqmusController extends Controller
             ->select(
                 'fis_cheqmus.*',
                 'cmn_patients.full_name as customer_name',
-                'users.name as name_user'
+                'cmn_patients.full_name as customer_name2',
+                'cmn_patients.dob as birth_date',
+                'users.name as name_user',
+                'users.name as encargado'
             )
             ->where('fis_cheqmus.status','=','1')
             ->get();
+            $data->transform(function ($item) {
+                    if ($item->birth_date) {
+                        // Calcular edad
+                        $item->age = Carbon::parse($item->birth_date)->age;
+
+                        // Formatear fecha a otro formato, por ejemplo dd/mm/yyyy
+                        $item->birth_date_formatted = Carbon::parse($item->birth_date)->format('d/m/Y');
+                    } else {
+                        $item->age = null;
+                        $item->birth_date_formatted = null;
+                    }return $item;
+                });
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {
             return $this->apiResponse(['status' => '403', 'data' => $qx], 400);

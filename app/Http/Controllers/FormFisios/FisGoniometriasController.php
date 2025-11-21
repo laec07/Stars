@@ -8,6 +8,7 @@ use App\Models\FormFisios\FisGoniometrias;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Exception;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
 
@@ -33,10 +34,25 @@ class FisGoniometriasController extends Controller
                 ->select(
                     'fis_goniometrias.*',
                     'cmn_patients.full_name as customer_name',
-                    'users.name as name_user'
+                    'cmn_patients.full_name as customer_name2',
+                    'cmn_patients.dob as birth_date',
+                    'users.name as name_user',
+                    'users.name as encargado'
                 )
-                ->where('fis_goniometrias.status', 1)
+                ->where('fis_goniometrias.status', '=', '1')
                 ->get();
+                $data->transform(function ($item) {
+                    if ($item->birth_date) {
+                        // Calcular edad
+                        $item->age = Carbon::parse($item->birth_date)->age;
+
+                        // Formatear fecha a otro formato, por ejemplo dd/mm/yyyy
+                        $item->birth_date_formatted = Carbon::parse($item->birth_date)->format('d/m/Y');
+                    } else {
+                        $item->age = null;
+                        $item->birth_date_formatted = null;
+                    }return $item;
+                });
 
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
 

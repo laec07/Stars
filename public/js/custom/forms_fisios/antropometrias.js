@@ -119,6 +119,10 @@
         // Asignar datos a inputs en clone
         Object.keys(rowData).forEach(function (key) {
             var input = modalClone.find('[name="' + key + '"]');
+            if (!input.length) {
+            input = modalClone.find('#' + key); // fallback por id si no encuentra por name
+            }
+
             if (input.length) {
                 if (checkboxFields.includes(key)) {
                     input.prop('checked', rowData[key] == 1);

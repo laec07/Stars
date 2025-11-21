@@ -48,15 +48,15 @@
                         </div>
                          <!-- Datos para impresion -->
                         <div class="row mt-3">
-                            <div class="col-md-12" name ="NompatientDiv" id='NompatientDiv'>
+                            <div class="col-md-12" id='NompatientDiv'>
                                 <label>Paciente</label>
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
                             </div>
-                            <div class="col-md-12" name="DatosImpresion" id='DatosImpresion'>
+                            <div class="col-md-12" id='DatosImpresion'>
                                 <label>Fecha de evaluación:</label>
                                 <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
                                 <label>Paciente:</label>
-                                <input type="text" id="customer_name" name="customer_name" class="form-control" readonly><br>
+                                <input type="text" id="customer_name2" name="customer_name2" class="form-control" readonly><br>
                                 <label>Edad:</label>
                                 <input type="text" id="age" name="age" class="form-control" readonly><br>
                                 <label>Encargado:</label>

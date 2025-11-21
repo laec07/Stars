@@ -63,6 +63,7 @@
                                 <input type="text" id="encargado" name="encargado" class="form-control" readonly>
                             </div>
                         </div>
+                         <hr>
                     <!-- Necesrio en todos los formularios -->
 
                         <div class="container">
@@ -139,7 +140,7 @@
                         <hr>
 
                        <h5>Imágenes</h5>
-                        <div class="row">
+                        {{-- <div class="row">
                             @for($i=1; $i<=4; $i++)
                                 <div class="col-md-3 mb-3">
                                     <label>Foto {{ $i }}</label>
@@ -160,8 +161,55 @@
                                     @endif
                                 </div>
                             @endfor
-                        </div>
+                        </div> --}}
 
+                        <div class="form-group control-group form-inline ">
+                                    <label class="col-md-12">
+                                        {{translate('Foto 1')}}
+                                    </label>
+                                    <div class="col-md-12 controls">
+                                        <input type="file" id="id_card" name="id_card" accept="image/png, image/jpeg">
+                                        <div class="float-left w-100">
+                                            <img id="empidcardimageview" class="mw250px" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                        <div class="form-group control-group form-inline ">
+                                    <label class="col-md-12">
+                                        {{translate('Foto 2')}}
+                                    </label>
+                                    <div class="col-md-12 controls">
+                                        <input type="file" id="id_card" name="id_card" accept="image/png, image/jpeg">
+                                        <div class="float-left w-100">
+                                            <img id="empidcardimageview" class="mw250px" />
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                        <div class="form-group control-group form-inline ">
+                                    <label class="col-md-12">
+                                        {{translate('Foto 3')}}
+                                    </label>
+                                    <div class="col-md-12 controls">
+                                        <input type="file" id="id_card" name="id_card" accept="image/png, image/jpeg">
+                                        <div class="float-left w-100">
+                                            <img id="empidcardimageview" class="mw250px" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                        <div class="form-group control-group form-inline ">
+                                    <label class="col-md-12">
+                                        {{translate('Foto 4')}}
+                                    </label>
+                                    <div class="col-md-12 controls">
+                                        <input type="file" id="id_card" name="id_card" accept="image/png, image/jpeg">
+                                        <div class="float-left w-100">
+                                            <img id="empidcardimageview" class="mw250px" />
+                                        </div>
+                                    </div>
+                                </div>
  
                         
                         <br>
