@@ -6,3 +6,11 @@
     background: #007bff;
     margin-left: 4px;
 }
+.table-header-blue {
+    background-color: #007bff; /* azul bootstrap */
+    color: #ffffff;
+    font-weight: bold;
+}
+.table-header-blue th {
+    padding: 8px;
+}

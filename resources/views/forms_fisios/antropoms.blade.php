@@ -46,19 +46,32 @@
                                 </div>
                             </div>
                         </div>
+                         <!-- Datos para impresion -->
                         <div class="row mt-3">
                             <div class="col-md-12" id='NompatientDiv'>
                                 <label>Paciente</label>
                                 <input type="text" id="customer_name" name="customer_name" class="form-control" readonly>
                             </div>
+                            <div class="col-md-12" id='DatosImpresion'>
+                                <label>Fecha de evaluación:</label>
+                                <input type="text" id="fecha" name="fecha" class="form-control" readonly><br>
+                                <label>Paciente:</label>
+                                <input type="text" id="customer_name2" name="customer_name2" class="form-control" readonly><br>
+                                <label>Edad:</label>
+                                <input type="text" id="age" name="age" class="form-control" readonly><br>
+                                <label>Encargado:</label>
+                                <input type="text" id="encargado" name="encargado" class="form-control" readonly>
+                            </div>
                         </div>
-                    <!-- Necesrio en todos los formularios -->
-
+                         <!-- Necesrio en todos los formularios -->
+                         <!-- Div para agregar instrucciones -->
                         <div class="container">
-                            <div class="alert alert-info text-center" role="alert">
-        <img src="{{ asset('img/antropometri.png') }}" alt="Anthropometry" 
-             class="img-fluid" style="max-height: 520px;">
-                  <!-- Div para agregar instrucciones -->
+                            <div class="alert alert-info text-center" role="alert" id="instructions">
+                             <h5 class="text-center mb-3">
+                                     
+                                <img src="{{ asset('img/antropometri.png') }}" alt="Anthropometry" class="img-fluid" style="max-height: 520px;">
+                                </h5> <br>
+                            <!-- Div para agregar instrucciones -->
                 
                             </div>
                         </div>   
@@ -127,7 +140,7 @@
 
                     {{-- Observaciones --}}
                     <div class="mb-3">
-                        <label>Observaciones</label>
+                        <label>Observaciones:</label>
                         <textarea name="observaciones" class="form-control" rows="3">{{ old('observaciones', isset($registro) ? $registro->observaciones : '') }}</textarea>
                     </div>
 
@@ -140,41 +153,53 @@
                                 value="{{ old('lug', isset($registro) ? $registro->lug : '') }}">
                         </div>
                         <div class="col-md-6">
-                            <label>Diámetro</label>
+                            <label>Diámetro:</label>
                             <input type="text" name="diam" class="form-control"
                                 value="{{ old('diam', isset($registro) ? $registro->diam : '') }}">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label>Observaciones</label>
+                        <label>Observaciones:</label>
                         <textarea name="observaciones2" class="form-control" rows="3">{{ old('observaciones2', isset($registro) ? $registro->observaciones2 : '') }}</textarea>
                     </div>
 
                     {{-- Evaluación del tono muscular --}}
-                    <h5>EVALUACIÓN DEL TONO MUSCULAR</h5>
-                    <p>Observar qué posiciones adopta el paciente en camilla o en la colchoneta.</p>
+{{-- <h5>EVALUACIÓN DEL TONO MUSCULAR</h5>
+<p>Observar qué posiciones adopta el paciente en camilla o en la colchoneta.</p>
 
-                    @php
-                        $checkboxes = [
-                            'hipo' => 'Hipotonía',
-                            'hipe' => 'Hipertonía',
-                            'fluc' => 'TM Fluctuante',
-                            'tm_n' => 'TM Normal'
-                        ];
-                    @endphp
+@php
+    $options = [
+        'hipo' => 'Hipotonía',
+        'hipe' => 'Hipertonía',
+        'fluc' => 'TM Fluctuante',
+        'tm_n' => 'TM Normal'
+    ];
 
-                    <div class="mb-3 text-center">
-                        @foreach($checkboxes as $name => $label)
-                            <label class="me-3">
-                                <input type="hidden" name="{{ $name }}" value="0">
-                                <input type="checkbox" 
-                                    name="{{ $name }}" 
-                                    value="1" 
-                                    {{ old($name, isset($registro) ? $registro->$name : 0) ? 'checked' : '' }}>
-                                {{ $label }}
-                            </label>
-                        @endforeach
-                    </div>
+    // Valor seleccionado por defecto
+    $selected = old('tono_muscular', isset($registro) ? $registro->tono_muscular : '');
+@endphp
+
+<div class="mb-3 text-center">
+    <select name="tono_muscular" class="form-select" required>
+        <option value="" disabled {{ $selected == '' ? 'selected' : '' }}>Seleccione una opción</option>
+        @foreach($options as $value => $label)
+            <option value="{{ $value }}" {{ $selected == $value ? 'selected' : '' }}>
+                {{ $label }}
+            </option>
+        @endforeach
+    </select>
+</div> --}}
+<div class="form-group">
+    <label for="tono_muscular">EVALUACIÓN DEL TONO MUSCULAR:</label>
+    <select name="tono_muscular" id="tono_muscular" class="form-control">
+        <option value="">Seleccione</option>
+        <option value="1" {{ old('escala') == 1 ? 'selected' : '' }}>1. Hipotonía</option>
+        <option value="2" {{ old('escala') == 2 ? 'selected' : '' }}>2. Hipertonía</option>
+        <option value="3" {{ old('escala') == 3 ? 'selected' : '' }}>3. TM Fluctuante</option>
+        <option value="4" {{ old('escala') == 4 ? 'selected' : '' }}>4. TM Normal </option>
+    </select>
+</div>
+
 
                     <div class="mb-3">
                         <label>Observaciones y resultados</label>

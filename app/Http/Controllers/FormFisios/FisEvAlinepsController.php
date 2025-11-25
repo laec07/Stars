@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Repository\UtilityRepository;
+use Carbon\Carbon;  
 use Exception;
 
 class FisEvAlinepsController extends Controller
@@ -35,10 +36,25 @@ class FisEvAlinepsController extends Controller
                 ->select(
                     'fis_evalineps.*',
                     'cmn_patients.full_name as customer_name',
-                    'users.name as name_user'
+                    'cmn_patients.full_name as customer_name2',
+                    'cmn_patients.dob as birth_date',
+                    'users.name as name_user',
+                    'users.name as encargado'
                 )
-                ->where('fis_evalineps.status', 1)
+                ->where('fis_evalineps.status', '=', '1')
                 ->get();
+                $data->transform(function ($item) {
+                    if ($item->birth_date) {
+                        // Calcular edad
+                        $item->age = Carbon::parse($item->birth_date)->age;
+
+                        // Formatear fecha a otro formato, por ejemplo dd/mm/yyyy
+                        $item->birth_date_formatted = Carbon::parse($item->birth_date)->format('d/m/Y');
+                    } else {
+                        $item->age = null;
+                        $item->birth_date_formatted = null;
+                    }return $item;
+                });
 
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
 
