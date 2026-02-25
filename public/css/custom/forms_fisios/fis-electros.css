@@ -6,3 +6,49 @@
     background: #007bff;
     margin-left: 4px;
 }
+ .motor-table {
+        border: 2px solid #000;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .motor-table td {
+        border: 1px solid #000;
+        padding: 4px 6px;
+        vertical-align: middle;
+    }
+
+    .motor-title {
+        font-weight: bold;
+        text-align: center;
+        background: #fff !important;
+    }
+
+    .motor-label {
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .motor-input {
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid #000;
+        outline: none;
+        background: transparent;
+        font-size: 14px;
+        padding: 2px 4px;
+    }
+
+    .motor-input::placeholder {
+        color: #777;
+    }
+
+    .current-type-input {
+        width: 40%;
+        border: none;
+        border-bottom: 1px solid #000;
+        outline: none;
+        background: transparent;
+        margin-left: 6px;
+    }

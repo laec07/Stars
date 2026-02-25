@@ -13,14 +13,13 @@
         //generate datatabe serial no
         dTableManager.dTableSerialNumber(dTable);
 
-        patientDiv.style.display = 'block';
-        NompatientDiv.style.display = 'none';
-
         //add  modal
         $("#btnAdd").on("click", function () {
             _id = null;
             //Mostrar y ocultar nombre paciente y busqueda
-            
+            patientDiv.style.display = 'block';
+            NompatientDiv.style.display = 'none';
+            DatosImpresion.style.display = 'none';
             Manager.ResetForm();
             $("#frmModal1").modal('show');
         });
@@ -35,6 +34,7 @@
             }
         });
     });
+   
 
 // Evento para imprimir la ficha técnica con el formato del formulario de edición laestrada
     $(document).on('click', '.dTableView', function () {
