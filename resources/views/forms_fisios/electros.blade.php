@@ -72,7 +72,8 @@
                                Llenar los datos que se le piden a continuacion para llevar un control de tratamiento, 
                                de la misma manera subrayar con un resaltador de color fluorecente el nombre y punto 
                                motor a estimular con electroterapia.
-                                <!-- Div para agregar instrucciones -->
+                               </h5>
+                                <!-- Div para agregar futuras instrucciones -->
                                 <div class="d-flex flex-column flex-md-row flex-wrap justify-content-center gap-2">
 
                                 </div>
@@ -84,71 +85,92 @@
                             
 
                             @php
-                    use Illuminate\Support\Str;
+                            use Illuminate\Support\Str;
 
-                    $sections = [
-                        ['title' => 'PUNTOS MOTORES DE LA CARA', 'key' => 'cara', 'current_type' => ''],
-                        ['title' => 'PUNTOS MOTORES MUSCULARES', 'key' => 'muscular', 'current_type' => ''],
-                        ['title' => 'PUNTOS MOTORES NERVIOSOS', 'key' => 'nervioso', 'current_type' => ''],
-                    ];
+                            $sections = [
+                                ['title' => 'PUNTOS MOTORES DE LA CARA:', 'key' => 'cara', 'current_type' => ''],
+                                ['title' => 'PUNTOS MOTORES MUSCULARES:', 'key' => 'muscular', 'current_type' => ''],
+                                ['title' => 'PUNTOS MOTORES NERVIOSOS:', 'key' => 'nervioso', 'current_type' => ''],
+                            ];
 
-                    $fields = [
-                        ['Waveform', 'Display'],
-                        ['CC/CV', 'Method'],
-                        ['Carrier Frecuencia', 'Channel Mode'],
-                        ['Frecuencia (MHz)', 'Burst Freq'],
-                        ['Vector Scan', 'Duty Cycle'],
-                        ['Treatment Time', 'Anti-Fatigue'],
-                        ['Cycle Time', 'Freq. Mod'],
-                        ['Polarity', 'Amplish. Mod.'],
-                        ['Ramp', 'Phase Duration'],
-                    ];
-                @endphp
+                            $fields = [
+                                ['Waveform', 'Display'],
+                                ['CC/CV', 'Method'],
+                                ['Carrier Frecuencia', 'Channel Mode'],
+                                ['Frecuencia (MHz)', 'Burst Freq'],
+                                ['Vector Scan', 'Duty Cycle'],
+                                ['Treatment Time', 'Anti-Fatigue'],
+                                ['Cycle Time', 'Freq. Mod'],
+                                ['Polarity', 'Amplish. Mod.'],
+                                ['Ramp', 'Phase Duration'],
+                            ];
+                        @endphp
 
-                @foreach ($sections as $section)
-                    <table class="table table-bordered text-center align-middle mb-5 border-dark">
-                        <tbody>
-                            <!-- Título de sección -->
-                            <tr class="table-primary">
-                                <td colspan="4" class="fw-bold text-center">
-                                    {{ $section['title'] }} — Tipo de Corriente:
-                                    <input 
-                                        type="text"
-                                        name="sections[{{ $section['key'] }}][current_type]"
-                                        value="{{ $section['current_type'] }}"
-                                        class="form-control d-inline-block w-50 ms-2"
+
+                        @foreach ($sections as $index => $section)
+                            <div class="row align-items-start mb-5">
+
+                                <!-- TABLA (IZQUIERDA) -->
+                                <div class="col-md-7">
+                                    <div class="table-responsive">
+                                        <table class="motor-table">
+                                            <tbody>
+
+                                                <tr>
+                                                    <td colspan="4" class="motor-title">
+                                                        {{ $section['title'] }}
+                                                        &nbsp;Tipo de Corriente
+                                                        <input
+                                                            type="text"
+                                                            name="sections[{{ $section['key'] }}][current_type]"
+                                                            class="current-type-input"
+                                                        >
+                                                    </td>
+                                                </tr>
+
+                                                @foreach ($fields as [$left, $right])
+                                                    <tr>
+                                                        <td class="motor-label" style="width:20%">{{ $left }}:</td>
+                                                        <td style="width:30%">
+                                                            <input
+                                                                type="text"
+                                                                name="sections[{{ $section['key'] }}][{{ Str::slug($left, '_') }}]"
+                                                                class="motor-input"
+                                                                placeholder="Texto"
+                                                            >
+                                                        </td>
+
+                                                        <td class="motor-label" style="width:20%">{{ $right }}:</td>
+                                                        <td style="width:30%">
+                                                            <input
+                                                                type="text"
+                                                                name="sections[{{ $section['key'] }}][{{ Str::slug($right, '_') }}]"
+                                                                class="motor-input"
+                                                                placeholder="Texto"
+                                                            >
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- IMAGEN (DERECHA) -->
+                                <div class="col-md-5 text-center">
+                                    <img
+                                        src="{{ asset('img/' . ['Puntos motores.png', 'Puntos_motores_musculares.png', 'Puntos_motores_nerviosos.png'][$index]) }}"
+                                        class="img-fluid border"
+                                        style="max-height: 420px;"
+                                        alt="{{ $section['title'] }}"
                                     >
-                                </td>
-                            </tr>
+                                
+                                </div>
 
-                            <!-- Campos dinámicos -->
-                            @foreach ($fields as [$left, $right])
-                                <tr>
-                                    <td class="bg-light fw-semibold text-start" style="width: 20%;">{{ $left }}:</td>
-                                    <td style="width: 30%;">
-                                        <input 
-                                            type="text"
-                                            name="sections[{{ $section['key'] }}][{{ Str::slug($left, '_') }}]"
-                                            class="form-control"
-                                        >
-                                    </td>
-
-                                    <td class="bg-light fw-semibold text-start" style="width: 20%;">{{ $right }}:</td>
-                                    <td style="width: 30%;">
-                                        <input 
-                                            type="text"
-                                            name="sections[{{ $section['key'] }}][{{ Str::slug($right, '_') }}]"
-                                            class="form-control"
-                                        >
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endforeach
-
-        
-                            
+                            </div>
+                        @endforeach
+                                   
                       </div>
                         
                       <div class="form-group control-group form-inline ">

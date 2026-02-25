@@ -19,7 +19,7 @@
             //Mostrar y ocultar nombre paciente y busqueda
             patientDiv.style.display = 'block';
             NompatientDiv.style.display = 'none';
-            modalClone.find('#DatosImpresion').show();
+            DatosImpresion.style.display = 'none';
             Manager.ResetForm();
             $("#frmModal1").modal('show');
         });
@@ -44,7 +44,7 @@
         //Mostrar y ocultar nombre paciente y busqueda
         patientDiv.style.display = 'none';
         NompatientDiv.style.display = 'block';
-        modalClone.find('#DatosImpresion').show();
+        DatosImpresion.style.display = 'none';
 
         // Definir campos que son checkbox
             const checkboxFields = [];
@@ -58,16 +58,31 @@
             });
 
         // Asignación automática a inputs que coincidan con los nombres de las claves
-            Object.keys(rowData).forEach(function (key) {
-                const input = $('[name="' + key + '"]');
-                if (input.length) {
-                    if (checkboxFields.includes(key)) {
-                        input.prop('checked', rowData[key] == 1); // ✅ checkbox
-                    } else {
-                        input.val(rowData[key]); // ✅ campos normales
-                    }
-                }
-            });
+            // Cargar campos normales (NO sections)
+['fecha', 'diagnostico', 'observaciones', 'patient_id', 'user_id'].forEach(function (field) {
+    if (rowData[field] !== undefined) {
+        $('[name="' + field + '"]').val(rowData[field]);
+    }
+});
+
+// Cargar SECTIONS (electroterapia)
+if (rowData.sections) {
+
+    Object.keys(rowData.sections).forEach(function (sectionKey) {
+        let section = rowData.sections[sectionKey];
+
+        Object.keys(section).forEach(function (fieldKey) {
+
+            let inputName = `sections[${sectionKey}][${fieldKey}]`;
+            let input = $('[name="' + inputName + '"]');
+
+            if (input.length) {
+                input.val(section[fieldKey]);
+            }
+        });
+    });
+}
+
         $('#id').val(_id);
         $('#frmModal1').modal('show');
     });
