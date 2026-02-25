@@ -170,7 +170,7 @@
         //Mostrar y ocultar nombre paciente y busqueda
         patientDiv.style.display = 'none';
         NompatientDiv.style.display = 'block';
-        DatosImpresion.style.display = 'none';
+        // DatosImpresion.style.display = 'none';
 
         // Definir campos que son checkbox
             const checkboxFields = [
