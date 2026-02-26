@@ -104,6 +104,10 @@ class FichaController extends Controller
         } catch (Exception $e) {
             return $this->apiResponse(['status' => '403', 'data' => $e->getMessage()], 400);
         }
+        $seguimiento = new Ficha();
+        $seguimiento->nota_detallada = $request->nota_detallada;
+        $seguimiento->ficha_id = $request->ficha_id;
+        $seguimiento->save();
     }
 
     /** Actualizar un registro */
@@ -300,7 +304,44 @@ public function getSeguimientosByFicha($fichaId)
         return $this->apiResponse(['status' => '403', 'data' => $e->getMessage()], 400);
     }
 }
+    
+public function uploadImage(Request $request)
+{
+    if ($request->hasFile('upload')) {
 
+        $file = $request->file('upload');
+
+        // Opcional: límite 20MB
+        if ($file->getSize() > 20 * 1024 * 1024) {
+            return response()->json([
+                'error' => ['message' => 'El archivo es demasiado grande']
+            ], 400);
+        }
+
+        $filename = time().'_'.$file->getClientOriginalName();
+
+        $path = $file->storeAs('seguimientos', $filename, 'public');
+
+        $url = asset('storage/'.$path);
+
+        // 👇 Si es imagen
+        if (str_contains($file->getMimeType(), 'image')) {
+            return response()->json([
+                'url' => $url
+            ]);
+        }
+
+        // 👇 Si NO es imagen → insertar como link
+        return response()->json([
+            'url' => $url,
+            'default' => $url
+        ]);
+    }
+
+    return response()->json([
+        'error' => ['message' => 'No se pudo subir el archivo']
+    ], 400);
+}
 
 
     /** Limpia y normaliza los datos antes de guardar */

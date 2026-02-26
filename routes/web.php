@@ -358,6 +358,8 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('seguimiento/update/{id}', [\App\Http\Controllers\FormFisios\FichaController::class, 'updateSeguimiento'])->name('seguimiento.update'); // actualizar seguimiento con ID
             Route::post('seguimiento-delete/{id}', [\App\Http\Controllers\FormFisios\FichaController::class, 'deleteSeguimiento'])->name('seguimiento.delete'); // eliminar seguimiento con ID
             Route::get('seguimiento-ficha/{fichaId}', [\App\Http\Controllers\FormFisios\FichaController::class, 'getSeguimientosByFicha'])->name('seguimiento.byficha'); 
+            Route::post('/seguimiento/upload-image',
+    [\App\Http\Controllers\FormFisios\FichaController::class, 'uploadImage'])->middleware(['web', 'auth'])->name('seguimiento.upload.image');
             # Fin Ficha Clinica Daniel's
 
             # Ultrasonido Daniel's

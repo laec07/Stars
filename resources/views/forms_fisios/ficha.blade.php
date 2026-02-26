@@ -302,7 +302,7 @@
         </div>
     </div>
                 
-                <!-- Modal Seguimiento -->
+                <!-- Modal Nuevo Seguimiento -->
             <div class="modal fade" id="modalSeguimiento" tabindex="-1" role="dialog" aria-labelledby="modalSeguimiento" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -320,6 +320,7 @@
     </div>
 
     <div class="modal-body">
+        <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>   
         <label>Fecha:</label>
         <input type="date" name="fecha" class="form-control" value="{{ date('Y-m-d') }}" required>
 
@@ -331,6 +332,10 @@
 
         <label>Evolución:</label>
         <textarea name="evolucion" class="form-control"></textarea>
+
+        <hr>
+        <label>Notas detalladas (multimedia):</label>
+        <textarea id="editor_detallado" name="nota_detallada" class="form-control"></textarea>
     </div>
 
     <div class="modal-footer">
@@ -342,7 +347,7 @@
                     </div>
                 </div>
             </div>
-                <!-- End Modal Seguimiento -->
+                <!-- End Modal Fin Seguimiento -->
 
                 <!-- Modal Ver Seguimiento -->
                 <div class="modal fade" id="modalVerSeguimiento" tabindex="-1" role="dialog" aria-labelledby="verSeguimientoLabel" aria-hidden="true">

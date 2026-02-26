@@ -17,6 +17,7 @@ class FisAntropometrias extends Model
 
     protected $fillable = [
      
+        'nota_detallada',
         'patient_id',
         'user_id',
         'fecha',
@@ -40,7 +41,7 @@ class FisAntropometrias extends Model
         //SENTARSE
         'se_i',
         "total_puntaje",
-        'observaciones',
+        'observaciones','diagnostico',
         'Campopersonalizado1', 'Campopersonalizado2',
         'Campopersonalizado3', 'Campopersonalizado4', 'Campopersonalizado5',
         'status', 'created_by', 'updated_by'

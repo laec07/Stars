@@ -11,6 +11,8 @@ use App\Http\Controllers\UserManagement\RolePermissionController;
 use App\Http\Repository\Language\LanguageRepository;
 use App\Http\Repository\UtilityRepository;
 use Illuminate\Support\Facades\Session;
+use App\Models\FormFisios\Ficha;
+use App\Observers\FichaObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+
+    {
+    Ficha::observe(FichaObserver::class);
+    }
         
         view()->composer('*', function ($view) {
 
