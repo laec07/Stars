@@ -90,8 +90,11 @@
 
                         <div class="table-responsive">
                             
-
-                {{-- ================== MOTIVO DE CONSULTA ================== --}}
+                         {{-- ================== DIAGNOSTICO ================== --}}
+                        <div class="caja-titulo">Diagnostico</div>
+                        <textarea name="diagnostico" class="form-control mb-4" rows="2" placeholder="Describa el diagnóstico..."></textarea>
+                        
+                        {{-- ================== MOTIVO DE CONSULTA ================== --}}
                         <div class="caja-titulo">Motivo de consulta</div>
                         <textarea name="motivo_consulta" class="form-control mb-4" rows="2" placeholder="Describa el motivo de la consulta..."></textarea>
 

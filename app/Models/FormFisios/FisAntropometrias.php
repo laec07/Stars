@@ -17,7 +17,7 @@ class FisAntropometrias extends Model
 
     protected $fillable = [
      
-        'nota_detallada',
+        
         'patient_id',
         'user_id',
         'fecha',
