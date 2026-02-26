@@ -19,7 +19,12 @@
             NompatientDiv.style.display = 'none';
             DatosImpresion.style.display = 'none';
             Manager.ResetForm();
-            $("#frmModal1").modal('show');
+            // $("#frmModal1").modal('show');
+            $("#frmModal1").modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+            });
             calcularTotal(); // reinicia total
         });
 

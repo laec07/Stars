@@ -19,9 +19,13 @@
             //Mostrar y ocultar nombre paciente y busqueda
             patientDiv.style.display = 'block';
             NompatientDiv.style.display = 'none';
-            modalClone.find('#DatosImpresion').show();
+            DatosImpresion.style.display = 'none';
             Manager.ResetForm();
-            $("#frmModal1").modal('show');
+            $("#frmModal1").modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+            });
         });
 
         //save or update
@@ -44,7 +48,7 @@
         //Mostrar y ocultar nombre paciente y busqueda
         patientDiv.style.display = 'none';
         NompatientDiv.style.display = 'block';
-        modalClone.find('#DatosImpresion').show();
+        DatosImpresion.style.display = 'block';
 
         // Definir campos que son checkbox
             const checkboxFields = [];

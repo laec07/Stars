@@ -21,7 +21,11 @@
             NompatientDiv.style.display = 'none';
             DatosImpresion.style.display = 'none';
             Manager.ResetForm();
-            $("#frmModal1").modal('show');
+            $("#frmModal1").modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+            });
         });
 
         //save or update
@@ -223,7 +227,77 @@
     $('#seguimiento_id').val('');
     $('#seguimiento_patient_id').val(rowData.patient_id);
     $('#ficha_id').val(rowData.id);
-    $('#modalSeguimiento').modal('show');
+    $('#modalSeguimiento').modal('show'); 
+});
+
+//=====================================
+// CKEditor para campo detallado del seguimiento
+//=====================================
+var editorDetallado = null;
+
+$('#modalSeguimiento').on('shown.bs.modal', function () {
+
+    if (!editorDetallado) {
+
+        ClassicEditor
+    .create(document.querySelector('#editor_detallado'), {
+
+        simpleUpload: {
+            uploadUrl: "{{ route('seguimiento.upload.image') }}",
+
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        },
+
+        toolbar: [
+            'heading',
+            '|',
+            'bold', 'italic', 'underline',
+            '|',
+            'link',
+            'bulletedList', 'numberedList',
+            '|',
+            'uploadImage',
+            'mediaEmbed',
+            '|',
+            'undo', 'redo'
+        ]
+    })
+            .then(editor => {
+                editorDetallado = editor;
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }
+
+});
+
+//==========================
+//  GUARDAR SEGUIMIENTO (CREAR O ACTUALIZAR)
+//==========================
+$('#formSeguimiento').on('submit', function (e) {
+    e.preventDefault();
+
+    if (editorDetallado) {
+        $('#editor_detallado').val(editorDetallado.getData());
+    }
+
+    var formData = new FormData(this);
+
+    $.ajax({
+        url: '/ruta-guardar-seguimiento',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+            $('#modalSeguimiento').modal('hide');
+            alert('Guardado correctamente');
+        }
+    });
+
 });
 
     // ===========================

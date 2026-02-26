@@ -21,7 +21,11 @@
             NompatientDiv.style.display = 'none';
             modalClone.find('#DatosImpresion').show();
             Manager.ResetForm();
-            $("#frmModal1").modal('show');
+            $("#frmModal1").modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+            });
         });
 
         //save or update
