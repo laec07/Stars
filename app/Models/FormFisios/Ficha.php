@@ -20,6 +20,7 @@ class Ficha extends Model
         'patient_id',
         'user_id',
         'fecha',
+        'diagnostico',
         'motivo_consulta',
         'historial_medico',
         'enfermedades_cronicas',
@@ -53,6 +54,7 @@ class Ficha extends Model
         'fecha_alta',
         'recomendaciones_finales',
         'firma',
+        'nota_detallada',
         'Campopersonalizado1', 'Campopersonalizado2', 'Campopersonalizado3',
         'status', 'created_by', 'updated_by'
     ];

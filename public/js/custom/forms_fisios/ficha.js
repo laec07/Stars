@@ -584,7 +584,7 @@ $(document).on('click', '.btnEliminarSeguimiento', function() {
             }
         },
 
-
+        
         LoadDataTable: function (data, refresh) {
             if (refresh == "0") {
                 dTable = $('#tableElement').DataTable({
@@ -666,9 +666,9 @@ $(document).on('click', '.btnEliminarSeguimiento', function() {
                             title: 'Encargado'
                         },
                         {
-                            data: 'motivo_consulta',
-                            name: 'Motivo Consulta',
-                            title: 'Motivo Consulta'
+                            data: 'diagnostico',
+                            name: 'diagnostico',
+                            title: 'Diagnostico'
                         }
                     ],
                     fixedColumns: false,

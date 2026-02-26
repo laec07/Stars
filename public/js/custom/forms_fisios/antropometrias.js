@@ -356,6 +356,7 @@
             }
         },
 
+        
         LoadDataTable: function (data, refresh) {
             if (refresh == "0") {
                 dTable = $('#tableElement').DataTable({
@@ -368,21 +369,21 @@
                             text: '<i class="fa fa-file-pdf"></i> PDF',
                             className: 'btn btn-sm',
                             extend: 'pdfHtml5',
-                            exportOptions: { columns: [2, 3, 4, 5] },
+                            exportOptions: { columns: [2, 3, 4, 5, 6] },
                             title: 'Anthropometry physical therapy List'
                         },
                         {
                             text: '<i class="fa fa-print"></i> Print',
                             className: 'btn btn-sm',
                             extend: 'print',
-                            exportOptions: { columns: [2, 3, 4, 5] },
+                            exportOptions: { columns: [2, 3, 4, 5, 6] },
                             title: 'Anthropometry physical therapy List'
                         },
                         {
                             text: '<i class="fa fa-file-excel"></i> Excel',
                             className: 'btn btn-sm',
                             extend: 'excelHtml5',
-                            exportOptions: { columns: [2, 3, 4, 5] },
+                            exportOptions: { columns: [2, 3, 4, 5, 6] },
                             title: 'Anthropometry physical therapy List'
                         }
                     ],
@@ -432,7 +433,8 @@
                         {
                             data: 'diagnostico',
                             name: 'diagnostico',
-                            title: 'Diagnostico'
+                            title: 'Diagnostico',
+                            defaultContent: ''
                         },
                         {
                             data: 'observaciones',
