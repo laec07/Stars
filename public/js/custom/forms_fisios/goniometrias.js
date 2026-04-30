@@ -19,7 +19,7 @@
             //Mostrar y ocultar nombre paciente y busqueda
             patientDiv.style.display = 'block';
             NompatientDiv.style.display = 'none';
-            modalClone.find('#DatosImpresion').show();
+            DatosImpresion.style.display = 'none';
             Manager.ResetForm();
             $("#frmModal1").modal({
             backdrop: 'static',
@@ -42,13 +42,13 @@
     // Show edit info modal
     $(document).on('click', '.dTableEdit', function () {
         var rowData = dTable.row($(this).parent()).data();
-        console.log(rowData);
+        // console.log(rowData);
         _id = rowData.id;
         
         //Mostrar y ocultar nombre paciente y busqueda
         patientDiv.style.display = 'none';
         NompatientDiv.style.display = 'block';
-        modalClone.find('#DatosImpresion').show();
+        DatosImpresion.style.display = 'none';
 
         // Definir campos que son checkbox
             const checkboxFields = [];
