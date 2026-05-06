@@ -203,7 +203,7 @@ class FichaController extends Controller
                 'tratamiento_realizado' => $request->tratamiento_realizado,
                 'observaciones' => $request->observaciones,
                 'evolucion' => $request->evolucion,
-                
+                'nota_detallada' => $request->nota_detallada, //laestrada - Nuevo campo para nota detallada
             ]);
 
             return response()->json([
@@ -250,6 +250,7 @@ class FichaController extends Controller
                 'tratamiento_realizado' => $request->tratamiento_realizado,
                 'observaciones' => $request->observaciones,
                 'evolucion' => $request->evolucion,
+                'nota_detallada' => $request->nota_detallada, //laestrada - actualizar nota detallada
             ]);
 
             return response()->json([
@@ -307,10 +308,9 @@ public function getSeguimientosByFicha($fichaId)
     
 public function uploadImage(Request $request)
 {
-    if ($request->hasFile('upload')) {
+    if ($request->hasFile('image')) {
 
-        $file = $request->file('upload');
-
+        $file = $request->file('image');
         // Opcional: límite 20MB
         if ($file->getSize() > 20 * 1024 * 1024) {
             return response()->json([

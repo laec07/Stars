@@ -38,9 +38,9 @@
             }
         });
     });
-   
 
-// Evento para imprimir la ficha técnica con el formato del formulario de edición laestrada
+
+    // Evento para imprimir la ficha técnica con el formato del formulario de edición laestrada
     $(document).on('click', '.dTableView', function () {
         var rowData = dTable.row($(this).closest('tr')).data();
         if (!rowData) return;
@@ -227,81 +227,12 @@
     $('#seguimiento_id').val('');
     $('#seguimiento_patient_id').val(rowData.patient_id);
     $('#ficha_id').val(rowData.id);
-    $('#modalSeguimiento').modal('show'); 
-});
-
-//=====================================
-// CKEditor para campo detallado del seguimiento
-//=====================================
-var editorDetallado = null;
-
-$('#modalSeguimiento').on('shown.bs.modal', function () {
-
-    if (!editorDetallado) {
-
-        ClassicEditor
-    .create(document.querySelector('#editor_detallado'), {
-
-        simpleUpload: {
-            uploadUrl: "{{ route('seguimiento.upload.image') }}",
-
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        },
-
-        toolbar: [
-            'heading',
-            '|',
-            'bold', 'italic', 'underline',
-            '|',
-            'link',
-            'bulletedList', 'numberedList',
-            '|',
-            'uploadImage',
-            'mediaEmbed',
-            '|',
-            'undo', 'redo'
-        ]
-    })
-            .then(editor => {
-                editorDetallado = editor;
-            })
-            .catch(error => {
-                console.error(error);
-            });
-    }
-
-});
-
-//==========================
-//  GUARDAR SEGUIMIENTO (CREAR O ACTUALIZAR)
-//==========================
-$('#formSeguimiento').on('submit', function (e) {
-    e.preventDefault();
-
-    if (editorDetallado) {
-        $('#editor_detallado').val(editorDetallado.getData());
-    }
-
-    var formData = new FormData(this);
-
-    $.ajax({
-        url: '/ruta-guardar-seguimiento',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function (response) {
-            $('#modalSeguimiento').modal('hide');
-            alert('Guardado correctamente');
-        }
-    });
-
+    $('#modalSeguimiento').modal('show');
 });
 
     // ===========================
-    // NUEVO BOTÓN: ver seguimiento
+    // NUEVO BOTÓN: ver seguimiento 
+    // Cambios: laestrada - se agrego detalles y se muestra en modal
     // ===========================
 $(document).on('click', '.dTableVerSeguimiento', function() {
     var rowData = dTable.row($(this).closest('tr')).data();
@@ -318,7 +249,7 @@ $(document).on('click', '.dTableVerSeguimiento', function() {
                         <th>Tratamiento</th>
                         <th>Observaciones</th>
                         <th>Evolución</th>
-                        <th>Acciones</th>
+                        <th>Detalles</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -332,6 +263,7 @@ $(document).on('click', '.dTableVerSeguimiento', function() {
                     <td>${seg.tratamiento_realizado || ''}</td>
                     <td>${seg.observaciones || ''}</td>
                     <td>${seg.evolucion || ''}</td>
+                    <td>${seg.nota_detallada ? `<button class="btn btn-info btn-sm btnVerNota" data-nota="${encodeURIComponent(seg.nota_detallada)}"><i class="fas fa-eye"></i></button>` : 'No hay nota'}</td>
                     <td>
                             <button class="btn btn-warning btn-sm btnEditarSeguimiento" data-id="${seg.id}" data-ficha-id="${seg.ficha_id}" data-patient-id="${seg.patient_id}"><i class="fas fa-edit"></i></button>
                             <button class="btn btn-danger btn-sm btnEliminarSeguimiento" data-id="${seg.id}"><i class="fas fa-trash"></i></button>
@@ -584,7 +516,7 @@ $(document).on('click', '.btnEliminarSeguimiento', function() {
             }
         },
 
-        
+
         LoadDataTable: function (data, refresh) {
             if (refresh == "0") {
                 dTable = $('#tableElement').DataTable({
@@ -666,9 +598,9 @@ $(document).on('click', '.btnEliminarSeguimiento', function() {
                             title: 'Encargado'
                         },
                         {
-                            data: 'diagnostico',
-                            name: 'diagnostico',
-                            title: 'Diagnostico'
+                            data: 'motivo_consulta',
+                            name: 'Motivo Consulta',
+                            title: 'Motivo Consulta'
                         }
                     ],
                     fixedColumns: false,
@@ -680,3 +612,15 @@ $(document).on('click', '.btnEliminarSeguimiento', function() {
         }
     };
 })(jQuery);
+
+// Mostrar nota detallada en modal como HTML laestrada
+$(document).on('click', '.btnVerNota', function() {
+    var notaHtml = decodeHtml(decodeURIComponent($(this).data('nota')));
+$('#modalNotaDetalle .modal-body').html(notaHtml);
+    $('#modalNotaDetalle').modal('show');
+});
+function decodeHtml(html) {
+    var txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+}

@@ -24,6 +24,7 @@ class FisSeguimientos extends Model
         'tratamiento_realizado',
         'observaciones',
         'evolucion',
+        'nota_detallada',
         'status',
         'created_by',
         'updated_by'

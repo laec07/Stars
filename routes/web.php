@@ -362,6 +362,9 @@ Route::group(['middleware' => 'xssProtection'], function () {
     [\App\Http\Controllers\FormFisios\FichaController::class, 'uploadImage'])->middleware(['web', 'auth'])->name('seguimiento.upload.image');
             # Fin Ficha Clinica Daniel's
 
+            # laestrada - Imagenes Ficha 
+            Route::post('upload-quill-image', [\App\Http\Controllers\FormFisios\FichaController::class, 'uploadImage'])->name('ficha.upload.image');
+
             # Ultrasonido Daniel's
             Route::get('get-ultras', [\App\Http\Controllers\FormFisios\FisUltrasController::class, 'getAllformUltras'])->name('ultras.get'); // muestra datos de la tabla index
             Route::get('fis-ultras', [\App\Http\Controllers\FormFisios\FisUltrasController::class, 'formUltras'])->name('ultras.info'); // muestra la vista

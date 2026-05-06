@@ -305,51 +305,55 @@
         </div>
     </div>
                 
-                <!-- Modal Nuevo Seguimiento -->
-            <div class="modal fade" id="modalSeguimiento" tabindex="-1" role="dialog" aria-labelledby="modalSeguimiento" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <form id="formSeguimiento">
-    @csrf
-    <input type="hidden" name="seguimiento_id" id="seguimiento_id">
-    <input type="hidden" name="ficha_id" id="ficha_id">
-    <input type="hidden" name="patient_id" id="seguimiento_patient_id">
+    <!-- Modal Nuevo Seguimiento -->
+    <div class="modal fade" id="modalSeguimiento" tabindex="-1" role="dialog" aria-labelledby="modalSeguimiento" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="formSeguimiento">
+                    @csrf
+                    <input type="hidden" name="seguimiento_id" id="seguimiento_id">
+                    <input type="hidden" name="ficha_id" id="ficha_id">
+                    <input type="hidden" name="patient_id" id="seguimiento_patient_id">
 
-    <div class="modal-header bg-info text-white">
-        <h5 class="modal-title" id="modalSeguimiento">Nuevo Seguimiento</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-        <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-
-    <div class="modal-body">
-        <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>   
-        <label>Fecha:</label>
-        <input type="date" name="fecha" class="form-control" value="{{ date('Y-m-d') }}" required>
-
-        <label>Tratamiento realizado:</label>
-        <textarea name="tratamiento_realizado" class="form-control"></textarea>
-
-        <label>Observaciones:</label>
-        <textarea name="observaciones" class="form-control"></textarea>
-
-        <label>Evolución:</label>
-        <textarea name="evolucion" class="form-control"></textarea>
-
-        <hr>
-        <label>Notas detalladas (multimedia):</label>
-        <textarea id="editor_detallado" name="nota_detallada" class="form-control"></textarea>
-    </div>
-
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-success">Guardar</button>
-    </div>
-</form>
-
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title" id="modalSeguimiento">Nuevo Seguimiento</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                </div>
+
+                    <div class="modal-body">
+                        <!-- Quill Editor CSS y JS -->
+                        <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+                        <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+                        <label>Fecha:</label>
+                        <input type="date" name="fecha" class="form-control" value="{{ date('Y-m-d') }}" required>
+
+                        <label>Tratamiento realizado:</label>
+                        <textarea name="tratamiento_realizado" class="form-control"></textarea>
+
+                        <label>Observaciones:</label>
+                        <textarea name="observaciones" class="form-control"></textarea>
+
+                        <label>Evolución:</label>
+                        <textarea name="evolucion" class="form-control"></textarea>
+
+                        <hr>
+                        <label>Notas detalladas (multimedia):</label>
+                        <!-- Contenedor para Quill -->
+                        <div id="editor_detallado" style="height: 200px;"></div>
+                        <!-- Campo oculto para enviar el contenido -->
+                        <input type="hidden" name="nota_detallada" id="nota_detallada_hidden">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                    </div>
+                </form>
             </div>
+        </div>
+    </div>
                 <!-- End Modal Fin Seguimiento -->
 
                 <!-- Modal Ver Seguimiento -->
@@ -395,14 +399,93 @@
         </div> 
     </div>
 </div>
-
-
+<!-- laestrada - Modal para mostrar nota detallada -->
+<div class="modal fade" id="modalNotaDetalle" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nota Detallada</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Aquí se mostrará la nota -->
+      </div>
+    </div>
+  </div>
+</div>
 
 @endsection
 
-
+<!-- laestrada - Script para inicializar Quill y manejar la subida de imágenes -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-   
+    // Inicializar Quill solo si existe el contenedor
+    var quillContainer = document.getElementById('editor_detallado');
+    if (quillContainer) {
+        var quill = new Quill('#editor_detallado', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: [
+                        [{ header: [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ script: 'sub' }, { script: 'super' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        [{ direction: 'rtl' }],
+                        [{ color: [] }, { background: [] }],
+                        [{ align: [] }],
+                        ['link', 'image', 'video'],
+                        ['clean']
+                    ],
+                    handlers: {
+                        image: function () {
+                            var input = document.createElement('input');
+                            input.setAttribute('type', 'file');
+                            input.setAttribute('accept', 'image/*');
+                            input.click();
+                            input.onchange = function () {
+                                var file = input.files[0];
+                                if (file) {
+                                    var formData = new FormData();
+                                    formData.append('image', file);
+                                    // CSRF token para Laravel
+                                    var token = document.querySelector('meta[name="csrf-token"]');
+                                    if (token) {
+                                        formData.append('_token', token.getAttribute('content'));
+                                    }
+                                    var xhr = new XMLHttpRequest();
+                                    xhr.open('POST', 'upload-quill-image', true); // Cambia la ruta si es diferente
+                                    xhr.onload = function () {
+                                        if (xhr.status === 200) {
+                                            var res = JSON.parse(xhr.responseText);
+                                            if (res.url) {
+                                                var range = quill.getSelection();
+                                                quill.insertEmbed(range.index, 'image', res.url);
+                                            } else {
+                                                alert('Error al subir la imagen.');
+                                            }
+                                        } else {
+                                            alert('Error al subir la imagen.');
+                                        }
+                                    };
+                                    xhr.send(formData);
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+        });
+
+        // Al enviar el formulario, pasar el contenido de Quill al input oculto
+        var form = quillContainer.closest('form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                document.getElementById('nota_detallada_hidden').value = quill.root.innerHTML;
+            });
+        }
+    }
 });
 </script>
