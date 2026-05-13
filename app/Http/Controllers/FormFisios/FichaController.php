@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Exception;
+use App\Http\Repository\UtilityRepository;
 
 class FichaController extends Controller
 {
@@ -311,30 +312,24 @@ public function uploadImage(Request $request)
     if ($request->hasFile('image')) {
 
         $file = $request->file('image');
-        // Opcional: límite 20MB
-        if ($file->getSize() > 20 * 1024 * 1024) {
-            return response()->json([
-                'error' => ['message' => 'El archivo es demasiado grande']
-            ], 400);
-        }
+
 
         $filename = time().'_'.$file->getClientOriginalName();
 
-        $path = $file->storeAs('seguimientos', $filename, 'public');
-
-        $url = asset('storage/'.$path);
+        // Guardar el archivo usando UtilityRepository
+        $cleanData["image"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg']);
 
         // 👇 Si es imagen
         if (str_contains($file->getMimeType(), 'image')) {
             return response()->json([
-                'url' => $url
+                'url' => $cleanData["image"] 
             ]);
         }
 
         // 👇 Si NO es imagen → insertar como link
         return response()->json([
-            'url' => $url,
-            'default' => $url
+            'url' => $cleanData["image"],
+            'default' => $cleanData["image"]
         ]);
     }
 
