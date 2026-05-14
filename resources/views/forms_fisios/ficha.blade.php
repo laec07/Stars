@@ -417,75 +417,15 @@
 @endsection
 
 <!-- laestrada - Script para inicializar Quill y manejar la subida de imágenes -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Inicializar Quill solo si existe el contenedor
-    var quillContainer = document.getElementById('editor_detallado');
-    if (quillContainer) {
-        var quill = new Quill('#editor_detallado', {
-            theme: 'snow',
-            modules: {
-                toolbar: {
-                    container: [
-                        [{ header: [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        ['blockquote', 'code-block'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        [{ script: 'sub' }, { script: 'super' }],
-                        [{ indent: '-1' }, { indent: '+1' }],
-                        [{ direction: 'rtl' }],
-                        [{ color: [] }, { background: [] }],
-                        [{ align: [] }],
-                        ['link', 'image', 'video'],
-                        ['clean']
-                    ],
-                    handlers: {
-                        image: function () {
-                            var input = document.createElement('input');
-                            input.setAttribute('type', 'file');
-                            input.setAttribute('accept', 'image/*');
-                            input.click();
-                            input.onchange = function () {
-                                var file = input.files[0];
-                                if (file) {
-                                    var formData = new FormData();
-                                    formData.append('image', file);
-                                    // CSRF token para Laravel
-                                    var token = document.querySelector('meta[name="csrf-token"]');
-                                    if (token) {
-                                        formData.append('_token', token.getAttribute('content'));
-                                    }
-                                    var xhr = new XMLHttpRequest();
-                                    xhr.open('POST', 'upload-quill-image', true); // Cambia la ruta si es diferente
-                                    xhr.onload = function () {
-                                        if (xhr.status === 200) {
-                                            var res = JSON.parse(xhr.responseText);
-                                            if (res.url) {
-                                                var range = quill.getSelection();
-                                                quill.insertEmbed(range.index, 'image', res.url);
-                                            } else {
-                                                alert('Error al subir la imagen.');
-                                            }
-                                        } else {
-                                            alert('Error al subir la imagen.');
-                                        }
-                                    };
-                                    xhr.send(formData);
-                                }
-                            };
-                        }
-                    }
-                }
-            }
-        });
-
-        // Al enviar el formulario, pasar el contenido de Quill al input oculto
-        var form = quillContainer.closest('form');
-        if (form) {
-            form.addEventListener('submit', function () {
-                document.getElementById('nota_detallada_hidden').value = quill.root.innerHTML;
-            });
-        }
+ <style>
+    /* Estandarizar tamaño de imágenes en Quill */
+    #editor_detallado img {
+        max-width: 600px !important;
+        width: 100% !important;
+        height: auto !important;
+        display: block;
     }
-});
+</style>
+<script>
+
 </script>

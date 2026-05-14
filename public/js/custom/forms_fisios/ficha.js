@@ -624,3 +624,130 @@ function decodeHtml(html) {
     txt.innerHTML = html;
     return txt.value;
 }
+
+
+// Función para redimensionar imagen usando Canvas
+function resizeImage(file, maxWidth, maxHeight, callback) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            
+            // Calcular proporciones
+            var ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+            var newWidth = img.width * ratio;
+            var newHeight = img.height * ratio;
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Dibujar imagen redimensionada
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+            
+            // Convertir canvas a blob
+            canvas.toBlob(callback, 'image/jpeg', 0.8);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Inicializar Quill solo si existe el contenedor
+    var quillContainer = document.getElementById('editor_detallado');
+    if (quillContainer) {
+        var quill = new Quill('#editor_detallado', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: [
+                        [{ header: [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ script: 'sub' }, { script: 'super' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        [{ direction: 'rtl' }],
+                        [{ color: [] }, { background: [] }],
+                        [{ align: [] }],
+                        ['link', 'image', 'video'],
+                        ['clean']
+                    ],
+                    handlers: {
+                        image: function () {
+                            var input = document.createElement('input');
+                            input.setAttribute('type', 'file');
+                            input.setAttribute('accept', 'image/*');
+                            input.click();
+                            input.onchange = function () {
+                                var file = input.files[0];
+                                if (file) {
+                                    // Redimensionar imagen antes de subir
+                                    resizeImage(file, 600, 600, function(blob) {
+                                        var formData = new FormData();
+                                        formData.append('image', blob, 'image.jpg');
+                                        
+                                        var token = document.querySelector('meta[name="csrf-token"]');
+                                        if (token) {
+                                            formData.append('_token', token.getAttribute('content'));
+                                        }
+                                        
+                                        var xhr = new XMLHttpRequest();
+                                        xhr.open('POST', 'upload-quill-image', true);
+                                        xhr.onload = function () {
+                                            if (xhr.status === 200) {
+                                                var res = JSON.parse(xhr.responseText);
+                                                if (res.url) {
+                                                    var range = quill.getSelection();
+                                                    var index = (range && typeof range.index === 'number') ? range.index : quill.getLength();
+                                                    quill.insertEmbed(index, 'image', res.url);
+                                                } else {
+                                                    alert('Error al subir la imagen.');
+                                                }
+                                            } else {
+                                                alert('Error al subir la imagen.');
+                                            }
+                                        };
+                                        xhr.send(formData);
+                                    });
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+        });
+
+        // Al enviar el formulario, pasar el contenido de Quill al input oculto
+        var hiddenNota = document.getElementById('nota_detallada_hidden');
+        var form = quillContainer.closest('form');
+
+        function syncQuillToHidden() {
+            if (hiddenNota) {
+                hiddenNota.value = quill.root.innerHTML;
+            }
+        }
+
+        if (form) {
+            form.addEventListener('submit', function () {
+                syncQuillToHidden();
+            });
+        }
+
+        // Mantiene el input oculto sincronizado mientras editas
+        quill.on('text-change', syncQuillToHidden);
+
+        // Limpia el editor cuando cierres el modal
+        var modalSeguimiento = document.getElementById('modalSeguimiento');
+        if (modalSeguimiento && window.jQuery) {
+            $(modalSeguimiento).on('hidden.bs.modal', function () {
+                quill.setContents([]);
+                if (hiddenNota) {
+                    hiddenNota.value = '';
+                }
+            });
+        }
+    }
+});
