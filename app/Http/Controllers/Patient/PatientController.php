@@ -31,15 +31,14 @@ class PatientController extends Controller
 {
     try {
         $data->merge([
-            'email'    => UtilityRepository::emptyToNull($data->email),
-            'phone_no' => UtilityRepository::emptyToNull($data->phone_no),
-            'dob'      => UtilityRepository::emptyToNull($data->dob),
+            'email' => UtilityRepository::emptyToNull($data->email),
+            'dob'   => UtilityRepository::emptyToNull($data->dob),
         ]);
 
         $validator = Validator::make($data->all(), [
             'full_name' => 'required|string',
             'email'     => ['nullable', 'email', 'unique:cmn_patients,email'],
-            'phone_no'  => ['nullable', 'string', 'max:20', 'unique:cmn_patients,phone_no'],
+            'phone_no'  => ['required', 'string', 'max:20', 'unique:cmn_patients,phone_no'],
             'dob'       => ['nullable', 'date', 'before_or_equal:today'],
         ]);
 
@@ -88,15 +87,14 @@ class PatientController extends Controller
 
         try {
             $data->merge([
-                'email'    => UtilityRepository::emptyToNull($data->email),
-                'phone_no' => UtilityRepository::emptyToNull($data->phone_no),
-                'dob'      => UtilityRepository::emptyToNull($data->dob),
+                'email' => UtilityRepository::emptyToNull($data->email),
+                'dob'   => UtilityRepository::emptyToNull($data->dob),
             ]);
 
             $validator = Validator::make($data->all(), [
                 'full_name' => ['required', 'string'],
                 'email'     => ['nullable', 'email', 'unique:cmn_patients,email,' . $data->user_id . ',id'],
-                'phone_no'  => ['nullable', 'string', 'max:20', 'unique:cmn_patients,phone_no,' . $data->user_id . ',id'],
+                'phone_no'  => ['required', 'string', 'max:20', 'unique:cmn_patients,phone_no,' . $data->user_id . ',id'],
                 'dob'       => ['nullable', 'date', 'before_or_equal:today'],
             ]);
     
