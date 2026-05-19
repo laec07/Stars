@@ -1,6 +1,16 @@
 @extends('layouts.app')
 @section('content')
 
+@push("adminScripts")
+<script>
+    window.PATIENT_CONTEXT = {
+        id: {{ (int) $patient->id }},
+        name: @json($patient->full_name)
+    };
+</script>
+<script src="{{ dsAsset('js/custom/patient/expediente.js') }}"></script>
+@endpush
+
 @push("adminCss")
 <style>
     /* Fase 1 - Expediente del paciente */
@@ -48,10 +58,38 @@
     .bg-c-info      { background:#48abf7; }
     .bg-c-secondary { background:#6861ce; }
 
+    /* Fase 2 - Tabs y sesiones */
+    .expediente-tabs { background:#fff; border-radius:.5rem 0 0 0; border:1px solid #e9ecef; border-bottom:none; padding:0; }
+    .expediente-tabs .nav-tabs { border-bottom:1px solid #e9ecef; padding:0 1rem; margin:0; }
+    .expediente-tabs .nav-link { color:#6c757d; border:none; border-bottom:3px solid transparent; padding:.85rem 1.1rem; font-weight:500; }
+    .expediente-tabs .nav-link.active { color:#1572e8; background:transparent; border-bottom-color:#1572e8; }
+    .expediente-tabs .nav-link:hover:not(.active) { color:#495057; border-bottom-color:#e9ecef; }
+    .expediente-tab-content { background:#fff; border:1px solid #e9ecef; border-top:none; border-radius:0 0 .5rem .5rem; padding:1.25rem; }
+
+    .sesion-card { background:#fff; border:1px solid #e9ecef; border-radius:.5rem; padding:.95rem 1.1rem; margin-bottom:.85rem; transition:box-shadow .15s; }
+    .sesion-card:hover { box-shadow:0 2px 8px rgba(0,0,0,.05); }
+    .sesion-card .sesion-head { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:.5rem; }
+    .sesion-card .sesion-date { font-weight:600; color:#212529; font-size:.95rem; }
+    .sesion-card .sesion-ficha { font-size:.78rem; color:#868e96; margin-top:.15rem; }
+    .sesion-card .sesion-actions { display:flex; gap:.35rem; }
+    .sesion-card .sesion-actions .btn { padding:.25rem .5rem; font-size:.78rem; }
+    .sesion-card .sesion-body { margin-top:.75rem; }
+    .sesion-card .sesion-field { margin-bottom:.5rem; }
+    .sesion-card .sesion-field .field-label { font-size:.72rem; text-transform:uppercase; color:#adb5bd; letter-spacing:.04em; margin-bottom:.1rem; }
+    .sesion-card .sesion-field .field-value { color:#343a40; font-size:.88rem; white-space:pre-wrap; }
+    .sesion-card .evol-chip { display:inline-block; padding:.15rem .55rem; border-radius:1rem; font-size:.72rem; font-weight:500; }
+    .evol-chip.favorable   { background:#e3f6e6; color:#1d7d2c; }
+    .evol-chip.estable     { background:#fff4d6; color:#996800; }
+    .evol-chip.desfavorable{ background:#fde2e1; color:#a8201a; }
+
+    .sesion-composer .modal-body label { font-size:.8rem; color:#495057; font-weight:500; margin-bottom:.25rem; }
+    .sesion-composer textarea.form-control { min-height:60px; }
+
     @media (max-width: 768px) {
         .patient-header { padding:1rem; }
         .patient-avatar { width:52px; height:52px; font-size:1.25rem; }
         .stat-card .stat-value { font-size:1.4rem; }
+        .expediente-tabs .nav-link { padding:.65rem .75rem; font-size:.85rem; }
     }
 </style>
 @endpush
@@ -109,6 +147,27 @@
             </div>
         </div>
     </div>
+
+    {{-- Tabs del expediente --}}
+    <div class="expediente-tabs">
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#tab-resumen" role="tab">
+                    <i class="fas fa-chart-pie mr-1"></i> {{ translate('Resumen') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#tab-sesiones" role="tab" id="tab-sesiones-trigger">
+                    <i class="fas fa-stethoscope mr-1"></i> {{ translate('Sesiones') }}
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="expediente-tab-content tab-content">
+
+    {{-- =========================== TAB RESUMEN =========================== --}}
+    <div class="tab-pane fade show active" id="tab-resumen" role="tabpanel">
 
     {{-- Stats cards --}}
     <div class="row mb-3">
@@ -240,6 +299,120 @@
         </div>
     </div>
 
+    </div> {{-- /tab-resumen --}}
+
+    {{-- =========================== TAB SESIONES =========================== --}}
+    <div class="tab-pane fade" id="tab-sesiones" role="tabpanel">
+
+        <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+            <div>
+                <h5 class="mb-0">{{ translate('Sesiones del paciente') }}</h5>
+                <small class="text-muted" id="sesiones-summary">{{ translate('Cargando...') }}</small>
+            </div>
+            <div class="d-flex" style="gap:.4rem;">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btnDuplicarUltima" disabled>
+                    <i class="fas fa-copy mr-1"></i> {{ translate('Duplicar última') }}
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnNuevaSesion">
+                    <i class="fas fa-plus mr-1"></i> {{ translate('Nueva sesión') }}
+                </button>
+            </div>
+        </div>
+
+        <div id="sesiones-list">
+            <div class="empty-state">
+                <i class="far fa-clock"></i>
+                {{ translate('Cargando sesiones...') }}
+            </div>
+        </div>
+
+    </div> {{-- /tab-sesiones --}}
+
+    </div> {{-- /tab-content --}}
+
+</div>
+
+{{-- ===================== MODAL COMPOSER DE SESIÓN ===================== --}}
+<div class="modal fade sesion-composer" id="modalSesion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form id="formSesion" autocomplete="off">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSesionTitle">{{ translate('Nueva sesión') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="sesion_id" id="sesion_id" value="">
+                    <input type="hidden" name="patient_id" id="sesion_patient_id" value="{{ $patient->id }}">
+
+                    <div class="row">
+                        <div class="col-md-7">
+                            <label for="sesion_ficha_id">{{ translate('Ficha clínica') }} <b style="color:#dc3545;">*</b></label>
+                            <select id="sesion_ficha_id" name="ficha_id" class="form-control" required>
+                                <option value="">{{ translate('Selecciona una ficha...') }}</option>
+                            </select>
+                            <small id="sesion-ficha-help" class="text-muted" style="display:none;">
+                                {{ translate('Este paciente aún no tiene una ficha clínica.') }}
+                                <a href="{{ route('ficha.info') }}">{{ translate('Crear ficha') }}</a>
+                            </small>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="sesion_fecha">{{ translate('Fecha') }} <b style="color:#dc3545;">*</b></label>
+                            <input type="date" id="sesion_fecha" name="fecha" class="form-control"
+                                   max="{{ date('Y-m-d') }}" required style="min-height:44px;">
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label for="sesion_tratamiento">{{ translate('Tratamiento realizado') }}</label>
+                        <textarea id="sesion_tratamiento" name="tratamiento_realizado" class="form-control" rows="3"
+                                  maxlength="1000" placeholder="{{ translate('Ej. TENS 80Hz 20min lumbar, estiramientos isquiotibiales 3×30s...') }}"></textarea>
+                    </div>
+
+                    <div class="mt-3">
+                        <label for="sesion_observaciones">{{ translate('Observaciones') }}</label>
+                        <textarea id="sesion_observaciones" name="observaciones" class="form-control" rows="2"
+                                  maxlength="1000" placeholder="{{ translate('Notas clínicas, respuesta del paciente...') }}"></textarea>
+                    </div>
+
+                    <div class="mt-3">
+                        <label for="sesion_evolucion">{{ translate('Evolución') }}</label>
+                        <select id="sesion_evolucion" name="evolucion" class="form-control">
+                            <option value="">—</option>
+                            <option value="favorable">{{ translate('Favorable') }}</option>
+                            <option value="estable">{{ translate('Estable') }}</option>
+                            <option value="desfavorable">{{ translate('Desfavorable') }}</option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" name="nota_detallada" id="sesion_nota_detallada" value="">
+                    <small class="text-muted d-block mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        {{ translate('Para notas con imágenes o formato enriquecido, edita la sesión desde la Ficha Clínica.') }}
+                    </small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cerrar') }}</button>
+                    <button type="submit" class="btn btn-success btn-sm" id="btnGuardarSesion">
+                        <i class="fas fa-save mr-1"></i> {{ translate('Guardar') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Modal para mostrar nota detallada (read-only) --}}
+<div class="modal fade" id="modalVerNota" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ translate('Nota detallada') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" id="modalVerNotaBody" style="max-height:60vh; overflow-y:auto;"></div>
+        </div>
+    </div>
 </div>
 
 @endsection

@@ -388,6 +388,9 @@ Route::group(['middleware' => 'xssProtection'], function () {
             // Fase 1 - Expediente del paciente (solo lectura)
             Route::get('patient-summary/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientSummary'])->name('patient.summary');
 
+            // Fase 2 - Datos de sesiones del paciente (JSON)
+            Route::get('patient-sesiones/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientSesionesData'])->name('patient.sesiones.data');
+
         });
 
        

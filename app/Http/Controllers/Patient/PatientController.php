@@ -217,4 +217,61 @@ class PatientController extends Controller
             'patient', 'age', 'timeline', 'formMeta', 'counts', 'totalEvents', 'lastEvent'
         ));
     }
+
+    /**
+     * Fase 2 - Devuelve sesiones (fis_seguimientos) y fichas activas del paciente.
+     * Reutiliza endpoints existentes para crear/editar; aquí solo se lee.
+     */
+    public function patientSesionesData($id)
+    {
+        try {
+            $patient = CmnPatient::where('id', $id)->where('status', 1)->first();
+            if (! $patient) {
+                return $this->apiResponse(['status' => '404', 'data' => 'Paciente no encontrado'], 404);
+            }
+
+            $sesiones = \Illuminate\Support\Facades\DB::table('fis_seguimientos as s')
+                ->leftJoin('fis_fichas as f', 's.ficha_id', '=', 'f.id')
+                ->leftJoin('users as u', 's.user_id', '=', 'u.id')
+                ->where('s.patient_id', $id)
+                ->where(function ($q) {
+                    $q->where('s.status', 1)->orWhereNull('s.status');
+                })
+                ->orderBy('s.fecha', 'desc')
+                ->orderBy('s.id', 'desc')
+                ->select(
+                    's.id',
+                    's.ficha_id',
+                    's.fecha',
+                    's.tratamiento_realizado',
+                    's.observaciones',
+                    's.evolucion',
+                    's.nota_detallada',
+                    's.created_at',
+                    'f.diagnostico as ficha_diagnostico',
+                    'f.motivo_consulta as ficha_motivo',
+                    'f.fecha as ficha_fecha',
+                    'u.name as user_name'
+                )
+                ->get();
+
+            $fichas = \Illuminate\Support\Facades\DB::table('fis_fichas')
+                ->where('patient_id', $id)
+                ->where('status', 1)
+                ->orderBy('fecha', 'desc')
+                ->select('id', 'fecha', 'diagnostico', 'motivo_consulta')
+                ->get();
+
+            return $this->apiResponse([
+                'status' => '1',
+                'data' => [
+                    'sesiones' => $sesiones,
+                    'fichas'   => $fichas,
+                ],
+            ], 200);
+        } catch (Exception $e) {
+            \Log::error('patientSesionesData: ' . $e->getMessage());
+            return $this->apiResponse(['status' => '500', 'data' => 'Error cargando sesiones'], 500);
+        }
+    }
 }
