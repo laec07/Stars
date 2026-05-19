@@ -75,7 +75,10 @@
                 {{ $initials }}
             </div>
             <div class="flex-grow-1">
-                <h4 class="mb-1">{{ $patient->full_name }}</h4>
+                <h4 class="mb-1">
+                    {{ $patient->full_name }}
+                    <small class="text-muted" style="font-size:.7rem;font-weight:400;">#{{ $patient->id }}</small>
+                </h4>
                 <div class="patient-meta">
                     @if($age !== null)
                         <span class="mr-3"><i class="fas fa-birthday-cake"></i> {{ $age }} {{ translate('años') }}</span>
@@ -201,6 +204,9 @@
                     <div class="empty-state">
                         <i class="far fa-clock"></i>
                         {{ translate('No hay actividad clínica registrada todavía.') }}
+                        <div style="font-size:.7rem;color:#ced4da;margin-top:.5rem;">
+                            (consultado: fis_historys.patient_id = {{ $patient->id }})
+                        </div>
                     </div>
                 @else
                     <div class="timeline-list">
