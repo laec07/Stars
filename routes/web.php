@@ -384,8 +384,10 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('patient-create', [\App\Http\Controllers\Patient\PatientController::class, 'patientStore'])->name('patient.store');
             Route::post('patient-update', [\App\Http\Controllers\Patient\PatientController::class, 'patientUpdate'])->name('patient.update');
             Route::post('patient-delete', [\App\Http\Controllers\Patient\PatientController::class, 'patientDelete'])->name('patient.delete');
-             
-                       
+
+            // Fase 1 - Expediente del paciente (solo lectura)
+            Route::get('patient-summary/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientSummary'])->name('patient.summary');
+
         });
 
        

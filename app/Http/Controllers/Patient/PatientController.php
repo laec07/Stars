@@ -161,4 +161,60 @@ class PatientController extends Controller
             return $this->apiResponse(['status' => '403', 'data' => $qx], 400);
         }
     }
+
+    /**
+     * Fase 1 - Expediente del paciente (solo lectura).
+     * Consume cmn_patients y la bitácora fis_historys que ya alimentan los
+     * controladores de FormFisios. No escribe en ninguna tabla.
+     */
+    public function patientSummary($id)
+    {
+        $patient = CmnPatient::where('id', $id)->where('status', 1)->first();
+
+        if (! $patient) {
+            return redirect()->route('patient')->with('error', 'Paciente no encontrado');
+        }
+
+        $age = $patient->dob ? Carbon::parse($patient->dob)->age : null;
+
+        $timeline = \Illuminate\Support\Facades\DB::table('fis_historys')
+            ->leftJoin('users', 'fis_historys.user_id', '=', 'users.id')
+            ->where('fis_historys.patient_id', $id)
+            ->where('fis_historys.status', 1)
+            ->orderBy('fis_historys.fecha', 'desc')
+            ->orderBy('fis_historys.id', 'desc')
+            ->select(
+                'fis_historys.id',
+                'fis_historys.fecha',
+                'fis_historys.tabla_form',
+                'fis_historys.id_formulario',
+                'fis_historys.created_at',
+                'users.name as user_name'
+            )
+            ->get();
+
+        // Etiqueta legible + icono + color + ruta destino para cada tabla_form
+        $formMeta = [
+            'fis_fichas'         => ['label' => 'Ficha clínica',         'icon' => 'fa-file-medical', 'color' => 'primary',   'route' => 'ficha.info'],
+            'fis_cheqmus'        => ['label' => 'Chequeo muscular',      'icon' => 'fa-dumbbell',     'color' => 'success',   'route' => 'cheqmus.info'],
+            'fis_cheqs'          => ['label' => 'Chequeo muscular (escala)', 'icon' => 'fa-dumbbell', 'color' => 'success',   'route' => 'cheqs.info'],
+            'fis_evdolors'       => ['label' => 'Evaluación de dolor',   'icon' => 'fa-heart-broken', 'color' => 'danger',    'route' => 'evdolors.info'],
+            'fis_sensitivitys'   => ['label' => 'Sensibilidad',          'icon' => 'fa-hand-paper',   'color' => 'warning',   'route' => 'sensitivitys.info'],
+            'fis_antropometrias' => ['label' => 'Antropometría T.F',     'icon' => 'fa-balance-scale','color' => 'info',      'route' => 'antropometrias.info'],
+            'fis_antropoms'      => ['label' => 'Antropometría',         'icon' => 'fa-ruler',        'color' => 'info',      'route' => 'antropoms.info'],
+            'fis_goniometrias'   => ['label' => 'Goniometría',           'icon' => 'fa-compass',      'color' => 'secondary', 'route' => 'goniometrias.info'],
+            'fis_evpiels'        => ['label' => 'Evaluación de piel',    'icon' => 'fa-hand-paper',   'color' => 'warning',   'route' => 'evpiels.info'],
+            'fis_evalineps'      => ['label' => 'Alineación postural',   'icon' => 'fa-walking',      'color' => 'secondary', 'route' => 'evalineps.info'],
+            'fis_electros'       => ['label' => 'Electroterapia',        'icon' => 'fa-bolt',         'color' => 'primary',   'route' => 'electros.info'],
+            'fis_ultras'         => ['label' => 'Ultrasonido',           'icon' => 'fa-broadcast-tower','color' => 'primary', 'route' => 'ultras.info'],
+        ];
+
+        $counts = $timeline->groupBy('tabla_form')->map->count();
+        $totalEvents = $timeline->count();
+        $lastEvent = $timeline->first();
+
+        return view('patient.summary', compact(
+            'patient', 'age', 'timeline', 'formMeta', 'counts', 'totalEvents', 'lastEvent'
+        ));
+    }
 }

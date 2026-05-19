@@ -310,9 +310,13 @@
                         {
                             name: 'Option',
                             title: 'Option',
-                            width: 60,
+                            width: 100,
                             render: function (data, type, row) {
-                                return EventManager.DataTableCommonButton();
+                                var summaryBtn = '<a href="patient-summary/' + row.id + '" '
+                                    + 'class="btn btn-secondary btn-datatable btn-round float-left mr-2" '
+                                    + 'title="Ver expediente">'
+                                    + '<i class="fas fa-folder-open"></i></a>';
+                                return summaryBtn + EventManager.DataTableCommonButton();
                             }
                         },
                         {
