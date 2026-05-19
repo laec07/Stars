@@ -230,29 +230,42 @@ class PatientController extends Controller
                 return $this->apiResponse(['status' => '404', 'data' => 'Paciente no encontrado'], 404);
             }
 
-            $sesiones = \Illuminate\Support\Facades\DB::table('fis_seguimientos as s')
+            // Columnas opcionales según el esquema real de fis_seguimientos
+            $hasStatus = \Illuminate\Support\Facades\Schema::hasColumn('fis_seguimientos', 'status');
+            $hasUserId = \Illuminate\Support\Facades\Schema::hasColumn('fis_seguimientos', 'user_id');
+            $hasCreatedAt = \Illuminate\Support\Facades\Schema::hasColumn('fis_seguimientos', 'created_at');
+
+            $select = [
+                's.id',
+                's.ficha_id',
+                's.fecha',
+                's.tratamiento_realizado',
+                's.observaciones',
+                's.evolucion',
+                's.nota_detallada',
+                'f.diagnostico as ficha_diagnostico',
+                'f.motivo_consulta as ficha_motivo',
+                'f.fecha as ficha_fecha',
+            ];
+            if ($hasCreatedAt) $select[] = 's.created_at';
+            if ($hasUserId)    $select[] = 'u.name as user_name';
+
+            $query = \Illuminate\Support\Facades\DB::table('fis_seguimientos as s')
                 ->leftJoin('fis_fichas as f', 's.ficha_id', '=', 'f.id')
-                ->leftJoin('users as u', 's.user_id', '=', 'u.id')
-                ->where('s.patient_id', $id)
-                ->where(function ($q) {
+                ->where('s.patient_id', $id);
+
+            if ($hasUserId) {
+                $query->leftJoin('users as u', 's.user_id', '=', 'u.id');
+            }
+            if ($hasStatus) {
+                $query->where(function ($q) {
                     $q->where('s.status', 1)->orWhereNull('s.status');
-                })
-                ->orderBy('s.fecha', 'desc')
+                });
+            }
+
+            $sesiones = $query->orderBy('s.fecha', 'desc')
                 ->orderBy('s.id', 'desc')
-                ->select(
-                    's.id',
-                    's.ficha_id',
-                    's.fecha',
-                    's.tratamiento_realizado',
-                    's.observaciones',
-                    's.evolucion',
-                    's.nota_detallada',
-                    's.created_at',
-                    'f.diagnostico as ficha_diagnostico',
-                    'f.motivo_consulta as ficha_motivo',
-                    'f.fecha as ficha_fecha',
-                    'u.name as user_name'
-                )
+                ->select($select)
                 ->get();
 
             $fichas = \Illuminate\Support\Facades\DB::table('fis_fichas')
@@ -269,9 +282,13 @@ class PatientController extends Controller
                     'fichas'   => $fichas,
                 ],
             ], 200);
-        } catch (Exception $e) {
-            \Log::error('patientSesionesData: ' . $e->getMessage());
-            return $this->apiResponse(['status' => '500', 'data' => 'Error cargando sesiones'], 500);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('patientSesionesData: ' . $e->getMessage());
+            return $this->apiResponse([
+                'status'  => '500',
+                'message' => 'Error cargando sesiones',
+                'debug'   => $e->getMessage(),
+            ], 500);
         }
     }
 }

@@ -94,8 +94,17 @@
             }
             function onFailed(xhr) {
                 state.loading = false;
-                Manager.RenderError('Error de red cargando sesiones.');
-                if (window.Message) Message.Exception(xhr);
+                var debugMsg = '';
+                try {
+                    var resp = xhr.responseJSON || (xhr.responseText ? JSON.parse(xhr.responseText) : null);
+                    if (resp && resp.debug) debugMsg = resp.debug;
+                } catch (e) { /* ignore parse error */ }
+                Manager.RenderError(
+                    'Error de red cargando sesiones (HTTP ' + xhr.status + ').' +
+                    (debugMsg ? '<div style="font-size:.7rem;color:#dc3545;margin-top:.5rem;text-align:left;">' +
+                                Manager.EscapeHtml(debugMsg) + '</div>' : '')
+                );
+                // No usamos Message.Exception aquí porque espera estructura de validación.
             }
         },
 
@@ -114,10 +123,11 @@
             $('#sesiones-summary').text(summary);
         },
 
-        RenderError: function (msg) {
+        RenderError: function (msgHtml) {
+            // msgHtml puede contener HTML controlado por nosotros (no input del usuario).
             $('#sesiones-list').html(
                 '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>' +
-                Manager.EscapeHtml(msg) + '</div>'
+                msgHtml + '</div>'
             );
             $('#sesiones-summary').text('');
         },
