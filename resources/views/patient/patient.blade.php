@@ -46,8 +46,8 @@
                             </div>
 
                             <div class="form-group control-group form-inline controls">
-                                <label>Patient Email *</label>
-                                <input type="text" id="email" name="email" placeholder="email@example.com" required data-validation-required-message="Email address is required" class="form-control input-full" />
+                                <label>{{translate('Patient Email')}}</label>
+                                <input type="email" id="email" name="email" placeholder="email@example.com" autocomplete="email" inputmode="email" class="form-control input-full" />
                                 <span class="help-block"></span>
                             </div>
 
@@ -55,15 +55,18 @@
                                 <div class="col-md-7">
                                     <div class="form-group control-group form-inline controls">
 
-                                        <label class="col-md-12 p-0">{{translate('Patient Phone')}} *</label>
-                                        <input type="tel" id="phone_no" maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" required data-validation-required-message="Phone number is required" class="form-control input-full w-100" />
+                                        <label class="col-md-12 p-0">{{translate('Patient Phone')}}</label>
+                                        <input type="tel" id="phone_no" maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" autocomplete="tel" class="form-control input-full w-100" />
                                         <span class="help-block"></span>
                                     </div>
                                 </div>
                                 <div class="col-md-5">
                                     <div class="form-group control-group form-inline controls">
-                                        <label>{{translate('Date of Birth')}} </label>
-                                        <input type="text" id="dob" name="dob" class="form-control input-full datePicker" />
+                                        <label for="dob">{{translate('Date of Birth')}} </label>
+                                        <input type="date" id="dob" name="dob" autocomplete="bday"
+                                               max="{{ date('Y-m-d') }}" min="1900-01-01"
+                                               style="min-height:44px;font-size:1rem;"
+                                               class="form-control input-full" />
                                         <span class="help-block"></span>
                                     </div>
                                 </div>

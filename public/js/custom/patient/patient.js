@@ -89,9 +89,13 @@
         $('#full_name').val(rowData.full_name);
         $('#user_id').val(rowData.id);
         $('#country_code').val(rowData.country_code);
-        initTelephone.setNumber('+' + rowData.phone_no);
+        if (rowData.phone_no) {
+            initTelephone.setNumber('+' + rowData.phone_no);
+        } else {
+            initTelephone.setNumber('');
+        }
         $('#email').val(rowData.email);
-        $('#dob').val(rowData.dob);
+        $('#dob').val(Manager.NormalizeDob(rowData.dob));
         $('#treated').val(rowData.treated);
         $('#has_study').val(rowData.has_study);
         $('#state').val(rowData.state);
@@ -116,6 +120,22 @@
 
         ResetForm: function () {
             $("#inputForm").trigger('reset');
+        },
+
+        // Acepta "YYYY-MM-DD", "YYYY-MM-DD HH:mm:ss", ISO o "DD/MM/YYYY" y devuelve "YYYY-MM-DD"
+        NormalizeDob: function (value) {
+            if (!value) return '';
+            var s = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+            var m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+            if (m) return m[3] + '-' + m[2] + '-' + m[1];
+            var d = new Date(s);
+            if (!isNaN(d.getTime())) {
+                var mm = String(d.getMonth() + 1).padStart(2, '0');
+                var dd = String(d.getDate()).padStart(2, '0');
+                return d.getFullYear() + '-' + mm + '-' + dd;
+            }
+            return '';
         },
 
         Save: function (form) {
