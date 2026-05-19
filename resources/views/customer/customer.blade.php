@@ -50,8 +50,8 @@
                         </div>
 
                         <div class="form-group control-group form-inline controls">
-                            <label>Customer Email *</label>
-                            <input type="email" id="email" name="email" placeholder="email@example.com" required data-validation-required-message="Email address is required" class="form-control input-full" />
+                            <label>Customer Email </label>
+                            <input type="email" id="email" name="email" placeholder="email@example.com" class="form-control input-full" />
                             <span class="help-block"></span>
                         </div>
 
@@ -59,8 +59,8 @@
                             <div class="col-md-7">
                                 <div class="form-group control-group form-inline controls">
 
-                                    <label class="col-md-12 p-0">{{translate('Customer Phone')}} *</label>
-                                    <input type="tel" id="phone_no"  maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" required data-validation-required-message="Phone number is required" class="form-control input-full w-100" />
+                                    <label class="col-md-12 p-0">{{translate('Customer Phone')}} </label>
+                                    <input type="tel" id="phone_no"  maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" class="form-control input-full w-100" />
                                     <span class="help-block"></span>
                                 </div>
                             </div>
@@ -74,8 +74,8 @@
                         </div>
 
                         <div class="form-group control-group form-inline ">
-                            <label>{{translate('Street Address')}} *</label>
-                            <textarea type="text" id="street_address" name="street_address" required data-validation-required-message="Street address is required" class="form-control input-full"></textarea>
+                            <label>{{translate('Street Address')}} </label>
+                            <textarea type="text" id="street_address" name="street_address" class="form-control input-full"></textarea>
                             <span class="help-block"></span>
                         </div>
                         <!-- Empiezan los campos Agregados -->

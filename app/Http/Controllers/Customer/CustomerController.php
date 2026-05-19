@@ -33,8 +33,8 @@ class CustomerController extends Controller
             $validator = Validator::make($data->all(), [
                 'full_name' => ['required', 'string'],
                // 'email' => ['required', 'string', 'unique:cmn_customers,email'],
-                'phone_no' => ['required', 'string', 'unique:cmn_customers,phone_no', 'max:20'],
-                'street_address' => ['required', 'string'],
+                'phone_no' => ['nullable', 'string', 'unique:cmn_customers,phone_no', 'max:20'],
+                'street_address' => ['nullable', 'string'],
                 'stre' => ['nullable', 'in:Yes,No'],
                 'mosly' => ['nullable', 'in:Ligth,Moderate,Deep pressure'],
                 'traumatic' => ['nullable', 'in:YES,NO']
@@ -83,9 +83,9 @@ class CustomerController extends Controller
         try {
             $validator = Validator::make($data->all(), [
                 'full_name' => ['required', 'string'],
-               'email' => ['required', 'string', 'unique:cmn_customers,email,' . $data->id . ',id'],
-                'phone_no' => ['required', 'string', 'unique:cmn_customers,phone_no,' . $data->id . ',id', 'max:20'],
-                'street_address' => ['required', 'string'],
+               'email' => ['nullable', 'email', 'unique:cmn_customers,email,' . $data->id . ',id'],
+                'phone_no' => ['nullable', 'string', 'unique:cmn_customers,phone_no,' . $data->id . ',id', 'max:20'],
+                'street_address' => ['nullable', 'string'],
                 'Occupation' => ['required', 'string']
             ]);
 

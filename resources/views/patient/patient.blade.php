@@ -45,8 +45,8 @@
                             </div>
 
                             <div class="form-group control-group form-inline controls">
-                                <label>Patient Email *</label>
-                                <input type="text" id="email" name="email" placeholder="email@example.com" required data-validation-required-message="Email address is required" class="form-control input-full" />
+                                <label>Patient Email </label>
+                                <input type="text" id="email" name="email" placeholder="email@example.com" class="form-control input-full" />
                                 <span class="help-block"></span>
                             </div>
 
@@ -54,8 +54,8 @@
                                 <div class="col-md-7">
                                     <div class="form-group control-group form-inline controls">
 
-                                        <label class="col-md-12 p-0">{{translate('Patient Phone')}} *</label>
-                                        <input type="tel" id="phone_no" maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" required data-validation-required-message="Phone number is required" class="form-control input-full w-100" />
+                                        <label class="col-md-12 p-0">{{translate('Patient Phone')}} </label>
+                                        <input type="tel" id="phone_no" maxlength="20" name="phone_no" placeholder="{{translate('Phone Number')}}" class="form-control input-full w-100" />
                                         <span class="help-block"></span>
                                     </div>
                                 </div>

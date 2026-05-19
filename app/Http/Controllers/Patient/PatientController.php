@@ -32,8 +32,8 @@ class PatientController extends Controller
     try {
         $validator = Validator::make($data->all(), [ 
             'full_name' => 'required|string',
-            'email' => ['required', 'string', 'unique:cmn_patients,email'],
-            'phone_no' => ['required', 'string', 'unique:cmn_patients,phone_no', 'max:20'],
+            'email' => ['nullable', 'email', 'unique:cmn_patients,email'],
+            'phone_no' => ['nullable', 'string', 'unique:cmn_patients,phone_no', 'max:20'],
 
         ]);
 
@@ -83,8 +83,8 @@ class PatientController extends Controller
             $validator = Validator::make($data->all(), [
             
                 'full_name' => ['required', 'string'],
-               'email' => ['required', 'string', 'unique:cmn_patients,email,' . $data->user_id . ',id'],
-                'phone_no' => ['required', 'string', 'unique:cmn_patients,phone_no,' . $data->user_id . ',id', 'max:20']
+                'email' => ['nullable', 'email', 'unique:cmn_patients,email,' . $data->user_id . ',id'],
+                'phone_no' => ['nullable', 'string', 'unique:cmn_patients,phone_no,' . $data->user_id . ',id', 'max:20']
             ]);
     
             $rutaArchivo = $data->image_url; 
