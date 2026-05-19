@@ -5,13 +5,16 @@
 <script>
     window.PATIENT_CONTEXT = {
         id: {{ (int) $patient->id }},
-        name: @json($patient->full_name)
+        name: @json($patient->full_name),
+        uploadUrl: @json(url('seguimiento/upload-image'))
     };
 </script>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script src="{{ dsAsset('js/custom/patient/expediente.js') }}"></script>
 @endpush
 
 @push("adminCss")
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
     /* Fase 1 - Expediente del paciente */
     .expediente-back { color:#6c757d; text-decoration:none; font-size:.9rem; display:inline-flex; align-items:center; gap:.4rem; margin-bottom:.75rem; }
@@ -66,24 +69,79 @@
     .expediente-tabs .nav-link:hover:not(.active) { color:#495057; border-bottom-color:#e9ecef; }
     .expediente-tab-content { background:#fff; border:1px solid #e9ecef; border-top:none; border-radius:0 0 .5rem .5rem; padding:1.25rem; }
 
-    .sesion-card { background:#fff; border:1px solid #e9ecef; border-radius:.5rem; padding:.95rem 1.1rem; margin-bottom:.85rem; transition:box-shadow .15s; }
+    .sesion-card { background:#fff; border:1px solid #e9ecef; border-radius:.5rem; padding:.9rem 1.05rem; margin-bottom:.75rem; transition:box-shadow .15s; }
     .sesion-card:hover { box-shadow:0 2px 8px rgba(0,0,0,.05); }
-    .sesion-card .sesion-head { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:.5rem; }
-    .sesion-card .sesion-date { font-weight:600; color:#212529; font-size:.95rem; }
-    .sesion-card .sesion-ficha { font-size:.78rem; color:#868e96; margin-top:.15rem; }
-    .sesion-card .sesion-actions { display:flex; gap:.35rem; }
-    .sesion-card .sesion-actions .btn { padding:.25rem .5rem; font-size:.78rem; }
-    .sesion-card .sesion-body { margin-top:.75rem; }
+    .sesion-card .sesion-top { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; }
+    .sesion-card .sesion-top-main { flex:1; min-width:0; }
+    .sesion-card .sesion-date { font-weight:600; color:#1572e8; font-size:.85rem; margin-bottom:.15rem; }
+    .sesion-card .sesion-date i { margin-right:.3rem; opacity:.75; }
+    .sesion-card .sesion-treatment {
+        color:#212529; font-size:.95rem; line-height:1.4; font-weight:500;
+        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    }
+    .sesion-card .sesion-treatment.empty { color:#adb5bd; font-style:italic; font-weight:400; }
+    .sesion-card .sesion-meta-row {
+        display:flex; flex-wrap:wrap; align-items:center; gap:.35rem .75rem;
+        color:#6c757d; font-size:.82rem; margin-top:.55rem;
+    }
+    .sesion-card .meta-diag { color:#212529; font-weight:500; }
+    .sesion-card .meta-diag i { color:#1572e8; margin-right:.25rem; }
+    .sesion-card .meta-user i { opacity:.6; margin-right:.25rem; }
+    .sesion-card .sesion-actions { display:flex; gap:.3rem; flex-shrink:0; }
+    .sesion-card .sesion-actions .btn { padding:.4rem .55rem; font-size:.8rem; min-width:36px; }
+    .sesion-card .sesion-body { margin-top:.7rem; padding-top:.6rem; border-top:1px dashed #e9ecef; }
     .sesion-card .sesion-field { margin-bottom:.5rem; }
-    .sesion-card .sesion-field .field-label { font-size:.72rem; text-transform:uppercase; color:#adb5bd; letter-spacing:.04em; margin-bottom:.1rem; }
-    .sesion-card .sesion-field .field-value { color:#343a40; font-size:.88rem; white-space:pre-wrap; }
-    .sesion-card .evol-chip { display:inline-block; padding:.15rem .55rem; border-radius:1rem; font-size:.72rem; font-weight:500; }
+    .sesion-card .sesion-field:last-child { margin-bottom:0; }
+    .sesion-card .sesion-field .field-label { font-size:.7rem; text-transform:uppercase; color:#adb5bd; letter-spacing:.04em; margin-bottom:.1rem; }
+    .sesion-card .sesion-field .field-value { color:#343a40; font-size:.88rem; white-space:pre-wrap; line-height:1.4; }
+    .sesion-card .sesion-footer { margin-top:.6rem; display:flex; flex-wrap:wrap; gap:.5rem 1rem; align-items:center; }
+    .sesion-card .motivo-toggle {
+        background:none; border:none; padding:.1rem 0; color:#1572e8;
+        font-size:.78rem; cursor:pointer;
+    }
+    .sesion-card .motivo-toggle:hover { text-decoration:underline; }
+    .sesion-card .motivo-content {
+        display:none; width:100%;
+        padding:.55rem .8rem; margin-top:.4rem;
+        background:#f1f7ff; border-left:3px solid #1572e8; border-radius:.25rem;
+        font-size:.83rem; color:#495057; line-height:1.4;
+    }
+    .sesion-card .motivo-content.open { display:block; }
+    .sesion-card .evol-chip { display:inline-block; padding:.15rem .6rem; border-radius:1rem; font-size:.72rem; font-weight:600; text-transform:capitalize; }
     .evol-chip.favorable   { background:#e3f6e6; color:#1d7d2c; }
     .evol-chip.estable     { background:#fff4d6; color:#996800; }
     .evol-chip.desfavorable{ background:#fde2e1; color:#a8201a; }
 
     .sesion-composer .modal-body label { font-size:.8rem; color:#495057; font-weight:500; margin-bottom:.25rem; }
     .sesion-composer textarea.form-control { min-height:60px; }
+
+    /* Quill — toolbar y editor optimizados para tablet */
+    .sesion-composer .nota-actions { display:flex; align-items:center; gap:.5rem; margin-bottom:.3rem; flex-wrap:wrap; }
+    .sesion-composer .nota-save-status { font-size:.75rem; color:#6c757d; margin-left:auto; min-width:120px; text-align:right; }
+    .sesion-composer .nota-save-status.saving { color:#f5a623; }
+    .sesion-composer .nota-save-status.saved  { color:#1d7d2c; }
+    .sesion-composer .ql-toolbar.ql-snow { border-radius:.35rem .35rem 0 0; padding:.45rem; background:#fafbfc; }
+    .sesion-composer .ql-toolbar.ql-snow .ql-formats { margin-right:.6rem; }
+    .sesion-composer .ql-toolbar.ql-snow button {
+        min-width:38px; min-height:38px; padding:6px 8px;
+        border-radius:.25rem; transition:background .15s;
+    }
+    .sesion-composer .ql-toolbar.ql-snow button:hover,
+    .sesion-composer .ql-toolbar.ql-snow button.ql-active { background:#e9ecef; }
+    .sesion-composer .ql-container.ql-snow { border-radius:0 0 .35rem .35rem; font-size:.95rem; }
+    .sesion-composer .ql-editor { min-height:160px; max-height:35vh; overflow-y:auto; }
+    .sesion-composer .ql-editor img { max-width:100%; height:auto; border-radius:.25rem; display:block; margin:.5rem auto; }
+    .sesion-composer .nota-upload-progress {
+        display:none; align-items:center; gap:.4rem;
+        font-size:.78rem; color:#1572e8; margin-top:.3rem;
+    }
+    .sesion-composer .nota-upload-progress.active { display:inline-flex; }
+
+    @media (max-width: 768px) {
+        .sesion-composer .ql-toolbar.ql-snow button { min-width:44px; min-height:44px; }
+        .sesion-composer .ql-editor { min-height:140px; max-height:40vh; }
+        .sesion-composer .modal-lg { max-width:96%; margin:.5rem auto; }
+    }
 
     @media (max-width: 768px) {
         .patient-header { padding:1rem; }
@@ -385,11 +443,32 @@
                         </select>
                     </div>
 
-                    <input type="hidden" name="nota_detallada" id="sesion_nota_detallada" value="">
-                    <small class="text-muted d-block mt-3">
-                        <i class="fas fa-info-circle"></i>
-                        {{ translate('Para notas con imágenes o formato enriquecido, edita la sesión desde la Ficha Clínica.') }}
-                    </small>
+                    {{-- Nota detallada con Quill: texto rico + imágenes desde cámara o galería --}}
+                    <div class="mt-3">
+                        <label>{{ translate('Nota detallada') }} <small class="text-muted">({{ translate('opcional') }})</small></label>
+
+                        <div class="nota-actions">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnSesionCamera">
+                                <i class="fas fa-camera mr-1"></i> {{ translate('Tomar foto') }}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSesionGallery">
+                                <i class="fas fa-image mr-1"></i> {{ translate('Galería') }}
+                            </button>
+                            <span class="nota-save-status" id="notaSaveStatus"></span>
+                        </div>
+
+                        <div id="sesionQuillEditor" style="background:#fff;"></div>
+
+                        <div class="nota-upload-progress" id="notaUploadProgress">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>{{ translate('Procesando y subiendo imagen...') }}</span>
+                        </div>
+
+                        {{-- Inputs ocultos: el de cámara fuerza la cámara trasera en Android --}}
+                        <input type="file" id="sesionCameraInput" accept="image/*" capture="environment" style="display:none;">
+                        <input type="file" id="sesionGalleryInput" accept="image/*" style="display:none;">
+                        <input type="hidden" name="nota_detallada" id="sesion_nota_detallada" value="">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cerrar') }}</button>
