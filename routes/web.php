@@ -394,6 +394,12 @@ Route::group(['middleware' => 'xssProtection'], function () {
             // Fase 3 - Datos de evaluaciones del paciente agrupadas por tipo (JSON)
             Route::get('patient-evaluaciones/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientEvaluacionesData'])->name('patient.evaluaciones.data');
 
+            // Fase 4a - Lectura de un único registro de cualquier formulario FormFisios (para editar inline)
+            Route::get('evaluation-record/{tabla}/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'getEvaluationRecord'])->name('patient.evaluacion.record');
+
+            // Fase 4c - Historial completo de un tipo de evaluación para un paciente (para comparar)
+            Route::get('evaluation-history/{tabla}/{patientId}', [\App\Http\Controllers\Patient\PatientController::class, 'getEvaluationHistory'])->name('patient.evaluacion.history');
+
         });
 
        

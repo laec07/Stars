@@ -379,4 +379,173 @@ class PatientController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Fase 4a — Lectura de un registro único de cualquier formulario FormFisios
+     * para poder editarlo inline desde el expediente.
+     *
+     * @param string $tabla   ej. 'fis_evdolors', 'fis_cheqmus', etc.
+     * @param int    $id      id del registro en la tabla correspondiente
+     */
+    public function getEvaluationRecord($tabla, $id)
+    {
+        try {
+            $modelClass = $this->resolveEvaluationModel($tabla);
+            if (! $modelClass) {
+                return $this->apiResponse([
+                    'status'  => '404',
+                    'message' => 'Tabla de evaluación no reconocida: ' . $tabla,
+                ], 404);
+            }
+
+            $record = $modelClass::find($id);
+            if (! $record) {
+                return $this->apiResponse([
+                    'status'  => '404',
+                    'message' => 'Registro no encontrado',
+                ], 404);
+            }
+
+            // Si el registro está marcado inactivo (status=0), no lo entregamos.
+            if (isset($record->status) && (int) $record->status === 0) {
+                return $this->apiResponse([
+                    'status'  => '404',
+                    'message' => 'Registro inactivo',
+                ], 404);
+            }
+
+            // Buscar el ficha_id correspondiente desde la bitácora
+            // (las tablas fis_* no tienen ficha_id; vive en fis_historys).
+            $fichaId = null;
+            $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+            if ($hasFichaIdColumn) {
+                $historyRow = \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('tabla_form', $tabla)
+                    ->where('id_formulario', $id)
+                    ->where('status', 1)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                if ($historyRow) {
+                    $fichaId = $historyRow->ficha_id;
+                }
+            }
+
+            // Normalizar para el cliente: enviar como array con keys lowercase + alias 'id'.
+            $data = $record->toArray();
+            $pk   = $record->getKeyName();        // 'id' o 'Id'
+            $data['id'] = $record->getKey();      // alias siempre lowercase
+            $data['_primary_key'] = $pk;          // para que el cliente sepa qué nombre usar al actualizar
+            $data['ficha_id'] = $fichaId;
+            $data['_table_form'] = $tabla;
+
+            return $this->apiResponse([
+                'status' => '1',
+                'data'   => $data,
+            ], 200);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('getEvaluationRecord: ' . $e->getMessage());
+            return $this->apiResponse([
+                'status'  => '500',
+                'message' => 'Error leyendo evaluación',
+                'debug'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Fase 4c — Historial completo de un tipo de evaluación para un paciente,
+     * para visualizar la evolución en el tiempo.
+     *
+     * @param string $tabla       ej. 'fis_goniometrias'
+     * @param int    $patientId   id del paciente
+     */
+    public function getEvaluationHistory($tabla, $patientId)
+    {
+        try {
+            $modelClass = $this->resolveEvaluationModel($tabla);
+            if (! $modelClass) {
+                return $this->apiResponse([
+                    'status'  => '404',
+                    'message' => 'Tabla de evaluación no reconocida: ' . $tabla,
+                ], 404);
+            }
+
+            // Cargar todos los registros activos del paciente, ordenados cronológicamente
+            $records = $modelClass::where('patient_id', $patientId)
+                ->where('status', 1)
+                ->orderBy('fecha', 'asc')
+                ->orderBy(($modelClass::make())->getKeyName(), 'asc')
+                ->get();
+
+            if ($records->isEmpty()) {
+                return $this->apiResponse([
+                    'status' => '1',
+                    'data'   => [ 'records' => [], 'count' => 0 ],
+                ], 200);
+            }
+
+            // Buscar ficha_id por cada registro en fis_historys (para mostrar contexto)
+            $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+            $idsArr = $records->pluck($records->first()->getKeyName())->all();
+            $fichaMap = [];
+            if ($hasFichaIdColumn && count($idsArr)) {
+                $histRows = \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('tabla_form', $tabla)
+                    ->whereIn('id_formulario', $idsArr)
+                    ->where('status', 1)
+                    ->select('id_formulario', 'ficha_id')
+                    ->get();
+                foreach ($histRows as $h) {
+                    $fichaMap[$h->id_formulario] = $h->ficha_id;
+                }
+            }
+
+            // Normalizar la respuesta: array de registros con campos planos + ficha_id
+            $out = [];
+            foreach ($records as $rec) {
+                $arr = $rec->toArray();
+                $arr['id']       = $rec->getKey();   // alias lowercase consistente
+                $arr['ficha_id'] = $fichaMap[$rec->getKey()] ?? null;
+                $out[] = $arr;
+            }
+
+            return $this->apiResponse([
+                'status' => '1',
+                'data'   => [
+                    'records' => $out,
+                    'count'   => count($out),
+                    'tabla'   => $tabla,
+                ],
+            ], 200);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('getEvaluationHistory: ' . $e->getMessage());
+            return $this->apiResponse([
+                'status'  => '500',
+                'message' => 'Error leyendo historial',
+                'debug'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Whitelist tabla_form -> clase de modelo.
+     * Sólo las 11 evaluaciones que tienen config inline son editables.
+     */
+    private function resolveEvaluationModel(string $tabla): ?string
+    {
+        $map = [
+            'fis_evdolors'        => \App\Models\FormFisios\FisEvDolors::class,
+            'fis_cheqs'           => \App\Models\FormFisios\FisCheqs::class,
+            'fis_evpiels'         => \App\Models\FormFisios\FisEvPiels::class,
+            'fis_antropometrias'  => \App\Models\FormFisios\FisAntropometrias::class,
+            'fis_antropoms'       => \App\Models\FormFisios\FisAntropoms::class,
+            'fis_goniometrias'    => \App\Models\FormFisios\FisGoniometrias::class,
+            'fis_cheqmus'         => \App\Models\FormFisios\FisCheqmus::class,
+            'fis_sensitivitys'    => \App\Models\FormFisios\FisSensitivitys::class,
+            'fis_evalineps'       => \App\Models\FormFisios\FisEvAlineps::class,
+            'fis_electros'        => \App\Models\FormFisios\FisElectros::class,
+            'fis_ultras'          => \App\Models\FormFisios\FisUltras::class,
+        ];
+        return $map[$tabla] ?? null;
+    }
 }

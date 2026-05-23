@@ -192,6 +192,38 @@
     .eval-section-body .eval-row a { color:#1572e8; font-size:.8rem; text-decoration:none; white-space:nowrap; }
     .eval-section-body .eval-row a:hover { text-decoration:underline; }
 
+    /* Fase 4a — botón Editar inline */
+    .eval-section-body .eval-row-edit {
+        background:transparent; border:1px solid #1572e8;
+        color:#1572e8; cursor:pointer;
+        border-radius:.3rem; padding:.2rem .5rem;
+        font-size:.75rem; line-height:1;
+        margin-right:.35rem;
+        min-width:36px; min-height:32px;
+        display:inline-flex; align-items:center; justify-content:center;
+        transition:background .15s ease, color .15s ease;
+    }
+    .eval-section-body .eval-row-edit:hover {
+        background:#1572e8; color:#fff;
+    }
+    .eval-section-body .eval-row-edit i { font-size:.85rem; }
+
+    /* Fase 4b — botón Eliminar */
+    .eval-section-body .eval-row-delete {
+        background:transparent; border:1px solid #dc3545;
+        color:#dc3545; cursor:pointer;
+        border-radius:.3rem; padding:.2rem .5rem;
+        font-size:.75rem; line-height:1;
+        margin-right:.5rem;
+        min-width:36px; min-height:32px;
+        display:inline-flex; align-items:center; justify-content:center;
+        transition:background .15s ease, color .15s ease;
+    }
+    .eval-section-body .eval-row-delete:hover {
+        background:#dc3545; color:#fff;
+    }
+    .eval-section-body .eval-row-delete i { font-size:.85rem; }
+
     .eval-add-row {
         margin-top:.4rem; padding-top:.5rem;
         border-top:1px dashed #e9ecef;
@@ -855,6 +887,138 @@
         .stat-card .stat-value { font-size:1.4rem; }
         .expediente-tabs .nav-link { padding:.65rem .75rem; font-size:.85rem; }
     }
+
+    /* ============== Fase 4c — Botón Comparar en cada sección ============== */
+    .eval-compare-row {
+        display:flex; justify-content:flex-end;
+        padding:.25rem 0 .55rem 0;
+        margin-bottom:.35rem;
+        border-bottom:1px dashed #e9ecef;
+    }
+    .eval-compare-btn {
+        background:transparent; border:1px solid #1abc9c;
+        color:#0e7263; cursor:pointer;
+        border-radius:.3rem; padding:.25rem .55rem;
+        font-size:.72rem; font-weight:600; line-height:1;
+        display:inline-flex; align-items:center; gap:.3rem;
+        transition:background .15s ease, color .15s ease;
+        text-transform:uppercase; letter-spacing:.04em;
+    }
+    .eval-compare-btn:hover { background:#1abc9c; color:#fff; }
+    .eval-compare-btn i { font-size:.85rem; }
+
+    /* ============== Fase 4c — Modal comparativo ============== */
+    .comparison-modal .modal-xl { max-width:1100px; }
+    .comparison-modal .cmp-legend {
+        background:#f1f7ff; border:1px solid #cfe1ff;
+        padding:.55rem .8rem; border-radius:.4rem;
+        font-size:.82rem; color:#1572e8;
+        display:flex; align-items:center; flex-wrap:wrap; gap:.5rem;
+        margin-bottom:.85rem;
+    }
+    .comparison-modal .cmp-legend-badges {
+        display:inline-flex; gap:.4rem; margin-left:auto;
+    }
+    .comparison-modal .cmp-section-title {
+        font-weight:700; font-size:.85rem;
+        text-transform:uppercase; letter-spacing:.04em;
+        color:#1572e8;
+        margin:1.1rem 0 .35rem;
+        padding-bottom:.3rem; border-bottom:1px solid #cfe1ff;
+    }
+    .comparison-modal .cmp-section-title:first-child { margin-top:0; }
+    .comparison-modal .cmp-noncomp-note {
+        background:#fff8e1; border-left:3px solid #ffad46;
+        padding:.55rem .8rem; border-radius:.25rem;
+        font-size:.85rem; color:#6c4500;
+        margin-bottom:.6rem;
+    }
+    .comparison-modal .cmp-scroll {
+        overflow-x:auto; -webkit-overflow-scrolling:touch;
+        border:1px solid #e9ecef; border-radius:.4rem;
+        margin-bottom:1rem;
+    }
+    .comparison-modal table.cmp-table {
+        width:100%; border-collapse:separate; border-spacing:0;
+        font-size:.8rem;
+    }
+    .comparison-modal table.cmp-table thead th {
+        background:#1572e8; color:#fff;
+        padding:.55rem .65rem;
+        font-weight:700; font-size:.72rem;
+        text-align:center; vertical-align:middle;
+        position:sticky; top:0;
+        white-space:nowrap;
+        border-right:1px solid rgba(255,255,255,.15);
+    }
+    .comparison-modal table.cmp-table thead th.cmp-th-field {
+        background:#0d5cbf;
+        text-align:left;
+        position:sticky; left:0; z-index:2;
+        min-width:200px;
+    }
+    .comparison-modal table.cmp-table thead th .cmp-th-fecha {
+        display:block; font-size:.78rem;
+    }
+    .comparison-modal table.cmp-table thead th .cmp-th-meta {
+        display:block; font-size:.65rem; font-weight:500; opacity:.85;
+        margin-top:.1rem;
+    }
+    .comparison-modal table.cmp-table tbody td {
+        padding:.4rem .55rem;
+        border-bottom:1px solid #f1f3f5;
+        text-align:center;
+        vertical-align:middle;
+    }
+    .comparison-modal table.cmp-table tbody tr:nth-child(even) td { background:#f8f9fc; }
+    .comparison-modal table.cmp-table tbody td.cmp-td-field {
+        font-weight:600; color:#212529;
+        text-align:left;
+        background:#fff !important;
+        position:sticky; left:0;
+        min-width:200px; max-width:260px;
+        border-right:1px solid #e9ecef;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .comparison-modal table.cmp-table tbody tr:nth-child(even) td.cmp-td-field { background:#f8f9fc !important; }
+    .comparison-modal .cmp-section-row td {
+        background:#1572e8 !important;
+        color:#fff !important;
+        font-weight:700;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+        font-size:.72rem;
+        text-align:left !important;
+        padding:.35rem .65rem !important;
+        position:sticky; left:0;
+    }
+    .comparison-modal .cmp-cell-value {
+        display:inline-block; font-weight:600; color:#212529;
+    }
+    .comparison-modal .cmp-cell-empty { color:#adb5bd; font-weight:400; }
+    .comparison-modal .cmp-delta {
+        display:inline-block;
+        padding:.05rem .35rem; border-radius:.8rem;
+        font-size:.65rem; font-weight:700;
+        margin-left:.3rem;
+    }
+    .comparison-modal .cmp-delta-up   { background:#d1e7dd; color:#0a3622; }
+    .comparison-modal .cmp-delta-down { background:#f8d7da; color:#842029; }
+    .comparison-modal .cmp-delta-same { background:#e9ecef; color:#495057; }
+    .comparison-modal .cmp-empty-state {
+        text-align:center; padding:2rem 1rem;
+        color:#adb5bd; font-size:.9rem;
+    }
+    .comparison-modal .cmp-empty-state i {
+        font-size:2.5rem; color:#dee2e6; margin-bottom:.5rem; display:block;
+    }
+
+    @media (max-width: 768px) {
+        .comparison-modal .modal-xl { max-width:96%; margin:.5rem auto; }
+        .comparison-modal table.cmp-table { font-size:.72rem; }
+        .comparison-modal table.cmp-table thead th.cmp-th-field,
+        .comparison-modal table.cmp-table tbody td.cmp-td-field { min-width:140px; max-width:160px; }
+    }
 </style>
 @endpush
 
@@ -1265,6 +1429,33 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- ============== Fase 4c — Modal comparativo de evaluaciones ============== --}}
+<div class="modal fade comparison-modal" id="modalEvalCompare" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEvalCompareTitle">{{ translate('Comparación temporal') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" style="max-height:78vh; overflow-y:auto;">
+                <div class="cmp-legend">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <span>Las flechas indican el cambio respecto a la evaluación anterior.</span>
+                    <span class="cmp-legend-badges">
+                        <span class="cmp-delta cmp-delta-up">↑ mejora</span>
+                        <span class="cmp-delta cmp-delta-down">↓ retroceso</span>
+                        <span class="cmp-delta cmp-delta-same">= sin cambio</span>
+                    </span>
+                </div>
+                <div id="modalEvalCompareBody"><!-- inyectado por JS --></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cerrar') }}</button>
+            </div>
         </div>
     </div>
 </div>

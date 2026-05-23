@@ -75,6 +75,35 @@
             InlineFormManager.Open(key);
         });
 
+        // Fase 4a — botón Editar en cada row de evaluación
+        $(document).on('click', '.eval-row-edit', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var key = $(this).data('key');
+            var id  = $(this).data('id');
+            InlineFormManager.OpenEdit(key, id);
+        });
+
+        // Fase 4b — botón Eliminar evaluación
+        $(document).on('click', '.eval-row-delete', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            EvaluacionManager.ConfirmAndDelete({
+                key:   $(this).data('key'),
+                id:    $(this).data('id'),
+                fecha: $(this).data('fecha'),
+                label: $(this).data('label')
+            });
+        });
+
+        // Fase 4c — botón Comparar evaluaciones del mismo tipo en el tiempo
+        $(document).on('click', '.eval-compare-btn', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var key = $(this).data('key');
+            EvaluacionManager.OpenComparison(key);
+        });
+
         // Submit del modal inline
         $('#formEvalInline').on('submit', function (e) {
             e.preventDefault();
@@ -163,6 +192,14 @@
         $('#modalSesion').on('hidden.bs.modal', function () {
             // No limpiamos aquí — la limpieza ocurre en SaveSesion onSuccess
             DraftManager.ShowStatus('');
+        });
+
+        // Fase 4a — Al cerrar el modal de evaluación inline, resetear estado de edición
+        // para que el próximo "Agregar" no envíe accidentalmente el id viejo.
+        $('#modalEvalInline').on('hidden.bs.modal', function () {
+            InlineFormManager.currentKey      = null;
+            InlineFormManager.currentRecordId = null;
+            InlineFormManager.currentRecordPK = null;
         });
     });
 
@@ -534,13 +571,31 @@
             s = String(s);
             // Si ya tiene tags HTML reales, devolverlo tal cual.
             if (/<[a-z!][\s\S]*?>/i.test(s)) return s;
-            // Si no hay tags pero sí entidades, decodificar una pasada con textarea.
-            if (/&(?:lt|gt|amp|quot|nbsp|#\d+);/.test(s)) {
+            // Si hay cualquier entidad HTML (&xxx;), decodificar.
+            // Cubre &oacute; &eacute; &ntilde; etc. además de las básicas.
+            if (/&(?:[a-zA-Z]+|#\d+|#x[0-9a-fA-F]+);/.test(s)) {
                 var ta = document.createElement('textarea');
                 ta.innerHTML = s;
                 return ta.value;
             }
             return s;
+        },
+
+        // Decodifica entidades HTML en cualquier valor (string, array, objeto).
+        // Útil para limpiar de una sola pasada las respuestas del backend que
+        // pasaron por el middleware xssProtection.
+        DecodeEntitiesDeep: function (input) {
+            if (input == null) return input;
+            if (typeof input === 'string') return Manager.SmartHtmlDecode(input);
+            if (Array.isArray(input)) return input.map(Manager.DecodeEntitiesDeep);
+            if (typeof input === 'object') {
+                var out = {};
+                Object.keys(input).forEach(function (k) {
+                    out[k] = Manager.DecodeEntitiesDeep(input[k]);
+                });
+                return out;
+            }
+            return input;
         }
     };
 
@@ -978,13 +1033,35 @@
                     }
                     var formUrl = EvaluacionManager.UrlForForm(key);
                     var viewLink = formUrl
-                        ? '<a href="' + formUrl + '" title="Abrir lista del formulario">Ver <i class="fas fa-external-link-alt" style="font-size:.7rem;"></i></a>'
+                        ? '<a href="' + formUrl + '" class="eval-row-view" title="Abrir lista del formulario">Ver <i class="fas fa-external-link-alt" style="font-size:.7rem;"></i></a>'
                         : '';
+                    // Fase 4a — botón Editar inline (solo si el tipo tiene config declarativa)
+                    var editBtn = '';
+                    var delBtn  = '';
+                    if (InlineFormManager.HasConfigFor(key) && r.id_formulario) {
+                        editBtn =
+                            '<button type="button" class="eval-row-edit" title="Editar inline" ' +
+                                ' data-key="' + Manager.EscapeHtml(key) + '"' +
+                                ' data-id="'  + Manager.EscapeHtml(String(r.id_formulario)) + '">' +
+                                '<i class="fas fa-edit"></i>' +
+                            '</button>';
+                        // Fase 4b — botón Eliminar
+                        delBtn =
+                            '<button type="button" class="eval-row-delete" title="Eliminar evaluación" ' +
+                                ' data-key="' + Manager.EscapeHtml(key) + '"' +
+                                ' data-id="'  + Manager.EscapeHtml(String(r.id_formulario)) + '"' +
+                                ' data-fecha="' + Manager.EscapeHtml(fecha) + '"' +
+                                ' data-label="' + Manager.EscapeHtml(meta.label) + '">' +
+                                '<i class="fas fa-trash-alt"></i>' +
+                            '</button>';
+                    }
                     return (
                         '<div class="eval-row">' +
                             '<span class="eval-row-date">' + fecha + '</span>' +
                             fichaBadge +
                             '<span class="eval-row-user">' + user + '</span>' +
+                            editBtn +
+                            delBtn +
                             viewLink +
                         '</div>'
                     );
@@ -1015,6 +1092,18 @@
                 }
             }
 
+            // Fase 4c — Botón Comparar (solo si hay 2+ registros y el tipo tiene config inline,
+            // que es donde tenemos metadata de campos para identificar lo comparable).
+            var compareLink = '';
+            if (count >= 2 && InlineFormManager.HasConfigFor(key)) {
+                compareLink =
+                    '<div class="eval-compare-row">' +
+                        '<button type="button" class="eval-compare-btn" data-key="' + Manager.EscapeHtml(key) + '">' +
+                            '<i class="fas fa-chart-line"></i> Comparar (' + count + ')' +
+                        '</button>' +
+                    '</div>';
+            }
+
             return (
                 '<div class="eval-section' + (collapsed ? ' collapsed' : '') + '" data-key="' + key + '">' +
                     '<button type="button" class="eval-section-header' + (collapsed ? ' collapsed' : '') + '">' +
@@ -1024,6 +1113,7 @@
                         '<i class="fas fa-chevron-down ev-toggle"></i>' +
                     '</button>' +
                     '<div class="eval-section-body">' +
+                        compareLink +
                         bodyHtml +
                         addLink +
                     '</div>' +
@@ -1046,6 +1136,285 @@
                 '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>' + msgHtml + '</div>'
             );
             $('#eval-summary').text('');
+        },
+
+        // Fase 4c — Abre el modal comparativo de todas las evaluaciones de un tipo.
+        OpenComparison: function (tableKey) {
+            var cfg = EVAL_INLINE_CONFIGS[tableKey];
+            var meta = EVAL_META[tableKey] || { label: tableKey };
+            if (!cfg) {
+                console.warn('No inline config for', tableKey);
+                return;
+            }
+
+            $('#modalEvalCompareTitle').text('Evolución — ' + meta.label);
+            $('#modalEvalCompareBody').html('<div class="cmp-empty-state"><i class="fas fa-spinner fa-spin"></i> Cargando historial…</div>');
+            $('#modalEvalCompare').modal('show');
+
+            JsManager.SendJson('GET', 'evaluation-history/' + tableKey + '/' + ctx.id, '', function (json) {
+                if (!json || json.status != '1' || !json.data) {
+                    $('#modalEvalCompareBody').html('<div class="cmp-empty-state"><i class="fas fa-exclamation-triangle"></i>Error al cargar el historial.</div>');
+                    return;
+                }
+                var records = (json.data.records || []).map(Manager.DecodeEntitiesDeep);
+                if (records.length < 2) {
+                    $('#modalEvalCompareBody').html(
+                        '<div class="cmp-empty-state">' +
+                            '<i class="fas fa-info-circle"></i>' +
+                            'Se necesitan al menos 2 evaluaciones para comparar. Hay ' + records.length + '.' +
+                        '</div>'
+                    );
+                    return;
+                }
+                EvaluacionManager.RenderComparison(cfg, records);
+            }, function (xhr) {
+                console.error('history fetch failed', xhr.status, xhr.responseText);
+                $('#modalEvalCompareBody').html(
+                    '<div class="cmp-empty-state">' +
+                        '<i class="fas fa-exclamation-triangle"></i>' +
+                        'No se pudo cargar el historial.' +
+                    '</div>'
+                );
+            });
+        },
+
+        /**
+         * Genera la tabla comparativa pivot (filas = campos, columnas = evaluaciones por fecha).
+         * Recorre el config para extraer los campos comparables y sus etiquetas.
+         */
+        RenderComparison: function (cfg, records) {
+            // Dirección de mejora a nivel form (override por campo via f.compareDirection)
+            // 'higher' = subir es mejor, 'lower' = bajar es mejor, 'none' = solo mostrar diff
+            var formDirection = cfg.compareDirection || 'none';
+
+            // Helper: obtener el array de "filas comparables" desde el config.
+            // Cada fila tiene { label, name, direction } o (para grupos) { sectionLabel: '...' }
+            var rows = [];
+
+            function pushSection(label) {
+                rows.push({ section: true, label: label });
+            }
+            function pushField(label, name, direction) {
+                rows.push({
+                    section: false,
+                    label: label,
+                    name: name,
+                    direction: direction || formDirection
+                });
+            }
+
+            cfg.fields.forEach(function (f) {
+                if (f.type === 'note' || f.type === 'image' || f.type === 'body_map' ||
+                    f.type === 'scale_legend' || f.type === 'file_uploads') return;
+
+                if (f.type === 'section') {
+                    if (f.label && f.label.toLowerCase() !== 'cierre') {
+                        pushSection(f.label);
+                    }
+                    return;
+                }
+
+                if (f.type === 'gonio_movement') {
+                    pushSection(f.title || 'Movimiento');
+                    (f.pairs || []).forEach(function (p) {
+                        pushField(p.label + ' · IZQ', p.nameLeft,  f.compareDirection || formDirection || 'higher');
+                        pushField(p.label + ' · DER', p.nameRight, f.compareDirection || formDirection || 'higher');
+                    });
+                    return;
+                }
+
+                if (f.type === 'postural_grid') {
+                    (f.bodyParts || []).forEach(function (bp) {
+                        (f.prefixes || []).forEach(function (prefix, idx) {
+                            var viewName = (f.headers && f.headers[idx]) || prefix.toUpperCase();
+                            pushField(bp.label + ' · ' + viewName, prefix + '_' + bp.key, 'none');
+                        });
+                    });
+                    return;
+                }
+
+                if (f.type === 'bilateral_number' || f.type === 'bilateral_grade' || f.type === 'bilateral_text') {
+                    var dir = f.compareDirection ||
+                              (f.type === 'bilateral_grade' ? 'higher' : (formDirection || 'none'));
+                    pushField((f.label || 'Bilateral') + ' · IZQ', f.nameLeft,  dir);
+                    pushField((f.label || 'Bilateral') + ' · DER', f.nameRight, dir);
+                    return;
+                }
+
+                if (f.type === 'dermatome') {
+                    var code = f.code;
+                    var dlabel = f.label || code.toUpperCase();
+                    pushField(dlabel + ' (Normal)',   code + '_zn', 'higher');
+                    pushField(dlabel + ' (Sensible)', code + '_zs', 'none');
+                    pushField(dlabel + ' (Alterada)', code + '_za', 'lower');
+                    return;
+                }
+
+                if (f.type === 'eva') {
+                    pushField(f.label, f.name, f.compareDirection || 'lower');
+                    return;
+                }
+
+                if (f.type === 'score_total') {
+                    pushField(f.label, f.name, f.compareDirection || formDirection || 'higher');
+                    return;
+                }
+
+                if (f.type === 'number') {
+                    pushField(f.label, f.name, f.compareDirection || formDirection);
+                    return;
+                }
+
+                // Text/textarea/select/date/time → mostrar pero sin delta numérico
+                if (f.name && (f.type === 'text' || f.type === 'textarea' || f.type === 'select' ||
+                               f.type === 'date' || f.type === 'time')) {
+                    pushField(f.label, f.name, 'none');
+                }
+            });
+
+            // Construir cabecera con cada fecha
+            var headerHtml = '<tr>' +
+                '<th class="cmp-th-field">Campo</th>' +
+                records.map(function (rec, idx) {
+                    var fecha = Manager.FormatDate(rec.fecha);
+                    var label = (idx === records.length - 1)
+                        ? '<span class="cmp-th-meta">más reciente</span>'
+                        : '<span class="cmp-th-meta">' + (records.length - idx - 1) + ' atrás</span>';
+                    return '<th><span class="cmp-th-fecha">' + fecha + '</span>' + label + '</th>';
+                }).join('') +
+                '</tr>';
+
+            // Construir body
+            var rowsWithData = 0;
+            var bodyHtml = rows.map(function (row) {
+                if (row.section) {
+                    return '<tr class="cmp-section-row"><td colspan="' + (records.length + 1) + '">' +
+                                Manager.EscapeHtml(row.label) +
+                           '</td></tr>';
+                }
+                // Solo incluir la fila si al menos un registro tiene valor en este campo
+                var anyValue = records.some(function (rec) {
+                    var v = rec[row.name];
+                    return v !== null && v !== undefined && v !== '';
+                });
+                if (!anyValue) return ''; // omitir filas totalmente vacías
+                rowsWithData++;
+
+                var prevNumeric = null;
+                var cells = records.map(function (rec) {
+                    var raw = rec[row.name];
+                    if (raw === null || raw === undefined || raw === '') {
+                        return '<td><span class="cmp-cell-empty">—</span></td>';
+                    }
+                    var num = Number(raw);
+                    var isNumeric = !isNaN(num) && raw !== true && raw !== false;
+
+                    var deltaHtml = '';
+                    if (isNumeric && prevNumeric !== null) {
+                        var diff = num - prevNumeric;
+                        if (diff === 0) {
+                            deltaHtml = '<span class="cmp-delta cmp-delta-same">=</span>';
+                        } else {
+                            // Direccionalidad: ¿es mejora o retroceso?
+                            var isUp = diff > 0;
+                            var isImprovement;
+                            if (row.direction === 'higher')      isImprovement = isUp;
+                            else if (row.direction === 'lower')  isImprovement = !isUp;
+                            else                                  isImprovement = null;
+
+                            var cls, arrow;
+                            if (isImprovement === true)  { cls = 'cmp-delta-up';   arrow = isUp ? '↑' : '↓'; }
+                            else if (isImprovement === false) { cls = 'cmp-delta-down'; arrow = isUp ? '↑' : '↓'; }
+                            else                          { cls = 'cmp-delta-same'; arrow = isUp ? '↑' : '↓'; }
+
+                            var sign = diff > 0 ? '+' : '';
+                            deltaHtml = '<span class="cmp-delta ' + cls + '">' + arrow + ' ' + sign + diff + '</span>';
+                        }
+                    }
+
+                    if (isNumeric) prevNumeric = num;
+                    else prevNumeric = null;
+
+                    var displayVal = isNumeric
+                        ? String(raw)
+                        : (String(raw).length > 30 ? Manager.EscapeHtml(String(raw).substring(0, 30)) + '…' : Manager.EscapeHtml(String(raw)));
+
+                    return '<td><span class="cmp-cell-value">' + displayVal + '</span>' + deltaHtml + '</td>';
+                }).join('');
+
+                return '<tr>' +
+                            '<td class="cmp-td-field" title="' + Manager.EscapeHtml(row.label) + '">' +
+                                Manager.EscapeHtml(row.label) +
+                            '</td>' +
+                            cells +
+                       '</tr>';
+            }).join('');
+
+            if (!rowsWithData) {
+                $('#modalEvalCompareBody').html(
+                    '<div class="cmp-empty-state">' +
+                        '<i class="fas fa-info-circle"></i>' +
+                        'No hay campos con datos suficientes para comparar entre estas evaluaciones.' +
+                    '</div>'
+                );
+                return;
+            }
+
+            $('#modalEvalCompareBody').html(
+                '<div class="cmp-scroll">' +
+                    '<table class="cmp-table">' +
+                        '<thead>' + headerHtml + '</thead>' +
+                        '<tbody>' + bodyHtml + '</tbody>' +
+                    '</table>' +
+                '</div>'
+            );
+        },
+
+        // Fase 4b — Confirma y elimina una evaluación.
+        // Convención: el endpoint es {clave sin 'fis_'}-delete. Ej. fis_evpiels → evpiels-delete.
+        // Payload: { id, Id } para compatibilidad con cheqmus que usa primary key 'Id'.
+        ConfirmAndDelete: function (opts) {
+            if (!opts || !opts.key || !opts.id) return;
+
+            var label = opts.label || 'evaluación';
+            var fecha = opts.fecha || '';
+            var msg = '¿Eliminar ' + label.toLowerCase() +
+                      (fecha ? ' del ' + fecha : '') + '?\n\n' +
+                      'El registro se marca como inactivo. Para restaurarlo es necesario un administrador con acceso a la base de datos.';
+
+            if (window.Message && typeof Message.Prompt === 'function') {
+                if (!Message.Prompt(msg)) return;
+            } else if (!window.confirm(msg)) {
+                return;
+            }
+
+            // Derivar endpoint: 'fis_evpiels' → 'evpiels-delete'
+            var endpoint = opts.key.replace(/^fis_/, '') + '-delete';
+            var payload  = { id: opts.id, Id: opts.id };
+
+            JsManager.StartProcessBar();
+            JsManager.SendJson('POST', endpoint, payload, onSuccess, onFailed);
+
+            function onSuccess(json) {
+                JsManager.EndProcessBar();
+                if (json && (json.status == '1' || json.status === 1)) {
+                    if (window.Message) Message.Success('delete');
+                    state.evaluacionesLoaded = false;
+                    EvaluacionManager.Load();
+                } else {
+                    if (window.Message) Message.Error('delete');
+                }
+            }
+            function onFailed(xhr) {
+                JsManager.EndProcessBar();
+                console.error('eval delete failed', xhr.status, xhr.responseText);
+                var msg = 'No se pudo eliminar la evaluación.';
+                try {
+                    var resp = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
+                    if (resp && typeof resp.data === 'string') msg += ' ' + resp.data;
+                } catch (e) { /* ignore */ }
+                if (window.Message) Message.Notification('error', msg);
+            }
         }
     };
 
@@ -1063,11 +1432,12 @@
         'fis_evdolors': {
             label: 'Evaluación de dolor',
             endpointCreate: 'evdolors-create',
+            compareDirection: 'lower',     // dolor: menos = mejor
             fields: [
                 { name: 'fecha',                        type: 'date',     label: 'Fecha',                 required: true, default: 'today', col: 6 },
                 { name: 'pain_severity',                type: 'eva',      label: 'EVA actual',            col: 6, help: 'Intensidad ahora (0=sin dolor, 10=máximo)' },
                 { name: 'pain_usual_intensity',         type: 'eva',      label: 'EVA habitual',          col: 6, help: 'Intensidad típica que reporta el paciente' },
-                { name: 'pain_reduction_effectiveness', type: 'eva',      label: 'Efectividad del reductor', col: 6, help: '0=no funciona, 10=elimina el dolor' },
+                { name: 'pain_reduction_effectiveness', type: 'eva',      label: 'Efectividad del reductor', col: 6, help: '0=no funciona, 10=elimina el dolor', compareDirection: 'higher' },
                 { name: 'pain_location',                type: 'textarea', label: 'Ubicación del dolor',   col: 12, rows: 2 },
                 { name: 'pain_start_when',              type: 'textarea', label: '¿Cuándo comenzó?',      col: 12, rows: 2 },
                 { name: 'pain_start_time',              type: 'time',     label: 'Hora de inicio',        col: 6 },
@@ -1147,6 +1517,7 @@
         'fis_antropometrias': {
             label: 'Antropometría T.F (equilibrio Tinetti)',
             endpointCreate: 'antropometrias-create',
+            compareDirection: 'higher',   // Tinetti: puntaje más alto = mejor equilibrio
             fields: [
                 { name: 'fecha', type: 'date', label: 'Fecha', required: true, default: 'today', col: 6 },
                 // Total automático (suma de 9 ítems; máx 15)
@@ -1276,6 +1647,7 @@
         'fis_goniometrias': {
             label: 'Goniometría',
             endpointCreate: 'goniometrias-create',
+            compareDirection: 'higher',   // más grados = más rango = mejor
             fields: [
                 { name: 'fecha', type: 'date', label: 'Fecha', required: true, default: 'today', col: 12 },
                 { type: 'note', label: 'Todos los rangos en grados (°). Deja en blanco las articulaciones no evaluadas. Las imágenes son de referencia.' },
@@ -1433,6 +1805,7 @@
         'fis_cheqmus': {
             label: 'Chequeo muscular completo',
             endpointCreate: 'cheqmus-create',
+            compareDirection: 'higher',   // grado Daniels 0-5 más alto = más fuerza = mejor
             fields: [
                 { name: 'fecha', type: 'date', label: 'Fecha', required: true, default: 'today', col: 12 },
                 { type: 'scale_legend', label: 'Escala para la valoración de la fuerza muscular',
@@ -1740,6 +2113,8 @@
     var InlineFormManager = {
 
         currentKey: null,
+        currentRecordId: null,         // si != null, estamos en modo edit
+        currentRecordPK: null,         // nombre real del PK (id vs Id) para el payload de update
 
         Open: function (tableKey) {
             var cfg = EVAL_INLINE_CONFIGS[tableKey];
@@ -1747,7 +2122,10 @@
                 console.warn('No inline config for', tableKey);
                 return false;
             }
+            // Reset modo edit al abrir como create
             InlineFormManager.currentKey = tableKey;
+            InlineFormManager.currentRecordId = null;
+            InlineFormManager.currentRecordPK = null;
 
             $('#modalEvalInlineTitle').text('Nueva ' + cfg.label.toLowerCase());
 
@@ -1788,6 +2166,194 @@
 
             $('#modalEvalInline').modal('show');
             return true;
+        },
+
+        // Fase 4a — Abre el modal en modo edición. Carga el registro y pre-popula campos.
+        OpenEdit: function (tableKey, recordId) {
+            var cfg = EVAL_INLINE_CONFIGS[tableKey];
+            if (!cfg) { console.warn('No inline config for', tableKey); return false; }
+
+            JsManager.StartProcessBar();
+            JsManager.SendJson('GET', 'evaluation-record/' + tableKey + '/' + recordId, '', function (json) {
+                JsManager.EndProcessBar();
+                if (!json || json.status != '1' || !json.data) {
+                    if (window.Message) Message.Notification('error', 'No se pudo cargar la evaluación.');
+                    return;
+                }
+                // Decodificar entidades HTML en TODOS los strings del registro.
+                // El middleware xssProtection codifica al guardar (ó → &oacute;),
+                // así que al editar tenemos que decodificar antes de mostrar.
+                var decoded = Manager.DecodeEntitiesDeep(json.data);
+
+                // 1. Abrir modal normalmente (renderiza estructura vacía)
+                InlineFormManager.Open(tableKey);
+                // 2. Marcar modo edit
+                InlineFormManager.currentRecordId = recordId;
+                InlineFormManager.currentRecordPK = decoded._primary_key || 'id';
+                $('#modalEvalInlineTitle').text('Editar ' + cfg.label.toLowerCase());
+                // 3. Pre-popular con los datos del registro
+                InlineFormManager.PopulateForm(decoded);
+            }, function (xhr) {
+                JsManager.EndProcessBar();
+                console.error('OpenEdit fetch failed', xhr);
+                if (window.Message) Message.Notification('error', 'No se pudo cargar la evaluación para editar.');
+            });
+            return true;
+        },
+
+        // Fase 4a — Pre-popula todos los campos del modal con los datos del registro.
+        // Soporta todos los field types: simples + compuestos.
+        PopulateForm: function (data) {
+            var cfg = EVAL_INLINE_CONFIGS[InlineFormManager.currentKey];
+            if (!cfg) return;
+
+            // Helper: setear el valor de un input/select por name
+            function setVal(name, value) {
+                if (value === null || value === undefined) return;
+                var $el = $('#formEvalInline [name="' + name + '"]');
+                if ($el.length) {
+                    if ($el.is(':checkbox') || $el.is(':radio')) {
+                        $el.filter('[value="' + value + '"]').prop('checked', true);
+                    } else {
+                        $el.val(value);
+                    }
+                }
+            }
+
+            // Preseleccionar ficha si vino en el registro
+            if (data.ficha_id) {
+                $('#evalInline_ficha_id').val(data.ficha_id);
+            }
+
+            cfg.fields.forEach(function (f) {
+                if (f.type === 'section' || f.type === 'note' || f.type === 'image' ||
+                    f.type === 'body_map' || f.type === 'scale_legend') return;
+
+                // Gonio movement: iterar pairs
+                if (f.type === 'gonio_movement') {
+                    (f.pairs || []).forEach(function (p) {
+                        setVal(p.nameLeft,  data[p.nameLeft]);
+                        setVal(p.nameRight, data[p.nameRight]);
+                    });
+                    return;
+                }
+
+                // Postural grid
+                if (f.type === 'postural_grid') {
+                    (f.prefixes || []).forEach(function (prefix) {
+                        (f.bodyParts || []).forEach(function (bp) {
+                            var n = prefix + '_' + bp.key;
+                            setVal(n, data[n]);
+                        });
+                    });
+                    return;
+                }
+
+                // Bilateral pairs
+                if (f.type === 'bilateral_number' || f.type === 'bilateral_grade' || f.type === 'bilateral_text') {
+                    setVal(f.nameLeft,  data[f.nameLeft]);
+                    setVal(f.nameRight, data[f.nameRight]);
+                    return;
+                }
+
+                // Dermatoma: 3 columnas _zn/_zs/_za → marcar el radio correspondiente
+                if (f.type === 'dermatome') {
+                    var code = f.code;
+                    var sel = '';
+                    if (Number(data[code + '_zn']) === 1) sel = 'zn';
+                    else if (Number(data[code + '_zs']) === 1) sel = 'zs';
+                    else if (Number(data[code + '_za']) === 1) sel = 'za';
+                    if (sel) {
+                        $('#formEvalInline input[name="dermatome_' + code + '"][value="' + sel + '"]')
+                            .prop('checked', true);
+                    }
+                    return;
+                }
+
+                // File uploads: mostrar preview con la URL del servidor (si existe)
+                if (f.type === 'file_uploads') {
+                    (f.slots || []).forEach(function (s) {
+                        var url = data[s.name];
+                        if (!url) return;
+                        var $slot = $('#formEvalInline .fu-slot[data-fu-slot="' + s.name + '"]');
+                        if (!$slot.length) return;
+                        // Los archivos viven en public/uploadfiles/, servidos directamente
+                        // desde la raíz (sin /storage/). Construir la URL correcta:
+                        //   - URL absoluta (http/https) → tal cual
+                        //   - Comienza con / → tal cual
+                        //   - 'uploadfiles/foo.jpg' o 'foo.jpg' → anteponer '/'
+                        var imgSrc;
+                        if (/^https?:/i.test(url) || url.charAt(0) === '/') {
+                            imgSrc = url;
+                        } else {
+                            imgSrc = '/' + url;
+                        }
+                        $slot.find('[data-fu-preview]')
+                            .html('<img src="' + imgSrc + '" alt="foto">')
+                            .addClass('has-image');
+                        $slot.find('[data-fu-clear]').show();
+                        // Guardar la URL original como hidden para que el backend la conserve si
+                        // el usuario no sube una nueva (el FisEvAlinepsController usa foto{n}_old).
+                        var $hidden = $slot.find('input[type="hidden"][name="' + s.name + '_old"]');
+                        if (!$hidden.length) {
+                            $slot.append('<input type="hidden" name="' + s.name + '_old" value="' + Manager.EscapeHtml(url) + '">');
+                        }
+                    });
+                    return;
+                }
+
+                // Campo regular (text, number, date, time, textarea, select, score_total, eva, mapToFlags)
+                if (!f.name) return;
+
+                // mapToFlags: reconstruir el valor del select desde los flags
+                if (f.mapToFlags) {
+                    var flagToVal = {};
+                    Object.keys(f.mapToFlags).forEach(function (k) { flagToVal[f.mapToFlags[k]] = k; });
+                    var picked = '';
+                    Object.keys(flagToVal).forEach(function (flagName) {
+                        if (Number(data[flagName]) === 1) picked = flagToVal[flagName];
+                    });
+                    setVal(f.name, picked);
+                    return;
+                }
+
+                setVal(f.name, data[f.name]);
+            });
+
+            // Re-disparar bindings que dependen del valor:
+            // 1. Score totals (Tinetti) — recalcular después de setear los selects
+            InlineFormManager.BindScoreTotal();
+            // 2. Imágenes dinámicas (electroterapia) — re-sync src según el campo controlador
+            InlineFormManager.BindDynamicImages();
+            // 3. EVA sliders — actualizar el bubble
+            $('#evalInlineFields .eva-slider-wrap input[type=range]').each(function () {
+                $(this).trigger('input');
+            });
+            // 4. Body maps (silueta de piel) — rehidratar selección según contenido de textareas
+            InlineFormManager.RehydrateBodyMaps();
+        },
+
+        // Rehidrata el estado visual de los body_map después de PopulateForm:
+        // marca como "selected" las regiones cuya textarea tiene contenido.
+        // Respeta el límite maxSelections.
+        RehydrateBodyMaps: function () {
+            $('#evalInlineFields [data-body-map]').each(function () {
+                var $map = $(this);
+                var maxSel = parseInt($map.data('max-selections'), 10) || 99;
+                var marked = 0;
+                $map.find('.body-map-region').each(function () {
+                    if (marked >= maxSel) return; // no rebasar el tope
+                    var $btn = $(this);
+                    var targetName = $btn.data('region-target');
+                    var $target = $('#formEvalInline [name="' + targetName + '"]');
+                    if (!$target.length) return;
+                    var val = ($target.val() || '').trim();
+                    if (val) {
+                        $btn.addClass('selected').attr('aria-pressed', 'true');
+                        marked++;
+                    }
+                });
+            });
         },
 
         BindFileUploads: function () {
@@ -2439,6 +3005,21 @@
 
             JsManager.StartProcessBar();
 
+            // Fase 4a — Determinar endpoint según modo (create vs update)
+            var isEditMode = !!InlineFormManager.currentRecordId;
+            var endpoint = isEditMode
+                ? (cfg.endpointUpdate || cfg.endpointCreate.replace('-create', '-update'))
+                : cfg.endpointCreate;
+
+            // Inyectar el id en el payload si estamos editando. Se usa el nombre real del
+            // primary key (id o Id) que vino en la respuesta del fetch.
+            if (isEditMode) {
+                var pk = InlineFormManager.currentRecordPK || 'id';
+                payload[pk] = InlineFormManager.currentRecordId;
+                // Algunos controllers esperan también 'id' lowercase para validar
+                payload.id = InlineFormManager.currentRecordId;
+            }
+
             // Si el formulario incluye file_uploads, usar FormData (multipart).
             // De lo contrario, payload plano normal (form-urlencoded).
             if (hasFileUploads) {
@@ -2449,7 +3030,7 @@
                 // CSRF token desde el meta tag de Laravel
                 var token = $('meta[name="csrf-token"]').attr('content');
                 if (token) fd.append('_token', token);
-                // Adjuntar cada archivo si fue elegido
+                // Adjuntar cada archivo si fue elegido (y propagar el *_old si existe)
                 cfg.fields.forEach(function (f) {
                     if (f.type !== 'file_uploads') return;
                     (f.slots || []).forEach(function (s) {
@@ -2457,11 +3038,14 @@
                         if (fileInput && fileInput.files && fileInput.files[0]) {
                             fd.append(s.name, fileInput.files[0]);
                         }
+                        // Si hay un *_old del fetch original, lo enviamos para conservar la foto
+                        var $old = $('#formEvalInline input[name="' + s.name + '_old"]');
+                        if ($old.length) fd.append(s.name + '_old', $old.val());
                     });
                 });
-                JsManager.SendJsonWithFile('POST', cfg.endpointCreate, fd, onSuccess, onFailed);
+                JsManager.SendJsonWithFile('POST', endpoint, fd, onSuccess, onFailed);
             } else {
-                JsManager.SendJson('POST', cfg.endpointCreate, payload, onSuccess, onFailed);
+                JsManager.SendJson('POST', endpoint, payload, onSuccess, onFailed);
             }
 
             function onSuccess(json) {
