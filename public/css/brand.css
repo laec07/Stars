@@ -1,0 +1,303 @@
+/* =====================================================================
+   Healing Hands — Identidad de marca
+   ---------------------------------------------------------------------
+   Fuente única de verdad para colores, tipografías y assets de marca.
+   Importado desde resources/views/layouts/app.blade.php y guest.blade.php.
+
+   Convención: los componentes de la app DEBEN usar var(--brand-xxx),
+   nunca colores hardcoded.
+   ===================================================================== */
+
+/* ---------- Tipografías ---------- */
+@font-face {
+    font-family: 'Carelia';
+    src: url('/fonts/carelia/Carelia-Upright.woff2') format('woff2'),
+         url('/fonts/carelia/Carelia-Upright.woff')  format('woff');
+    font-weight: 400;
+    font-style:  normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Carelia';
+    src: url('/fonts/carelia/Carelia-Italic.woff2') format('woff2'),
+         url('/fonts/carelia/Carelia-Italic.woff')  format('woff');
+    font-weight: 400;
+    font-style:  italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/montserrat/Montserrat-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style:  normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/montserrat/Montserrat-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style:  normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/montserrat/Montserrat-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style:  italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/montserrat/Montserrat-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style:  normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/montserrat/Montserrat-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style:  normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/montserrat/Montserrat-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style:  normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/montserrat/Montserrat-ExtraBold.ttf') format('truetype');
+    font-weight: 800;
+    font-style:  normal;
+    font-display: swap;
+}
+
+/* ---------- Tokens (custom properties) ---------- */
+:root {
+    /* Paleta oficial Healing Hands */
+    --brand-primary:        #9F93E7;  /* Light Pastel Purple — botones, headers, CTA */
+    --brand-primary-dark:   #7d6fd6;  /* Hover/active del primario */
+    --brand-primary-darker: #5e4fbf;  /* Texto/borde con primario */
+    --brand-secondary:      #DFBEF4;  /* Mauve — fondos suaves, backgrounds */
+    --brand-accent:         #C7D9E5;  /* Columbia Blue — secciones aireadas */
+    --brand-neutral:        #2F4157;  /* Charcoal — texto, contraste fuerte */
+    --brand-neutral-soft:   #5a6c80;  /* variación más clara del Charcoal para body */
+
+    /* Aliases semánticos */
+    --brand-text:           var(--brand-neutral);
+    --brand-text-muted:     var(--brand-neutral-soft);
+    --brand-bg-soft:        var(--brand-secondary);
+    --brand-bg-airy:        var(--brand-accent);
+
+    /* Tipografía */
+    --brand-font-display:   'Carelia', Georgia, 'Times New Roman', serif;
+    --brand-font-body:      'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+    /* Sombras de marca */
+    --brand-shadow-sm:      0 1px 3px rgba(47, 65, 87, .08);
+    --brand-shadow-md:      0 4px 12px rgba(47, 65, 87, .10);
+    --brand-shadow-lg:      0 8px 24px rgba(47, 65, 87, .14);
+
+    /* Foco accesible (anillo) */
+    --brand-focus-ring:     0 0 0 3px rgba(159, 147, 231, .35);
+}
+
+/* ---------- Aplicación tipográfica global ---------- */
+body,
+.wrapper,
+.main-panel,
+.content,
+.modal,
+.dropdown-menu,
+.btn,
+.form-control,
+.nav-link,
+.card,
+.table {
+    font-family: var(--brand-font-body) !important;
+    color: var(--brand-text);
+}
+
+h1, h2, h3, .display-1, .display-2, .display-3, .display-4,
+.brand-display {
+    font-family: var(--brand-font-display);
+    color: var(--brand-text);
+}
+
+h4, h5, h6,
+.card-title, .modal-title, .page-title,
+.brand-headline {
+    font-family: var(--brand-font-body);
+    font-weight: 600;
+    color: var(--brand-text);
+}
+
+/* ---------- Overrides de Atlantis: navbar + sidebar ---------- */
+
+/* Logo header / topbar (el área azul de arriba) — se aplica vía data-background-color="blue" */
+.logo-header[data-background-color="blue"] {
+    background: var(--brand-primary) !important;
+}
+.navbar-header[data-background-color="blue2"] {
+    background: var(--brand-primary-dark) !important;
+}
+.navbar-header[data-background-color="blue2"] .nav-link,
+.navbar-header[data-background-color="blue2"] .navbar-nav .nav-item .nav-link {
+    color: #fff;
+}
+.navbar-header[data-background-color="blue2"] .nav-link:hover { color: rgba(255, 255, 255, .85); }
+
+/* Sidebar — fondo blanco con acentos púrpura */
+.sidebar .nav.nav-primary > .nav-item.active > a,
+.sidebar[data-background-color="white"] .nav.nav-primary > .nav-item.active > a {
+    color: var(--brand-primary-darker) !important;
+}
+.sidebar .nav.nav-primary > .nav-item.active > a:before,
+.sidebar[data-background-color="white"] .nav.nav-primary > .nav-item.active > a:before {
+    background: var(--brand-primary) !important;
+}
+.sidebar .nav.nav-primary > .nav-item a:hover i,
+.sidebar .nav.nav-primary > .nav-item a:focus i,
+.sidebar[data-background-color="white"] .nav.nav-primary > .nav-item a:hover i,
+.sidebar[data-background-color="white"] .nav.nav-primary > .nav-item a:focus i {
+    color: var(--brand-primary) !important;
+}
+
+/* ---------- Botones primarios ---------- */
+.btn-primary,
+.btn-primary:not(:disabled):not(.disabled).active,
+.btn-primary:not(:disabled):not(.disabled):active {
+    background-color: var(--brand-primary) !important;
+    border-color:     var(--brand-primary) !important;
+    color: #fff !important;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:not(:disabled):not(.disabled):active:focus {
+    background-color: var(--brand-primary-dark) !important;
+    border-color:     var(--brand-primary-dark) !important;
+    box-shadow: var(--brand-focus-ring) !important;
+}
+.btn-primary:disabled,
+.btn-primary.disabled {
+    background-color: var(--brand-primary) !important;
+    border-color:     var(--brand-primary) !important;
+    opacity: .55;
+}
+
+/* Variante outline */
+.btn-outline-primary {
+    color: var(--brand-primary-darker) !important;
+    border-color: var(--brand-primary) !important;
+    background: transparent !important;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background: var(--brand-primary) !important;
+    color: #fff !important;
+}
+
+/* Botón "rounded" Atlantis */
+.btn-round { border-radius: 1.5rem; }
+
+/* ---------- Links, focos, selección de texto ---------- */
+a {
+    color: var(--brand-primary-darker);
+}
+a:hover, a:focus {
+    color: var(--brand-primary-dark);
+}
+
+.form-control:focus,
+.btn:focus,
+.nav-link:focus,
+button:focus-visible {
+    box-shadow: var(--brand-focus-ring) !important;
+    border-color: var(--brand-primary) !important;
+    outline: none;
+}
+
+::selection { background: rgba(159, 147, 231, .35); color: var(--brand-text); }
+
+/* ---------- Badges + alerts ---------- */
+.badge-primary,
+.bg-primary {
+    background-color: var(--brand-primary) !important;
+    color: #fff;
+}
+.badge-secondary,
+.bg-secondary {
+    background-color: var(--brand-neutral) !important;
+    color: #fff;
+}
+
+.alert-primary {
+    background: rgba(159, 147, 231, .12);
+    border-color: rgba(159, 147, 231, .35);
+    color: var(--brand-primary-darker);
+}
+.alert-info {
+    background: rgba(199, 217, 229, .35);
+    border-color: var(--brand-accent);
+    color: var(--brand-neutral);
+}
+
+/* ---------- Tabs ---------- */
+.nav-tabs .nav-link.active,
+.nav-pills .nav-link.active {
+    color: var(--brand-primary-darker) !important;
+    border-color: var(--brand-primary) !important;
+}
+.nav-pills .nav-link.active {
+    background-color: var(--brand-primary) !important;
+    color: #fff !important;
+}
+
+/* ---------- Tablas: header con acento de marca ---------- */
+.table thead.thead-primary,
+.table .thead-primary,
+.table-primary {
+    background-color: var(--brand-primary) !important;
+    color: #fff;
+}
+
+/* ---------- Form controls: focos consistentes ---------- */
+.form-control,
+.form-select,
+select.form-control {
+    color: var(--brand-text);
+}
+.form-control::placeholder { color: #a8b2c0; }
+
+/* ---------- Modal — headers con acento sutil ---------- */
+.modal-header {
+    border-bottom: 1px solid rgba(159, 147, 231, .18);
+}
+.modal-title {
+    color: var(--brand-text);
+    font-weight: 600;
+}
+
+/* ---------- Custom utilities ---------- */
+.text-brand          { color: var(--brand-primary) !important; }
+.text-brand-dark     { color: var(--brand-primary-darker) !important; }
+.text-brand-neutral  { color: var(--brand-neutral) !important; }
+.bg-brand            { background-color: var(--brand-primary) !important; color: #fff; }
+.bg-brand-soft       { background-color: var(--brand-secondary) !important; }
+.bg-brand-airy       { background-color: var(--brand-accent) !important; }
+.bg-brand-neutral    { background-color: var(--brand-neutral) !important; color: #fff; }
+
+.brand-gradient {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+    color: var(--brand-neutral);
+}
+
+/* ---------- Print: respetar branding ---------- */
+@media print {
+    body { font-family: var(--brand-font-body); color: var(--brand-neutral); }
+    h1, h2, h3 { font-family: var(--brand-font-display); }
+}

@@ -20,6 +20,8 @@
     <script src="{{ dsAsset('js/lib/assets/js/core/jquery-3.6.0.min.js') }}"></script>
     <link href="{{ dsAsset('css/custom/user_management/login.css') }}" rel="stylesheet" />
     <link href="{{ dsAsset('css/site.css') }}" rel="stylesheet" />
+    {{-- Fase 5 — Branding Healing Hands --}}
+    <link href="{{ dsAsset('css/brand.css?v=1') }}" rel="stylesheet" />
 </head>
 <body class="login-bg" style="background-image: url({{dsAsset($appearance->login_background_image)}});">
 

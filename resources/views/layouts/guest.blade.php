@@ -32,6 +32,8 @@
     <link href="{{ dsAsset('js/lib/assets/css/atlantis.min.css') }}" rel="stylesheet" />
     <link href="{{ dsAsset('css/site.css') }}" rel="stylesheet" />
     <link href="{{ dsAsset('js/lib/assets/css/bootstrap.min.css') }}" rel="stylesheet" />
+    {{-- Fase 5 — Branding Healing Hands. Después de atlantis/site para override. --}}
+    <link href="{{ dsAsset('css/brand.css?v=1') }}" rel="stylesheet" />
     <script src="{{ dsAsset('js/lib/assets/js/core/jquery-3.6.0.min.js') }}"></script>
 
 </head>

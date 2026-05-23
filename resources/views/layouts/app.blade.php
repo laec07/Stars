@@ -36,6 +36,8 @@
     <link href="{{ dsAsset('js/lib/assets/css/checkbox-slider.css')}}" rel="stylesheet" />
     <link href="{{ dsAsset('js/lib/xd-dpicker/jquery.datetimepicker.css')}}" rel="stylesheet" />
     <link href="{{ dsAsset('css/site.css?v=1') }}" rel="stylesheet" />
+    {{-- Fase 5 — Branding Healing Hands. DEBE cargarse después de atlantis y site para override de tokens. --}}
+    <link href="{{ dsAsset('css/brand.css?v=1') }}" rel="stylesheet" />
     <!-- tel input css -->
     <link href="{{dsAsset('js/lib/tel-input/css/intlTelInput.css')}}" rel="stylesheet" />
 
