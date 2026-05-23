@@ -391,6 +391,9 @@ Route::group(['middleware' => 'xssProtection'], function () {
             // Fase 2 - Datos de sesiones del paciente (JSON)
             Route::get('patient-sesiones/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientSesionesData'])->name('patient.sesiones.data');
 
+            // Fase 3 - Datos de evaluaciones del paciente agrupadas por tipo (JSON)
+            Route::get('patient-evaluaciones/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientEvaluacionesData'])->name('patient.evaluaciones.data');
+
         });
 
        

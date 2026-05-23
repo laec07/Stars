@@ -291,4 +291,92 @@ class PatientController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Fase 3 — Devuelve las evaluaciones del paciente agrupadas por tipo,
+     * filtradas opcionalmente por ficha clínica.
+     *
+     * Fuente: bitácora fis_historys, excluyendo entradas que son la propia
+     * ficha (tabla_form = fis_fichas) ya que se muestra aparte.
+     *
+     * Query params:
+     *   ?ficha_id=N          → sólo evaluaciones vinculadas a esa ficha
+     *   ?ficha_id=unassigned → sólo evaluaciones sin ficha asignada
+     *   (sin param)          → todas
+     */
+    public function patientEvaluacionesData($id)
+    {
+        try {
+            $patient = CmnPatient::where('id', $id)->where('status', 1)->first();
+            if (! $patient) {
+                return $this->apiResponse(['status' => '404', 'data' => 'Paciente no encontrado'], 404);
+            }
+
+            $fichaFilter = request()->input('ficha_id', null);
+
+            $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+
+            $base = \Illuminate\Support\Facades\DB::table('fis_historys as h')
+                ->leftJoin('users as u', 'h.user_id', '=', 'u.id')
+                ->where('h.patient_id', $id)
+                ->where('h.status', 1)
+                ->whereNotIn('h.tabla_form', ['fis_fichas']);
+
+            if ($hasFichaIdColumn && $fichaFilter !== null && $fichaFilter !== '' && $fichaFilter !== 'all') {
+                if ($fichaFilter === 'unassigned') {
+                    $base->whereNull('h.ficha_id');
+                } else {
+                    $base->where('h.ficha_id', (int) $fichaFilter);
+                }
+            }
+
+            $selectColumns = [
+                'h.id as history_id',
+                'h.tabla_form',
+                'h.id_formulario',
+                'h.fecha',
+                'h.created_at',
+                'u.name as user_name',
+            ];
+            if ($hasFichaIdColumn) $selectColumns[] = 'h.ficha_id';
+
+            $eventos = $base->orderBy('h.fecha', 'desc')
+                ->orderBy('h.id', 'desc')
+                ->select($selectColumns)
+                ->get();
+
+            // Agrupar por tabla_form
+            $grouped = [];
+            foreach ($eventos as $ev) {
+                $key = $ev->tabla_form;
+                if (! isset($grouped[$key])) $grouped[$key] = [];
+                $grouped[$key][] = $ev;
+            }
+
+            // Fichas del paciente para el dropdown
+            $fichas = \Illuminate\Support\Facades\DB::table('fis_fichas')
+                ->where('patient_id', $id)
+                ->where('status', 1)
+                ->orderBy('fecha', 'desc')
+                ->select('id', 'fecha', 'diagnostico', 'motivo_consulta')
+                ->get();
+
+            return $this->apiResponse([
+                'status' => '1',
+                'data' => [
+                    'evaluaciones'        => $grouped,
+                    'fichas'              => $fichas,
+                    'has_ficha_id_column' => $hasFichaIdColumn,
+                    'filter_applied'      => $fichaFilter,
+                ],
+            ], 200);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('patientEvaluacionesData: ' . $e->getMessage());
+            return $this->apiResponse([
+                'status'  => '500',
+                'message' => 'Error cargando evaluaciones',
+                'debug'   => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

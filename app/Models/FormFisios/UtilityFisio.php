@@ -17,6 +17,7 @@ class UtilityFisio extends Model
     // Campos asignables masivamente
     protected $fillable = [
         'patient_id',
+        'ficha_id',         // Fase 3 — relación 1:1 con fis_fichas
         'user_id',
         'id_formulario',
         'fecha',
@@ -49,5 +50,10 @@ class UtilityFisio extends Model
     public function updatedBy()
     {
         return $this->belongsTo(\App\Models\User::class, 'updated_by');
+    }
+
+    public function ficha()
+    {
+        return $this->belongsTo(\App\Models\FormFisios\Ficha::class, 'ficha_id');
     }
 }

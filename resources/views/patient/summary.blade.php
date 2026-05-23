@@ -143,6 +143,712 @@
         .sesion-composer .modal-lg { max-width:96%; margin:.5rem auto; }
     }
 
+    /* Fase 3 - Tab Evaluación */
+    .eval-header { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem 1rem; margin-bottom:1rem; }
+    .eval-header h5 { margin:0; }
+    .eval-filter { display:flex; align-items:center; gap:.5rem; margin-left:auto; flex-wrap:wrap; }
+    .eval-filter label { margin:0; font-size:.78rem; color:#6c757d; text-transform:uppercase; letter-spacing:.04em; }
+    .eval-filter select { font-size:.85rem; max-width:340px; }
+
+    .eval-summary-pill { background:#f1f7ff; color:#1572e8; border:1px solid #cfe1ff; padding:.25rem .7rem; border-radius:1rem; font-size:.78rem; font-weight:500; }
+
+    .eval-section { background:#fff; border:1px solid #e9ecef; border-radius:.5rem; margin-bottom:.6rem; overflow:hidden; }
+    .eval-section-header {
+        display:flex; align-items:center; padding:.7rem 1rem;
+        cursor:pointer; user-select:none;
+        background:#fafbfc; transition:background .15s;
+        border:none; width:100%; text-align:left;
+    }
+    .eval-section-header:hover { background:#f1f3f5; }
+    .eval-section-header .ev-icon {
+        width:32px; height:32px; border-radius:.4rem;
+        display:flex; align-items:center; justify-content:center;
+        color:#fff; margin-right:.7rem; flex-shrink:0; font-size:.85rem;
+    }
+    .eval-section-header .ev-title { flex:1; font-weight:500; color:#212529; }
+    .eval-section-header .ev-count {
+        background:#e9ecef; color:#495057;
+        padding:.1rem .55rem; border-radius:1rem;
+        font-size:.75rem; font-weight:600; margin-right:.6rem;
+    }
+    .eval-section-header .ev-count.zero { background:transparent; color:#adb5bd; }
+    .eval-section-header .ev-toggle { color:#adb5bd; font-size:.85rem; transition:transform .15s; }
+    .eval-section-header.collapsed .ev-toggle { transform:rotate(-90deg); }
+
+    .eval-section-body { padding:.4rem 1rem 1rem 4rem; border-top:1px solid #f1f3f5; }
+    .eval-section.collapsed .eval-section-body { display:none; }
+    .eval-section-body .eval-row {
+        display:flex; align-items:center; padding:.45rem 0;
+        border-bottom:1px solid #f8f9fa; font-size:.85rem;
+    }
+    .eval-section-body .eval-row:last-child { border-bottom:none; }
+    .eval-section-body .eval-row-date { color:#212529; font-weight:500; width:110px; flex-shrink:0; }
+    .eval-section-body .eval-row-user { color:#6c757d; flex:1; }
+    .eval-section-body .eval-row-ficha {
+        font-size:.72rem; padding:.1rem .55rem; border-radius:1rem;
+        background:#e3f6e6; color:#1d7d2c; margin-right:.5rem;
+    }
+    .eval-section-body .eval-row-ficha.unassigned { background:#fff4d6; color:#996800; }
+    .eval-section-body .eval-row a { color:#1572e8; font-size:.8rem; text-decoration:none; white-space:nowrap; }
+    .eval-section-body .eval-row a:hover { text-decoration:underline; }
+
+    .eval-add-row {
+        margin-top:.4rem; padding-top:.5rem;
+        border-top:1px dashed #e9ecef;
+    }
+    .eval-add-row a {
+        display:inline-flex; align-items:center; gap:.35rem;
+        color:#1572e8; font-size:.82rem; text-decoration:none;
+        padding:.25rem 0;
+    }
+    .eval-add-row a:hover { text-decoration:underline; }
+
+    .eval-empty-section { color:#adb5bd; font-size:.85rem; font-style:italic; padding:.5rem 0; }
+
+    @media (max-width: 768px) {
+        .eval-section-body { padding:.4rem .8rem .8rem 1rem; }
+        .eval-section-body .eval-row { flex-wrap:wrap; }
+        .eval-section-body .eval-row-date { width:auto; margin-right:.5rem; }
+        .eval-filter { width:100%; margin-left:0; }
+        .eval-filter select { flex:1; }
+    }
+
+    /* Fase 3b - Modal inline genérico para crear evaluaciones */
+    .inline-eval-modal .modal-body label { font-size:.78rem; color:#495057; font-weight:600; margin-bottom:.2rem; text-transform:uppercase; letter-spacing:.03em; }
+    .inline-eval-modal .modal-body label .req { color:#dc3545; margin-left:.15rem; }
+    .inline-eval-modal .modal-body .field-help { font-size:.72rem; color:#adb5bd; margin-top:.15rem; }
+    .inline-eval-modal .modal-body .form-control { font-size:.92rem; }
+    .inline-eval-modal .modal-body textarea.form-control { min-height:56px; }
+    .inline-eval-modal .modal-body input[type=date].form-control,
+    .inline-eval-modal .modal-body input[type=time].form-control { min-height:42px; }
+    .inline-eval-modal .form-row-grid { display:grid; grid-template-columns:repeat(12, 1fr); gap:.65rem .85rem; }
+    .inline-eval-modal .col-12 { grid-column: span 12; }
+    .inline-eval-modal .col-6  { grid-column: span 6; }
+    .inline-eval-modal .col-4  { grid-column: span 4; }
+    .inline-eval-modal .col-8  { grid-column: span 8; }
+    .inline-eval-modal .field-group { display:flex; flex-direction:column; min-width:0; width:100%; }
+    /* Asegurar que cualquier input/select dentro del field-group ocupe todo el ancho
+       de su columna. Sin esto, algunos navegadores (especialmente con type=date)
+       respetan el ancho intrínseco del control y se ven colapsados.
+       Usamos !important porque Bootstrap aplica width:100% pero algunos browsers
+       (Chrome con type=date/time/number) sobreescriben con su propio shrink-to-fit. */
+    .inline-eval-modal .field-group > .form-control,
+    .inline-eval-modal .field-group > input,
+    .inline-eval-modal .field-group > select,
+    .inline-eval-modal .field-group > textarea {
+        width:100% !important;
+        min-width:0 !important;
+        max-width:100%;
+        box-sizing:border-box !important;
+        display:block;
+    }
+    /* Específicamente para date/time/number en Chrome donde el ancho intrínseco
+       depende del valor mostrado */
+    .inline-eval-modal .field-group > input[type=date],
+    .inline-eval-modal .field-group > input[type=time],
+    .inline-eval-modal .field-group > input[type=number] {
+        min-width:0 !important;
+        width:100% !important;
+    }
+    .inline-eval-modal .ficha-context {
+        background:#f1f7ff; border:1px solid #cfe1ff;
+        padding:.55rem .8rem; border-radius:.4rem;
+        font-size:.85rem; color:#1572e8;
+        margin-bottom:1rem;
+    }
+    .inline-eval-modal .ficha-context .ficha-warn { color:#996800; }
+    .inline-eval-modal .ficha-context select { font-size:.85rem; padding:.2rem .4rem; }
+
+    /* EVA slider táctil */
+    .eva-slider-wrap { display:flex; align-items:center; gap:.8rem; padding:.2rem 0; }
+    .eva-slider-wrap input[type=range] {
+        flex:1; height:42px;
+        appearance:none; -webkit-appearance:none;
+        background:transparent;
+    }
+    .eva-slider-wrap input[type=range]::-webkit-slider-runnable-track {
+        height:8px; border-radius:4px;
+        background:linear-gradient(to right, #31ce36 0%, #ffad46 50%, #f25961 100%);
+    }
+    .eva-slider-wrap input[type=range]::-moz-range-track {
+        height:8px; border-radius:4px;
+        background:linear-gradient(to right, #31ce36 0%, #ffad46 50%, #f25961 100%);
+    }
+    .eva-slider-wrap input[type=range]::-webkit-slider-thumb {
+        appearance:none; -webkit-appearance:none;
+        width:28px; height:28px; border-radius:50%;
+        background:#fff; border:3px solid #1572e8;
+        margin-top:-10px;
+        cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.15);
+    }
+    .eva-slider-wrap input[type=range]::-moz-range-thumb {
+        width:28px; height:28px; border-radius:50%;
+        background:#fff; border:3px solid #1572e8;
+        cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.15);
+    }
+    .eva-value-bubble {
+        min-width:48px; height:36px;
+        border-radius:.4rem; padding:0 .65rem;
+        display:flex; align-items:center; justify-content:center;
+        font-weight:700; font-size:1.05rem;
+        background:#e9ecef; color:#212529;
+        transition:background .2s, color .2s;
+    }
+    .eva-value-bubble.low  { background:#e3f6e6; color:#1d7d2c; }
+    .eva-value-bubble.mid  { background:#fff4d6; color:#996800; }
+    .eva-value-bubble.high { background:#fde2e1; color:#a8201a; }
+
+    @media (max-width: 768px) {
+        .inline-eval-modal .col-6,
+        .inline-eval-modal .col-4,
+        .inline-eval-modal .col-8 { grid-column: span 12; }
+        .inline-eval-modal .modal-lg { max-width:96%; margin:.5rem auto; }
+    }
+
+    /* === Tipos de campo compuestos (Fase 3b extendida) === */
+    .inline-eval-modal .field-section-header {
+        grid-column: span 12;
+        margin: 1rem 0 .15rem;
+        font-size: .82rem; font-weight: 700;
+        color: #1572e8;
+        padding-bottom: .35rem;
+        border-bottom: 1px solid #cfe1ff;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+    .inline-eval-modal .field-section-header:first-child { margin-top:0; }
+    .inline-eval-modal .field-section-header .fs-help {
+        font-size:.7rem; font-weight:400; color:#6c757d;
+        text-transform:none; letter-spacing:0;
+        margin-left:.5rem;
+    }
+
+    .inline-eval-modal .field-note {
+        grid-column: span 12;
+        background:#fff8e1; border-left:3px solid #ffad46;
+        padding:.55rem .8rem; border-radius:.25rem;
+        font-size:.8rem; color:#6c4500;
+    }
+
+    /* Section headers de colores — Tinetti (danger) + dermatomas (cervical/torácico/lumbar/sacro) */
+    .inline-eval-modal .field-section-header.field-section-danger,
+    .inline-eval-modal .field-section-header.field-section-success,
+    .inline-eval-modal .field-section-header.field-section-info,
+    .inline-eval-modal .field-section-header.field-section-warning,
+    .inline-eval-modal .field-section-header.field-section-pink {
+        grid-column: span 12;
+        border:none; border-radius:.25rem;
+        padding:.55rem .8rem;
+        font-size:.85rem; font-weight:700;
+        text-transform:uppercase; letter-spacing:.04em;
+        margin:.85rem 0 .25rem;
+        color:#fff;
+    }
+    .inline-eval-modal .field-section-header.field-section-danger  { background:#e23a3a; }
+    .inline-eval-modal .field-section-header.field-section-success { background:#7cbf3a; } /* verde dermatoma cervical */
+    .inline-eval-modal .field-section-header.field-section-pink    { background:#f29ab3; color:#5a1f2f; } /* rosa torácico */
+    .inline-eval-modal .field-section-header.field-section-info    { background:#5bbfd6; } /* cian lumbar */
+    .inline-eval-modal .field-section-header.field-section-warning { background:#f0c33c; color:#5c4400; } /* amarillo sacro */
+    .inline-eval-modal .field-section-header.field-section-danger .fs-help { color:#ffe5e5; }
+    .inline-eval-modal .field-section-header.field-section-pink .fs-help   { color:#5a1f2f; opacity:.7; }
+    .inline-eval-modal .field-section-header.field-section-warning .fs-help { color:#5c4400; opacity:.7; }
+
+    /* Note "Instrucciones" estilo alert info */
+    .inline-eval-modal .field-note.field-note-instructions {
+        background:#e9f3ff; border-left:4px solid #1572e8;
+        color:#0b3d8c; font-weight:600; font-size:.9rem;
+        text-align:center; padding:.75rem 1rem;
+    }
+
+    /* Imagen decorativa de referencia anatómica */
+    .inline-eval-modal .field-image-wrap {
+        grid-column: span 12;
+        display:flex; justify-content:center;
+        background:#f8f9fc; border:1px solid #e9ecef;
+        border-radius:.4rem; padding:.5rem;
+        margin-bottom:.25rem;
+    }
+    .inline-eval-modal .field-image-wrap img {
+        display:block;
+    }
+
+    /* Silueta interactiva (body_map) — click en zonas para marcar alteraciones */
+    .inline-eval-modal .field-body-map {
+        grid-column: span 12;
+        background:#f8f9fc; border:1px solid #e9ecef;
+        border-radius:.4rem; padding:.5rem;
+        margin-bottom:.25rem;
+        display:flex; justify-content:center;
+    }
+    .inline-eval-modal .body-map-canvas {
+        position:relative;
+        display:inline-block;     /* el contenedor se ajusta al ancho de la imagen */
+        max-width:100%;
+    }
+    .inline-eval-modal .body-map-canvas img {
+        display:block; max-width:100%; height:auto;
+        user-select:none; -webkit-user-drag:none;
+        pointer-events:none;       /* deja pasar todos los clicks a los botones */
+    }
+    .inline-eval-modal .body-map-region {
+        position:absolute;
+        background:transparent;
+        border:2px dashed rgba(108, 117, 125, .35);
+        border-radius:.35rem;
+        padding:0; margin:0;
+        cursor:pointer;
+        transition:background .15s ease, border-color .15s ease;
+        display:flex; align-items:flex-end; justify-content:center;
+        overflow:hidden;
+    }
+    .inline-eval-modal .body-map-region:hover {
+        background:rgba(255, 89, 97, .12);
+        border-color:rgba(255, 89, 97, .65);
+    }
+    .inline-eval-modal .body-map-region:focus {
+        outline:none;
+        box-shadow:0 0 0 3px rgba(21, 114, 232, .25);
+    }
+    .inline-eval-modal .body-map-region.selected {
+        background:rgba(242, 89, 97, .35);
+        border-color:rgba(220, 53, 69, .85);
+        border-style:solid;
+    }
+    .inline-eval-modal .body-map-region-label {
+        font-size:.65rem; font-weight:700;
+        color:#dc3545;
+        background:rgba(255, 255, 255, .85);
+        padding:.1rem .35rem; border-radius:.2rem;
+        margin-bottom:.25rem;
+        opacity:0;            /* visible solo al hover/seleccionado */
+        transition:opacity .15s ease;
+        pointer-events:none;
+        text-align:center;
+        white-space:nowrap;
+    }
+    .inline-eval-modal .body-map-region:hover .body-map-region-label,
+    .inline-eval-modal .body-map-region.selected .body-map-region-label {
+        opacity:1;
+    }
+
+    @media (max-width: 768px) {
+        .inline-eval-modal .body-map-region-label { font-size:.6rem; padding:.05rem .25rem; }
+    }
+
+    /* ========== Leyenda de escala con badges de colores (ej. Daniels 0-5) ========== */
+    .inline-eval-modal .field-scale-legend {
+        grid-column: span 12;
+        background:#fff; border:1px solid #cfe1ff;
+        border-radius:.4rem; padding:.6rem .75rem;
+        margin-bottom:.25rem;
+    }
+    .inline-eval-modal .field-scale-legend .scale-title {
+        font-size:.78rem; font-weight:700; color:#1572e8;
+        text-align:center; text-transform:uppercase;
+        letter-spacing:.04em; margin-bottom:.5rem;
+        padding-bottom:.35rem; border-bottom:1px dashed #cfe1ff;
+    }
+    .inline-eval-modal .field-scale-legend .scale-items {
+        display:flex; flex-wrap:wrap; gap:.4rem;
+        justify-content:center;
+    }
+    .inline-eval-modal .scale-badge {
+        display:inline-flex; align-items:center;
+        gap:.4rem; padding:.25rem .5rem .25rem .65rem;
+        border-radius:1rem;
+        font-size:.75rem; font-weight:600;
+        line-height:1;
+    }
+    .inline-eval-modal .scale-badge-label { white-space:nowrap; }
+    .inline-eval-modal .scale-badge-value {
+        background:rgba(0,0,0,.18);
+        padding:.15rem .4rem; border-radius:.8rem;
+        font-weight:700; font-size:.75rem;
+    }
+    /* Variantes de color */
+    .inline-eval-modal .scale-danger  { background:#f25961; color:#fff; }
+    .inline-eval-modal .scale-warning { background:#ffad46; color:#000; }
+    .inline-eval-modal .scale-dark    { background:#212529; color:#fff; }
+    .inline-eval-modal .scale-info    { background:#48abf7; color:#fff; }
+    .inline-eval-modal .scale-light   { background:#f3f5f8; color:#212529; border:1px solid #dee2e6; }
+    .inline-eval-modal .scale-light .scale-badge-value { background:rgba(0,0,0,.08); }
+    .inline-eval-modal .scale-success { background:#31ce36; color:#fff; }
+    .inline-eval-modal .scale-primary { background:#1572e8; color:#fff; }
+    .inline-eval-modal .scale-pink    { background:#f29ab3; color:#5a1f2f; }
+    .inline-eval-modal .scale-pink .scale-badge-value { background:rgba(0,0,0,.08); }
+
+    /* ========== Reforzar visibilidad del valor en selects bilaterales ==========
+       Sin estas reglas, los selects nativos de Chrome colapsan verticalmente
+       cuando viven en un contenedor flex muy estrecho y el dígito seleccionado
+       queda cortado por arriba/abajo. Forzamos altura, line-height y font-size. */
+    .inline-eval-modal .bilateral-pair select.form-control {
+        height:38px !important;
+        min-height:38px !important;
+        min-width:62px !important;
+        padding:0 1.4rem 0 .55rem !important;
+        font-size:1rem !important;
+        font-weight:700 !important;
+        line-height:1.2 !important;
+        text-align:center;
+        text-align-last:center;
+        -webkit-appearance:menulist;
+        appearance:menulist;
+        background-color:#fff;
+        color:#212529;
+    }
+    .inline-eval-modal .bilateral-pair input.form-control {
+        height:38px !important;
+        min-height:38px !important;
+        min-width:62px !important;
+        font-size:.95rem;
+        text-align:center;
+    }
+    .inline-eval-modal .bilateral-pair .side-block {
+        gap:.3rem;
+    }
+    .inline-eval-modal .bilateral-pair .side-label {
+        font-size:.7rem;
+        width:28px;
+    }
+
+    @media (max-width:768px) {
+        .inline-eval-modal .bilateral-pair select.form-control {
+            min-width:54px !important; font-size:.95rem !important;
+        }
+        .inline-eval-modal .bilateral-pair .side-label { width:24px; font-size:.65rem; }
+    }
+
+    /* ===== bilateral-pair-compact (para grades en col-6 donde no caben labels al lado) =====
+       Layout en grid 2-columnas, con la etiqueta IZQ/DER arriba del select centrada. */
+    .inline-eval-modal .bilateral-pair.bilateral-pair-compact {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:.5rem;
+        align-items:start;
+    }
+    .inline-eval-modal .bilateral-pair-compact .side-block {
+        flex-direction:column;
+        align-items:center;
+        gap:.15rem;
+        min-width:0;
+    }
+    .inline-eval-modal .bilateral-pair-compact .side-label {
+        width:auto;
+        text-align:center;
+        font-size:.65rem;
+        color:#6c757d;
+        letter-spacing:.04em;
+    }
+    .inline-eval-modal .bilateral-pair-compact select.form-control {
+        width:100% !important;
+        min-width:0 !important;
+    }
+
+    /* ========== Postural grid — tabla parte × vista (Alineación postural) ========== */
+    .inline-eval-modal .field-postural-grid {
+        grid-column: span 12;
+        margin-bottom:.4rem;
+    }
+    .inline-eval-modal .field-postural-grid .pg-scroll {
+        overflow-x:auto; -webkit-overflow-scrolling:touch;
+        border:1px solid #e9ecef; border-radius:.4rem;
+    }
+    .inline-eval-modal .field-postural-grid .pg-table {
+        width:100%; border-collapse:separate; border-spacing:0;
+        font-size:.78rem;
+    }
+    .inline-eval-modal .field-postural-grid .pg-table thead th {
+        background:#1572e8; color:#fff;
+        padding:.5rem .5rem;
+        font-weight:700; font-size:.75rem;
+        text-align:center;
+        position:sticky; top:0;
+        letter-spacing:.04em;
+    }
+    .inline-eval-modal .field-postural-grid .pg-table th.pg-part {
+        background:#0d5cbf;
+        text-align:left;
+        min-width:90px;
+    }
+    .inline-eval-modal .field-postural-grid .pg-table tbody tr:nth-child(even) td { background:#f8f9fc; }
+    .inline-eval-modal .field-postural-grid .pg-table tbody td {
+        padding:.25rem .35rem;
+        border-bottom:1px solid #f1f3f5;
+        vertical-align:middle;
+    }
+    .inline-eval-modal .field-postural-grid .pg-part-label {
+        font-weight:600; color:#212529;
+        white-space:nowrap;
+        padding-right:.5rem !important;
+        background:#fff !important;
+        position:sticky; left:0;
+        border-right:1px solid #e9ecef;
+    }
+    .inline-eval-modal .field-postural-grid .pg-cell input.form-control {
+        height:32px; min-height:32px;
+        padding:.15rem .4rem;
+        font-size:.8rem;
+        min-width:90px;
+    }
+
+    @media (max-width:768px) {
+        .inline-eval-modal .field-postural-grid .pg-cell input.form-control { min-width:80px; font-size:.75rem; }
+        .inline-eval-modal .field-postural-grid .pg-table { font-size:.7rem; }
+    }
+
+    /* ========== File uploads — 4 slots con preview (Alineación postural) ========== */
+    .inline-eval-modal .field-file-uploads {
+        grid-column: span 12;
+        margin-bottom:.4rem;
+    }
+    .inline-eval-modal .field-file-uploads .fu-grid {
+        display:grid;
+        grid-template-columns:repeat(4, 1fr);
+        gap:.5rem;
+    }
+    .inline-eval-modal .field-file-uploads .fu-slot {
+        position:relative;
+        background:#f8f9fc; border:1px solid #e9ecef;
+        border-radius:.4rem; padding:.5rem;
+        display:flex; flex-direction:column; align-items:center;
+    }
+    .inline-eval-modal .field-file-uploads .fu-label {
+        font-size:.7rem; font-weight:700; color:#495057;
+        text-transform:uppercase; letter-spacing:.03em;
+        margin-bottom:.4rem; text-align:center;
+    }
+    .inline-eval-modal .field-file-uploads .fu-preview {
+        width:100%; aspect-ratio:1/1; max-height:140px;
+        background:#fff; border:2px dashed #cfd8e3;
+        border-radius:.3rem;
+        display:flex; align-items:center; justify-content:center;
+        cursor:pointer;
+        color:#adb5bd; font-size:1.4rem;
+        overflow:hidden;
+        transition:border-color .15s ease, background .15s ease;
+    }
+    .inline-eval-modal .field-file-uploads .fu-preview:hover {
+        border-color:#1572e8;
+        background:#f0f7ff;
+        color:#1572e8;
+    }
+    .inline-eval-modal .field-file-uploads .fu-preview.has-image {
+        border-style:solid; border-color:#31ce36;
+        background:#fff;
+    }
+    .inline-eval-modal .field-file-uploads .fu-preview img {
+        width:100%; height:100%; object-fit:cover;
+    }
+    .inline-eval-modal .field-file-uploads .fu-input {
+        position:absolute; inset:0;
+        opacity:0; cursor:pointer;
+        width:100%; height:100%;
+    }
+    .inline-eval-modal .field-file-uploads .fu-clear {
+        position:absolute; top:.35rem; right:.35rem;
+        z-index:2;
+        background:#dc3545; color:#fff;
+        border:none; border-radius:50%;
+        width:24px; height:24px;
+        font-size:.65rem;
+        display:flex; align-items:center; justify-content:center;
+        cursor:pointer;
+        box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+    .inline-eval-modal .field-file-uploads .fu-clear:hover { background:#c82333; }
+
+    @media (max-width:768px) {
+        .inline-eval-modal .field-file-uploads .fu-grid {
+            grid-template-columns:repeat(2, 1fr);
+        }
+    }
+
+    /* ========== Goniometría — bloque de movimiento con imágenes ========== */
+    .inline-eval-modal .gonio-movement {
+        grid-column: span 12;
+        border:1px solid #e9ecef;
+        border-radius:.4rem;
+        margin-bottom:.6rem;
+        overflow:hidden;
+        background:#fff;
+    }
+    .inline-eval-modal .gonio-movement .gm-header {
+        padding:.4rem .75rem;
+        font-weight:700; font-size:.85rem; color:#212529;
+        text-align:center;
+        text-transform:uppercase; letter-spacing:.03em;
+    }
+    .inline-eval-modal .gonio-movement .gm-range {
+        background:#f8f9fc; color:#495057;
+        padding:.3rem .75rem;
+        font-size:.72rem;
+        text-align:center;
+        border-top:1px solid #e9ecef;
+        border-bottom:1px solid #e9ecef;
+    }
+    .inline-eval-modal .gonio-movement .gm-body {
+        display:flex; align-items:stretch;
+        padding:.5rem;
+        gap:.5rem;
+    }
+    .inline-eval-modal .gonio-movement .gm-img {
+        flex:0 0 110px;
+        background:#f8f9fc;
+        border:1px solid #e9ecef;
+        border-radius:.3rem;
+        padding:.25rem;
+        display:flex; align-items:center; justify-content:center;
+    }
+    .inline-eval-modal .gonio-movement .gm-img img {
+        max-width:100%; max-height:130px; height:auto;
+        object-fit:contain;
+    }
+    .inline-eval-modal .gonio-movement .gm-img-placeholder {
+        background:transparent; border:1px dashed #dee2e6;
+    }
+    .inline-eval-modal .gonio-movement .gm-table-wrap {
+        flex:1; min-width:0;
+    }
+    .inline-eval-modal .gonio-movement table.gm-table {
+        width:100%; border-collapse:collapse; font-size:.8rem;
+    }
+    .inline-eval-modal .gonio-movement .gm-table thead th {
+        background:#f1f3f5; color:#495057;
+        padding:.25rem .35rem; font-weight:600;
+        font-size:.7rem; text-align:center;
+        border-bottom:1px solid #dee2e6;
+    }
+    .inline-eval-modal .gonio-movement .gm-table tbody td {
+        padding:.25rem .35rem;
+        border-bottom:1px solid #f1f3f5;
+        vertical-align:middle;
+    }
+    .inline-eval-modal .gonio-movement .gm-table tbody tr:last-child td {
+        border-bottom:none;
+    }
+    .inline-eval-modal .gonio-movement .gm-pair-label {
+        font-weight:600; font-size:.72rem;
+        color:#495057;
+        text-transform:uppercase; letter-spacing:.02em;
+        white-space:nowrap; width:1%;
+    }
+    .inline-eval-modal .gonio-movement .gm-input {
+        position:relative;
+    }
+    .inline-eval-modal .gonio-movement .gm-input input.form-control {
+        text-align:center;
+        font-size:.85rem;
+        padding-right:1.4rem;
+        height:32px;
+    }
+    .inline-eval-modal .gonio-movement .gm-input .gm-unit {
+        position:absolute; right:.5rem; top:50%;
+        transform:translateY(-50%);
+        font-size:.7rem; color:#adb5bd; pointer-events:none;
+    }
+
+    /* Variantes de color para el header */
+    .inline-eval-modal .gonio-warning .gm-header { background:#fff3cd; color:#7a5a00; }
+    .inline-eval-modal .gonio-primary .gm-header { background:#cfe2ff; color:#0a3d8c; }
+    .inline-eval-modal .gonio-info    .gm-header { background:#cff4fc; color:#055160; }
+    .inline-eval-modal .gonio-success .gm-header { background:#d1e7dd; color:#0a3622; }
+    .inline-eval-modal .gonio-danger  .gm-header { background:#f8d7da; color:#842029; }
+
+    @media (max-width: 768px) {
+        .inline-eval-modal .gonio-movement .gm-body { flex-direction:column; }
+        .inline-eval-modal .gonio-movement .gm-img { flex:0 0 auto; }
+        .inline-eval-modal .gonio-movement .gm-img img { max-height:110px; }
+        .inline-eval-modal .gonio-movement .gm-img-placeholder { display:none; } /* en mobile, sin imagen no ocupa espacio */
+    }
+
+    /* Total automático (Tinetti) */
+    .inline-eval-modal .field-score-total {
+        background:#930a8d; color:#fff;
+        padding:.65rem 1rem; border-radius:.25rem;
+        font-size:1.2rem; font-weight:700;
+        display:flex; align-items:center; justify-content:flex-end;
+        min-height:44px;
+    }
+    .inline-eval-modal .field-score-total .field-score-max {
+        opacity:.85; font-weight:500; margin-left:.15rem;
+    }
+
+    .inline-eval-modal .bilateral-pair {
+        display:flex; align-items:center; gap:.45rem; flex-wrap:wrap;
+    }
+    .inline-eval-modal .bilateral-pair .side-block {
+        flex:1; min-width:0; display:flex; align-items:center; gap:.35rem;
+    }
+    .inline-eval-modal .bilateral-pair .side-label {
+        font-size:.7rem; color:#6c757d; text-transform:uppercase;
+        width:30px; text-align:right; font-weight:600; flex-shrink:0;
+    }
+    .inline-eval-modal .bilateral-pair input.form-control,
+    .inline-eval-modal .bilateral-pair select.form-control { flex:1; min-width:0; }
+
+    .inline-eval-modal .dermatome-row {
+        grid-column: span 12;
+        display:flex; align-items:center;
+        gap:.85rem; padding:.35rem .6rem;
+        border-bottom:1px solid #f1f3f5;
+        border-left:4px solid transparent;
+        border-radius:.2rem;
+    }
+    .inline-eval-modal .dermatome-row:last-child { border-bottom:none; }
+    .inline-eval-modal .dermatome-row .dermatome-code {
+        font-weight:700; width:46px; flex-shrink:0; color:#212529;
+        cursor:pointer; user-select:none;
+        text-align:center;
+        padding:.15rem .25rem;
+        border-radius:.25rem;
+        transition:background .15s ease;
+    }
+    .inline-eval-modal .dermatome-row .dermatome-code:hover {
+        background:rgba(0,0,0,.06);
+    }
+    .inline-eval-modal .dermatome-row .dermatome-code-right {
+        text-align:center; margin-left:auto;
+    }
+    .inline-eval-modal .dermatome-row .dermatome-options {
+        flex:1; justify-content:flex-start;
+    }
+
+    /* Fondo + acento lateral por grupo (matchea la imagen anatómica) */
+    .inline-eval-modal .dermatome-row-cervical {
+        background:#e8f5d5; border-left-color:#7cbf3a;
+    }
+    .inline-eval-modal .dermatome-row-cervical .dermatome-code { color:#3d5e1d; }
+    .inline-eval-modal .dermatome-row-thoracic {
+        background:#fde7ee; border-left-color:#f29ab3;
+    }
+    .inline-eval-modal .dermatome-row-thoracic .dermatome-code { color:#7a2540; }
+    .inline-eval-modal .dermatome-row-lumbar {
+        background:#dff3f8; border-left-color:#5bbfd6;
+    }
+    .inline-eval-modal .dermatome-row-lumbar .dermatome-code { color:#1d5e6b; }
+    .inline-eval-modal .dermatome-row-sacrum {
+        background:#fdf3d1; border-left-color:#f0c33c;
+    }
+    .inline-eval-modal .dermatome-row-sacrum .dermatome-code { color:#7a5a00; }
+    .inline-eval-modal .dermatome-row .dermatome-options {
+        display:flex; gap:1rem; flex-wrap:wrap; flex:1;
+    }
+    .inline-eval-modal .dermatome-row .dermatome-options label {
+        display:inline-flex; align-items:center; gap:.3rem;
+        margin:0; font-size:.8rem; cursor:pointer;
+        text-transform:none; font-weight:500; color:#495057;
+        letter-spacing:0;
+    }
+    .inline-eval-modal .dermatome-row .dermatome-options input[type=radio] {
+        width:18px; height:18px; cursor:pointer;
+    }
+
+    @media (max-width: 768px) {
+        .inline-eval-modal .bilateral-pair .side-label { width:24px; font-size:.65rem; }
+        .inline-eval-modal .dermatome-row { flex-wrap:wrap; }
+        .inline-eval-modal .dermatome-row .dermatome-options { gap:.65rem; }
+    }
+
     @media (max-width: 768px) {
         .patient-header { padding:1rem; }
         .patient-avatar { width:52px; height:52px; font-size:1.25rem; }
@@ -217,6 +923,11 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#tab-sesiones" role="tab" id="tab-sesiones-trigger">
                     <i class="fas fa-stethoscope mr-1"></i> {{ translate('Sesiones') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#tab-evaluacion" role="tab" id="tab-evaluacion-trigger">
+                    <i class="fas fa-clipboard-list mr-1"></i> {{ translate('Evaluación') }}
                 </a>
             </li>
         </ul>
@@ -386,6 +1097,36 @@
 
     </div> {{-- /tab-sesiones --}}
 
+    {{-- =========================== TAB EVALUACIÓN =========================== --}}
+    <div class="tab-pane fade" id="tab-evaluacion" role="tabpanel">
+
+        <div class="eval-header">
+            <div>
+                <h5>{{ translate('Evaluación unificada') }}</h5>
+                <small class="text-muted" id="eval-summary">{{ translate('Cargando...') }}</small>
+            </div>
+            <div class="eval-filter">
+                <label for="evalFichaFilter">{{ translate('Caso') }}:</label>
+                <select id="evalFichaFilter" class="form-control form-control-sm">
+                    <option value="all">{{ translate('Todas las evaluaciones') }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="eval-sections">
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                {{ translate('Cargando evaluaciones...') }}
+            </div>
+        </div>
+
+        <div class="text-muted mt-3" style="font-size:.78rem;">
+            <i class="fas fa-info-circle"></i>
+            {{ translate('Las evaluaciones se cargan desde la bitácora clínica. Al crear una nueva desde el botón "Agregar", quedará vinculada al caso seleccionado.') }}
+        </div>
+
+    </div> {{-- /tab-evaluacion --}}
+
     </div> {{-- /tab-content --}}
 
 </div>
@@ -490,6 +1231,40 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body" id="modalVerNotaBody" style="max-height:60vh; overflow-y:auto;"></div>
+        </div>
+    </div>
+</div>
+
+{{-- ============== Fase 3b — Modal genérico de evaluación inline ============== --}}
+<div class="modal fade inline-eval-modal" id="modalEvalInline" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form id="formEvalInline" autocomplete="off">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEvalInlineTitle">{{ translate('Nueva evaluación') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" style="max-height:75vh; overflow-y:auto;">
+                    <input type="hidden" name="patient_id" id="evalInline_patient_id" value="{{ $patient->id }}">
+
+                    <div class="ficha-context" id="evalInlineFichaContext">
+                        <i class="fas fa-folder-open mr-1"></i>
+                        <strong>{{ translate('Caso clínico') }}:</strong>
+                        <span id="evalInlineFichaLabel">—</span>
+                        <select id="evalInline_ficha_id" name="ficha_id" class="form-control form-control-sm ml-2" style="display:inline-block; width:auto; vertical-align:middle;"></select>
+                    </div>
+
+                    <div class="form-row-grid" id="evalInlineFields">
+                        {{-- Inyectado por JS --}}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cerrar') }}</button>
+                    <button type="submit" class="btn btn-success btn-sm" id="btnEvalInlineSave">
+                        <i class="fas fa-save mr-1"></i> {{ translate('Guardar evaluación') }}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

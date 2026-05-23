@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/DES/Stars/**)",
+      "Bash(php -l app/Http/Controllers/Patient/PatientController.php)",
+      "Bash(php -l app/Http/Controllers/FormFisios/UtilityFisioController.php)",
+      "Bash(php -l app/Models/FormFisios/UtilityFisio.php)",
+      "Bash(php -l database/migrations/2026_05_19_120000_add_ficha_id_to_fis_historys.php)",
+      "Bash(node -e \"require\\('fs'\\).readFileSync\\('public/js/custom/patient/expediente.js','utf8'\\); console.log\\('JS file is readable'\\);\")"
+    ]
+  }
+}

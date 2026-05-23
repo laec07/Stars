@@ -72,26 +72,39 @@ class FisCheqmusController extends Controller
 
         try {
 
-        $validator = Validator::make($data->all(), [ 
-            'patient_id' => 'required|string',
+            $validator = Validator::make($data->all(), [
+                'patient_id' => 'required',
+            ]);
 
-        ]);
-            if (!$validator->fails()) {
-              $form = FisCheqmus::create($data->only(
-                    (new FisCheqmus())->getFillable()
-                ));
+            if ($validator->fails()) {
+                return $this->apiResponse(['status' => '422', 'data' => $validator->errors()], 422);
+            }
+
+            $form = FisCheqmus::create($data->only(
+                (new FisCheqmus())->getFillable()
+            ));
 
             // Crear entrada en la bitácora laestrada
             $tabla='fis_cheqmus';
             $patientId = $data->input('patient_id');
-           UtilityFisioController::logEntry($patientId, $tabla, $form->Id,1);
+            UtilityFisioController::logEntry($patientId, $tabla, $form->Id, 1);
 
-                return $this->apiResponse(['status' => '1', 'data' => ''], 200);
-            }
+            return $this->apiResponse(['status' => '1', 'data' => ''], 200);
 
-            
         } catch (Exception $qx) {
-            return $this->apiResponse(['status' => '403', 'data' => $qx->getMessage()], 400);
+            \Log::error('cheqmus-create exception', [
+                'msg'  => $qx->getMessage(),
+                'file' => $qx->getFile(),
+                'line' => $qx->getLine(),
+            ]);
+            return $this->apiResponse([
+                'status' => '403',
+                'data'   => $qx->getMessage(),
+                'debug'  => [
+                    'file' => basename($qx->getFile()),
+                    'line' => $qx->getLine(),
+                ],
+            ], 400);
         }
     }
 

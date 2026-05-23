@@ -16,14 +16,27 @@ class UtilityFisioController extends Controller
      */
     public function createLog(array $data): UtilityFisio
     {
+        // Fase 3 — auto-capturar ficha_id del request actual si el caller
+        // no lo proporcionó explícitamente. Esto permite que cualquier
+        // formulario que reciba `ficha_id` en su payload quede vinculado
+        // a su ficha clínica sin modificar los 11 form controllers.
+        $fichaId = $data['ficha_id']
+            ?? request()->input('ficha_id', null);
+
         $payload = array_merge([
-            'patient_id' => $data['patient_id'] ?? null,
+            'patient_id'    => $data['patient_id'] ?? null,
+            'ficha_id'      => $fichaId,
             'id_formulario' => $data['id_formulario'] ?? null,
-            'tabla_form' => $data['tabla_form'] ?? null,
-            'status'     => $data['status'] ?? 1,
-            'fecha'      => $data['fecha'] ?? now()->format('Y-m-d'),
-            'user_id'    => $data['user_id'] ?? Auth::id(),
+            'tabla_form'    => $data['tabla_form'] ?? null,
+            'status'        => $data['status'] ?? 1,
+            'fecha'         => $data['fecha'] ?? now()->format('Y-m-d'),
+            'user_id'       => $data['user_id'] ?? Auth::id(),
         ], $data);
+
+        // Si ficha_id es vacío (0 o ""), normalizar a null
+        if (empty($payload['ficha_id'])) {
+            $payload['ficha_id'] = null;
+        }
 
         return UtilityFisio::create($payload);
     }
