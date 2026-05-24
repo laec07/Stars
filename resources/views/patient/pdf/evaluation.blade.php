@@ -420,10 +420,22 @@
                         @if($url)
                             <td style="width:25%; text-align:center; padding:6pt;">
                                 @php
-                                    // SOLO filesystem path — nunca URL HTTP (cuelga mPDF en artisan serve)
-                                    $imgPath = public_path(ltrim($url, '/'));
+                                    // Las fotos pueden vivir en dos lugares según cómo se subieron:
+                                    //   - public/uploadfiles/...   (UtilityRepository::saveFile)
+                                    //   - storage/app/public/...   (disco "public" de Laravel)
+                                    // Probamos ambas ubicaciones del filesystem (mPDF lee local).
+                                    $clean = ltrim($url, '/');
+                                    $candidates = [
+                                        public_path($clean),                              // public/uploadfiles/xxx.jpg
+                                        storage_path('app/public/' . $clean),             // storage/app/public/evalineps/xxx.jpg
+                                        public_path('storage/' . $clean),                 // via symlink (mismo destino)
+                                    ];
+                                    $imgPath = null;
+                                    foreach ($candidates as $c) {
+                                        if (file_exists($c)) { $imgPath = $c; break; }
+                                    }
                                 @endphp
-                                @if(file_exists($imgPath))
+                                @if($imgPath)
                                     <img src="{{ $imgPath }}" style="max-width:110pt; max-height:140pt;">
                                 @else
                                     <span class="text-muted">[imagen no disponible]</span>

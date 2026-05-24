@@ -130,19 +130,29 @@ class FisEvAlinepsController extends Controller
             }
 
             $fillableData = $this->cleanRequestData($request);
-            // Actualizar fotos
+            // Actualizar fotos — usar el MISMO método que createformEvalineps
+            // (UtilityRepository::saveFile → public/uploadfiles/) para que las URLs
+            // queden consistentes y servibles sin requerir `php artisan storage:link`.
             for ($i = 1; $i <= 4; $i++) {
-            if ($request->hasFile("foto$i")) {
-                // Opcional: eliminar la foto antigua
-                if ($evalineps->{"foto$i"}) {
-                    Storage::disk('public')->delete($evalineps->{"foto$i"});
+                if ($request->hasFile("foto$i")) {
+                    // Eliminar la foto antigua si existía físicamente en public/
+                    $old = $evalineps->{"foto$i"};
+                    if ($old) {
+                        $oldPath = public_path(ltrim($old, '/'));
+                        if (file_exists($oldPath)) {
+                            @unlink($oldPath);
+                        } else {
+                            // Fallback: limpiar también del disco "public" por compatibilidad con registros antiguos
+                            try { Storage::disk('public')->delete($old); } catch (\Throwable $ex) {}
+                        }
+                    }
+                    $file = $request->file("foto$i");
+                    $fillableData["foto$i"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg']);
+                } else if ($request->has("foto{$i}_old")) {
+                    // Mantener foto antigua si no sube nueva
+                    $fillableData["foto$i"] = $request->input("foto{$i}_old");
                 }
-                $fillableData["foto$i"] = $request->file("foto$i")->store('evalineps', 'public');
-            } else if ($request->has("foto{$i}_old")) {
-                // Mantener foto antigua si no sube nueva
-                $fillableData["foto$i"] = $request->input("foto{$i}_old");
             }
-        }
             $evalineps->update($fillableData);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro actualizado correctamente.'], 200);

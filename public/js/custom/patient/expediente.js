@@ -581,6 +581,32 @@
             return s;
         },
 
+        /**
+         * Resuelve la URL pública de un archivo subido según el método del controller.
+         *   - 'http://...' → tal cual
+         *   - '/anything'  → tal cual (ya absoluta desde la raíz)
+         *   - 'uploadfiles/foo.jpg'    → '/uploadfiles/foo.jpg' (vive en public/)
+         *   - 'evalineps/foo.jpg' o cualquier otro disco "public" de Laravel
+         *                              → '/storage/evalineps/foo.jpg' (requiere storage:link)
+         *
+         * Convención: si el primer segmento es 'uploadfiles', no prefija storage.
+         * Para todo lo demás se asume que es path relativo del disco "public" y
+         * se prefija /storage/. Funciona en dev y producción una vez ejecutado
+         * `php artisan storage:link` en el servidor.
+         */
+        ResolveAssetUrl: function (url) {
+            if (!url) return '';
+            url = String(url).trim();
+            if (/^https?:\/\//i.test(url)) return url;
+            if (url.charAt(0) === '/') return url;
+            // public/uploadfiles/ ya es servible directamente desde la raíz
+            if (url.indexOf('uploadfiles/') === 0 || url.indexOf('img/') === 0) {
+                return '/' + url;
+            }
+            // resto: path del disco "public" → ir vía /storage/
+            return '/storage/' + url;
+        },
+
         // Decodifica entidades HTML en cualquier valor (string, array, objeto).
         // Útil para limpiar de una sola pasada las respuestas del backend que
         // pasaron por el middleware xssProtection.
@@ -2291,17 +2317,13 @@
                         if (!url) return;
                         var $slot = $('#formEvalInline .fu-slot[data-fu-slot="' + s.name + '"]');
                         if (!$slot.length) return;
-                        // Los archivos viven en public/uploadfiles/, servidos directamente
-                        // desde la raíz (sin /storage/). Construir la URL correcta:
-                        //   - URL absoluta (http/https) → tal cual
-                        //   - Comienza con / → tal cual
-                        //   - 'uploadfiles/foo.jpg' o 'foo.jpg' → anteponer '/'
-                        var imgSrc;
-                        if (/^https?:/i.test(url) || url.charAt(0) === '/') {
-                            imgSrc = url;
-                        } else {
-                            imgSrc = '/' + url;
-                        }
+                        // Resolver URL del archivo. En este proyecto coexisten dos
+                        // ubicaciones según el método del controller:
+                        //   - public/uploadfiles/...           → path en DB: 'uploadfiles/xxx.jpg'
+                        //   - storage/app/public/{disk}/...    → path en DB: '{disk}/xxx.jpg' (ej. 'evalineps/...')
+                        // Para los segundos se requiere `php artisan storage:link`
+                        // que crea public/storage → storage/app/public.
+                        var imgSrc = Manager.ResolveAssetUrl(url);
                         $slot.find('[data-fu-preview]')
                             .html('<img src="' + imgSrc + '" alt="foto">')
                             .addClass('has-image');
