@@ -528,6 +528,209 @@ class PatientController extends Controller
     }
 
     /**
+     * Fase 6a — Genera y descarga PDF de una evaluación individual.
+     * El PDF tiene hoja membretada con logo Healing Hands, datos del paciente,
+     * datos de la ficha clínica asociada y los campos del registro.
+     *
+     * @param string $tabla   ej. 'fis_goniometrias'
+     * @param int    $id      id del registro
+     */
+    public function downloadEvaluationPdf($tabla, $id)
+    {
+        try {
+            $modelClass = $this->resolveEvaluationModel($tabla);
+            if (! $modelClass) {
+                abort(404, 'Tabla de evaluación no reconocida');
+            }
+
+            $record = $modelClass::find($id);
+            if (! $record) {
+                abort(404, 'Registro no encontrado');
+            }
+            if (isset($record->status) && (int) $record->status === 0) {
+                abort(404, 'Registro inactivo');
+            }
+
+            // Paciente
+            $patient = \App\Models\Patient\CmnPatient::find($record->patient_id);
+            if (! $patient) {
+                abort(404, 'Paciente no encontrado');
+            }
+
+            // Ficha clínica asociada (si existe)
+            $ficha = null;
+            if (\Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id')) {
+                $historyRow = \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('tabla_form', $tabla)
+                    ->where('id_formulario', $id)
+                    ->where('status', 1)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                if ($historyRow && $historyRow->ficha_id) {
+                    $ficha = \Illuminate\Support\Facades\DB::table('fis_fichas')
+                        ->where('id', $historyRow->ficha_id)
+                        ->first();
+                }
+            }
+
+            // Usuario que realizó la evaluación
+            $user = \App\Models\User::find($record->user_id);
+
+            // Información de la empresa para el header/footer (si existe)
+            $company = class_exists(\App\Models\Settings\CmnCompany::class)
+                ? \App\Models\Settings\CmnCompany::first()
+                : null;
+
+            // mPDF setup
+            $mpdf = new \Mpdf\Mpdf([
+                'mode'                 => 'utf-8',
+                'format'               => 'A4',
+                'orientation'          => 'P',
+                'default_font'         => 'dejavusans',
+                'margin_left'          => 12,
+                'margin_right'         => 12,
+                'margin_top'           => 30,
+                'margin_bottom'        => 22,
+                'margin_header'        => 8,
+                'margin_footer'        => 8,
+            ]);
+
+            $title = \App\Support\EvaluationMeta::displayName($tabla);
+            $mpdf->SetTitle($title . ' - ' . $patient->full_name);
+            $mpdf->SetAuthor('Healing Hands');
+            $mpdf->SetCreator('Healing Hands - Expediente Clínico');
+
+            $html = view('patient.pdf.evaluation', [
+                'tabla'   => $tabla,
+                'record'  => $record,
+                'patient' => $patient,
+                'ficha'   => $ficha,
+                'user'    => $user,
+                'company' => $company,
+                'sections'=> \App\Support\EvaluationMeta::sections($tabla),
+                'title'   => $title,
+            ])->render();
+
+            $mpdf->WriteHTML($html);
+
+            $filename = $tabla . '_' . $id . '_' . now()->format('Ymd_His') . '.pdf';
+            // 'I' = inline (abre en navegador), 'D' = forzar descarga
+            $mpdf->Output($filename, 'I');
+            exit;
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('downloadEvaluationPdf: ' . $e->getMessage());
+            abort(500, 'Error generando PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Fase 6b — Genera PDF del expediente clínico completo de un paciente.
+     * Incluye: datos del paciente + fichas clínicas + todas las evaluaciones activas.
+     */
+    public function downloadPatientExpedientePdf($patientId)
+    {
+        try {
+            $patient = \App\Models\Patient\CmnPatient::find($patientId);
+            if (! $patient) {
+                abort(404, 'Paciente no encontrado');
+            }
+
+            // Fichas clínicas del paciente
+            $fichas = \Illuminate\Support\Facades\DB::table('fis_fichas')
+                ->where('patient_id', $patientId)
+                ->where('status', 1)
+                ->orderBy('fecha', 'desc')
+                ->get();
+
+            // Mapa de ficha_id por historial (para asociar evaluaciones a sus fichas)
+            $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+            $fichaMap = [];
+            if ($hasFichaIdColumn) {
+                $hist = \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('patient_id', $patientId)
+                    ->where('status', 1)
+                    ->select('tabla_form', 'id_formulario', 'ficha_id')
+                    ->get();
+                foreach ($hist as $h) {
+                    $fichaMap[$h->tabla_form . ':' . $h->id_formulario] = $h->ficha_id;
+                }
+            }
+
+            // Cargar evaluaciones de cada tabla (las 11)
+            $allTables = [
+                'fis_evdolors', 'fis_cheqs', 'fis_evpiels', 'fis_antropometrias',
+                'fis_antropoms', 'fis_goniometrias', 'fis_cheqmus', 'fis_sensitivitys',
+                'fis_evalineps', 'fis_electros', 'fis_ultras',
+            ];
+            $evaluations = [];
+            foreach ($allTables as $tabla) {
+                $modelClass = $this->resolveEvaluationModel($tabla);
+                if (! $modelClass) continue;
+                $records = $modelClass::where('patient_id', $patientId)
+                    ->where('status', 1)
+                    ->orderBy('fecha', 'desc')
+                    ->get();
+                if ($records->count() > 0) {
+                    $evaluations[$tabla] = $records;
+                }
+            }
+
+            // Sesiones (fis_seguimientos)
+            $sesiones = collect();
+            if (\Illuminate\Support\Facades\Schema::hasTable('fis_seguimientos')) {
+                $sesiones = \Illuminate\Support\Facades\DB::table('fis_seguimientos')
+                    ->where('patient_id', $patientId)
+                    ->where('status', 1)
+                    ->orderBy('fecha', 'desc')
+                    ->limit(20)        // últimas 20 para que el PDF no sea gigante
+                    ->get();
+            }
+
+            // Empresa
+            $company = class_exists(\App\Models\Settings\CmnCompany::class)
+                ? \App\Models\Settings\CmnCompany::first()
+                : null;
+
+            $mpdf = new \Mpdf\Mpdf([
+                'mode'                 => 'utf-8',
+                'format'               => 'A4',
+                'orientation'          => 'P',
+                'default_font'         => 'dejavusans',
+                'margin_left'          => 12,
+                'margin_right'         => 12,
+                'margin_top'           => 30,
+                'margin_bottom'        => 22,
+                'margin_header'        => 8,
+                'margin_footer'        => 8,
+            ]);
+
+            $mpdf->SetTitle('Expediente clínico — ' . $patient->full_name);
+            $mpdf->SetAuthor('Healing Hands');
+            $mpdf->SetCreator('Healing Hands - Expediente Clínico');
+
+            $html = view('patient.pdf.expediente', [
+                'patient'     => $patient,
+                'fichas'      => $fichas,
+                'evaluations' => $evaluations,
+                'fichaMap'    => $fichaMap,
+                'sesiones'    => $sesiones,
+                'company'     => $company,
+            ])->render();
+
+            $mpdf->WriteHTML($html);
+
+            $filename = 'expediente_' . $patient->id . '_' . now()->format('Ymd_His') . '.pdf';
+            $mpdf->Output($filename, 'I');
+            exit;
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('downloadPatientExpedientePdf: ' . $e->getMessage());
+            abort(500, 'Error generando expediente PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Whitelist tabla_form -> clase de modelo.
      * Sólo las 11 evaluaciones que tienen config inline son editables.
      */

@@ -400,6 +400,12 @@ Route::group(['middleware' => 'xssProtection'], function () {
             // Fase 4c - Historial completo de un tipo de evaluación para un paciente (para comparar)
             Route::get('evaluation-history/{tabla}/{patientId}', [\App\Http\Controllers\Patient\PatientController::class, 'getEvaluationHistory'])->name('patient.evaluacion.history');
 
+            // Fase 6a - Descarga PDF de una evaluación individual
+            Route::get('evaluation-pdf/{tabla}/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'downloadEvaluationPdf'])->name('patient.evaluacion.pdf');
+
+            // Fase 6b - Descarga PDF del expediente clínico completo
+            Route::get('expediente-pdf/{patientId}', [\App\Http\Controllers\Patient\PatientController::class, 'downloadPatientExpedientePdf'])->name('patient.expediente.pdf');
+
         });
 
        

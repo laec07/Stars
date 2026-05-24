@@ -226,7 +226,7 @@
         color:#dc3545; cursor:pointer;
         border-radius:.3rem; padding:.2rem .5rem;
         font-size:.75rem; line-height:1;
-        margin-right:.5rem;
+        margin-right:.35rem;
         min-width:36px; min-height:32px;
         display:inline-flex; align-items:center; justify-content:center;
         transition:background .15s ease, color .15s ease;
@@ -235,6 +235,24 @@
         background:#dc3545; color:#fff;
     }
     .eval-section-body .eval-row-delete i { font-size:.85rem; }
+
+    /* Fase 6a — botón Descargar PDF (link estilizado como botón) */
+    .eval-section-body .eval-row-pdf {
+        background:transparent; border:1px solid #6c757d;
+        color:#495057;
+        border-radius:.3rem; padding:.2rem .5rem;
+        font-size:.75rem; line-height:1;
+        margin-right:.5rem;
+        min-width:36px; min-height:32px;
+        display:inline-flex; align-items:center; justify-content:center;
+        transition:background .15s ease, color .15s ease;
+        text-decoration:none !important;
+    }
+    .eval-section-body .eval-row-pdf:hover {
+        background:#495057; color:#fff;
+        text-decoration:none !important;
+    }
+    .eval-section-body .eval-row-pdf i { font-size:.85rem; }
 
     .eval-add-row {
         margin-top:.4rem; padding-top:.5rem;
@@ -1084,6 +1102,12 @@
                         </a>
                     @endif
                 </div>
+            </div>
+            {{-- Fase 6b — Botón Descargar expediente completo en PDF --}}
+            <div class="ml-auto" style="flex-shrink:0;">
+                <a href="{{ url('expediente-pdf/' . $patient->id) }}" target="_blank" class="btn btn-primary btn-sm" title="Descargar expediente clínico en PDF">
+                    <i class="fas fa-file-pdf mr-1"></i> {{ translate('Descargar expediente') }}
+                </a>
             </div>
         </div>
     </div>

@@ -1038,6 +1038,7 @@
                     // Fase 4a — botón Editar inline (solo si el tipo tiene config declarativa)
                     var editBtn = '';
                     var delBtn  = '';
+                    var pdfBtn  = '';
                     if (InlineFormManager.HasConfigFor(key) && r.id_formulario) {
                         editBtn =
                             '<button type="button" class="eval-row-edit" title="Editar inline" ' +
@@ -1054,6 +1055,18 @@
                                 ' data-label="' + Manager.EscapeHtml(meta.label) + '">' +
                                 '<i class="fas fa-trash-alt"></i>' +
                             '</button>';
+                        // Fase 6a — botón Descargar PDF (abre en nueva pestaña).
+                        // URL absoluta vía JsManager.BaseUrl() porque la página actual
+                        // es /patient-summary/{id} y un href relativo se resolvería como
+                        // /patient-summary/evaluation-pdf/... → 404.
+                        var pdfUrl = JsManager.BaseUrl() + '/evaluation-pdf/' +
+                                     encodeURIComponent(key) + '/' +
+                                     encodeURIComponent(r.id_formulario);
+                        pdfBtn =
+                            '<a class="eval-row-pdf" title="Descargar PDF" target="_blank"' +
+                                ' href="' + pdfUrl + '">' +
+                                '<i class="fas fa-file-pdf"></i>' +
+                            '</a>';
                     }
                     return (
                         '<div class="eval-row">' +
@@ -1062,6 +1075,7 @@
                             '<span class="eval-row-user">' + user + '</span>' +
                             editBtn +
                             delBtn +
+                            pdfBtn +
                             viewLink +
                         '</div>'
                     );
