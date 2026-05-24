@@ -6,7 +6,12 @@
     <meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
     <meta name="_token" content="{{ csrf_token() }}" url="{{ url('/') }}" />
     <title>{{$appearance->app_name}} | Admin</title>
+    {{-- Favicon: prioriza el configurado desde admin; los de marca van como fallback estándar --}}
     <link rel="shortcut icon" href="{{url($appearance->icon)}}">
+    <link rel="icon" href="{{ dsAsset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ dsAsset('img/brand/favicon-32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ dsAsset('img/brand/favicon-16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ dsAsset('img/brand/favicon-180.png') }}">
 
     <!-- Fonts and icons -->
     <script src="{{ dsAsset('js/lib/assets/js/plugin/webfont/webfont.min.js') }}"></script>
