@@ -270,9 +270,19 @@ class PatientController extends Controller
 
         $casoActivo = $casoParam;
 
+        // Fase Reorg-A.2 — Si hay caso seleccionado, cargar la ficha COMPLETA
+        // para mostrarla expandida en el tab Resumen.
+        $fichaCompleta = null;
+        if (is_numeric($casoActivo)) {
+            $fichaCompleta = \App\Models\FormFisios\Ficha::where('id', (int) $casoActivo)
+                ->where('patient_id', $id)
+                ->where('status', 1)
+                ->first();
+        }
+
         return view('patient.summary', compact(
             'patient', 'age', 'timeline', 'formMeta', 'counts', 'totalEvents', 'lastEvent',
-            'fichas', 'casoActivo'
+            'fichas', 'casoActivo', 'fichaCompleta'
         ));
     }
 
@@ -695,9 +705,18 @@ class PatientController extends Controller
     /**
      * Fase 6b — Genera PDF del expediente clínico completo de un paciente.
      * Incluye: datos del paciente + fichas clínicas + todas las evaluaciones activas.
+     *
+     * Reorg-A.2 — Si ?caso=X, renderiza el reporte focalizado de ese caso
+     * con la ficha clínica COMPLETA + sus evaluaciones + sus sesiones.
      */
     public function downloadPatientExpedientePdf($patientId)
     {
+        // Si hay caso seleccionado, delegar al reporte focalizado
+        $caso = request('caso', 'all');
+        if ($caso !== 'all' && $caso !== '' && is_numeric($caso)) {
+            return $this->downloadCaseReportPdf($patientId, (int) $caso);
+        }
+
         try {
             $patient = \App\Models\Patient\CmnPatient::find($patientId);
             if (! $patient) {
@@ -937,6 +956,99 @@ class PatientController extends Controller
                 'message' => 'Error cargando evolución',
                 'debug'   => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Reorg-A.2 — Reporte focalizado de UN caso clínico:
+     * ficha completa + sus evaluaciones + sus sesiones.
+     */
+    public function downloadCaseReportPdf($patientId, $fichaId)
+    {
+        try {
+            $patient = \App\Models\Patient\CmnPatient::find($patientId);
+            if (! $patient) abort(404, 'Paciente no encontrado');
+
+            $ficha = \App\Models\FormFisios\Ficha::where('id', $fichaId)
+                ->where('patient_id', $patientId)
+                ->where('status', 1)
+                ->first();
+            if (! $ficha) abort(404, 'Caso clínico no encontrado');
+
+            // Evaluaciones vinculadas a esta ficha (vía fis_historys)
+            $evaluations = [];
+            $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+            if ($hasFichaIdColumn) {
+                $historyByTable = \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('patient_id', $patientId)
+                    ->where('ficha_id', $fichaId)
+                    ->where('status', 1)
+                    ->whereNotIn('tabla_form', ['fis_fichas'])
+                    ->select('tabla_form', 'id_formulario')
+                    ->get()
+                    ->groupBy('tabla_form');
+
+                foreach ($historyByTable as $tabla => $rows) {
+                    $modelClass = $this->resolveEvaluationModel($tabla);
+                    if (!$modelClass) continue;
+                    $ids = $rows->pluck('id_formulario')->all();
+                    if (empty($ids)) continue;
+                    $records = $modelClass::whereIn($modelClass::make()->getKeyName(), $ids)
+                        ->where('status', 1)
+                        ->orderBy('fecha', 'asc')
+                        ->get();
+                    if ($records->count() > 0) {
+                        $evaluations[$tabla] = $records;
+                    }
+                }
+            }
+
+            // Sesiones de este caso
+            $sesiones = \Illuminate\Support\Facades\DB::table('fis_seguimientos')
+                ->where('patient_id', $patientId)
+                ->where('ficha_id', $fichaId)
+                ->where(function ($q) { $q->where('status', 1)->orWhereNull('status'); })
+                ->orderBy('fecha', 'asc')
+                ->get();
+
+            $company = class_exists(\App\Models\Settings\CmnCompany::class)
+                ? \App\Models\Settings\CmnCompany::first()
+                : null;
+
+            $mpdf = new \Mpdf\Mpdf([
+                'mode'          => 'utf-8',
+                'format'        => 'A4',
+                'orientation'   => 'P',
+                'default_font'  => 'dejavusans',
+                'margin_left'   => 12,
+                'margin_right'  => 12,
+                'margin_top'    => 30,
+                'margin_bottom' => 22,
+                'margin_header' => 8,
+                'margin_footer' => 8,
+            ]);
+
+            $caseTitle = trim((string) $ficha->diagnostico) ?: ('Caso #' . $ficha->id);
+            $mpdf->SetTitle('Reporte clínico — ' . $caseTitle . ' — ' . $patient->full_name);
+            $mpdf->SetAuthor('Healing Hands');
+
+            $html = view('patient.pdf.case-report', [
+                'patient'     => $patient,
+                'ficha'       => $ficha,
+                'evaluations' => $evaluations,
+                'sesiones'    => $sesiones,
+                'company'     => $company,
+                'caseTitle'   => $caseTitle,
+            ])->render();
+
+            $mpdf->WriteHTML($html);
+            $filename = 'caso_' . $ficha->id . '_' . now()->format('Ymd_His') . '.pdf';
+            $mpdf->Output($filename, 'I');
+            exit;
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('downloadCaseReportPdf: ' . $e->getMessage());
+            abort(500, 'Error generando reporte: ' . $e->getMessage());
         }
     }
 

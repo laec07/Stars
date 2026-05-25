@@ -135,6 +135,83 @@
 
     window.CaseManager = CaseManager;
 
+    // ========================================================================
+    // Quick-add ficha clínica — NewCaseManager
+    // Abre el modal, recoge los 27 campos del formulario y los envía a
+    // ficha-create. Al éxito, recarga la página con la nueva ficha pre-seleccionada.
+    // ========================================================================
+    var NewCaseManager = {
+
+        Open: function () {
+            // Reset del formulario
+            var $f = $('#formNewCase')[0];
+            if ($f) $f.reset();
+            // Cerrar todos los paneles del acordeón
+            $('#newCaseAccordion .collapse').removeClass('show');
+            // Focus en el primer campo importante
+            setTimeout(function () { $('#formNewCase [name="motivo_consulta"]').focus(); }, 200);
+            $('#modalNewCase').modal('show');
+        },
+
+        Save: function () {
+            var $form = $('#formNewCase');
+            var $btn  = $('#btnSaveNewCase');
+
+            // Validación mínima: motivo de consulta no vacío
+            var motivo = ($form.find('[name="motivo_consulta"]').val() || '').trim();
+            var diag   = ($form.find('[name="diagnostico"]').val() || '').trim();
+            if (!motivo && !diag) {
+                if (window.Message) Message.Notification('warning',
+                    'Llena al menos el motivo de consulta o el diagnóstico para crear la ficha.');
+                $form.find('[name="motivo_consulta"]').focus();
+                return;
+            }
+
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Creando…');
+            JsManager.StartProcessBar();
+
+            // Recolectar todos los campos del form (serialize maneja checkbox + hidden de 0/1)
+            var payload = $form.serialize();
+
+            $.ajax({
+                type: 'POST',
+                url:  JsManager.BaseUrl() + '/ficha-create',
+                data: payload,
+                dataType: 'json',
+                success: function (json) {
+                    JsManager.EndProcessBar();
+                    if (json && (json.status == '1' || json.status === 1)) {
+                        if (window.Message) Message.Notification('success', 'Ficha clínica creada correctamente.');
+                        $('#modalNewCase').modal('hide');
+                        // Recargar el expediente — el backend ya verá la nueva ficha en el selector
+                        // y la podemos pre-seleccionar si la respuesta nos dio el id.
+                        var newId = (json.data && json.data.id) || (json.ficha_id) || null;
+                        var url = window.location.pathname;
+                        if (newId) url += '?caso=' + encodeURIComponent(newId);
+                        setTimeout(function () { window.location.href = url; }, 600);
+                    } else {
+                        $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Crear ficha clínica');
+                        if (window.Message) Message.Notification('error', 'No se pudo crear la ficha.');
+                    }
+                },
+                error: function (xhr) {
+                    JsManager.EndProcessBar();
+                    $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Crear ficha clínica');
+                    console.error('Create ficha failed', xhr);
+                    var msg = 'Error al crear la ficha clínica.';
+                    try {
+                        var resp = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
+                        if (resp && resp.data && typeof resp.data === 'string') msg += ' ' + resp.data;
+                        if (resp && resp.message) msg += ' ' + resp.message;
+                    } catch (e) {}
+                    if (window.Message) Message.Notification('error', msg);
+                }
+            });
+        }
+    };
+
+    window.NewCaseManager = NewCaseManager;
+
     $(document).ready(function () {
 
         // ====== Fase Reorg-A — Case selector ======
@@ -144,6 +221,15 @@
         $('#caseSelector').on('change', function () {
             var newCase = $(this).val();
             CaseManager.Set(newCase);
+        });
+
+        // ====== Quick-add ficha clínica ======
+        $('#btnNewCase').on('click', function () {
+            NewCaseManager.Open();
+        });
+        $('#formNewCase').on('submit', function (e) {
+            e.preventDefault();
+            NewCaseManager.Save();
         });
 
         // Lazy-load al abrir la pestaña Sesiones por primera vez

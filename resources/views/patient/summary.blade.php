@@ -79,6 +79,120 @@
     .bg-c-secondary { background:#6861ce; }
 
     /* Fase 2 - Tabs y sesiones */
+    /* ====== Reorg-A.2 — Ficha clínica completa (inline en tab Resumen) ====== */
+    .ficha-completa-card {
+        background:#fff;
+        border:1px solid rgba(159, 147, 231, .35);
+        border-left:5px solid var(--brand-primary, #9F93E7);
+        border-radius:.5rem;
+        margin-bottom:1.2rem;
+        box-shadow: var(--brand-shadow-sm);
+        overflow:hidden;
+    }
+    .ficha-completa-header {
+        display:flex; align-items:center; gap:.85rem;
+        padding:.85rem 1.1rem;
+        cursor:pointer;
+        background: linear-gradient(135deg, rgba(159, 147, 231, .06), rgba(199, 217, 229, .12));
+        transition: background .15s ease;
+        user-select: none;
+    }
+    .ficha-completa-header:hover { background: linear-gradient(135deg, rgba(159, 147, 231, .12), rgba(199, 217, 229, .2)); }
+    .ficha-completa-icon {
+        width:42px; height:42px; border-radius:.4rem;
+        background: var(--brand-primary, #9F93E7);
+        color:#fff;
+        display:flex; align-items:center; justify-content:center;
+        font-size:1.1rem;
+        flex-shrink:0;
+    }
+    .ficha-completa-title-block { flex:1; min-width:0; }
+    .ficha-completa-title {
+        font-weight:700; font-size:1rem;
+        color: var(--brand-text, #2F4157);
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .ficha-completa-meta {
+        font-size:.75rem; color:var(--brand-text-muted, #5a6c80);
+        margin-top:.1rem;
+    }
+    .ficha-completa-toggle-hint {
+        font-size:.78rem; font-weight:600;
+        color:var(--brand-primary-darker, #5e4fbf);
+        background:rgba(159, 147, 231, .12);
+        padding:.3rem .7rem;
+        border-radius:1rem;
+        white-space:nowrap;
+        flex-shrink:0;
+    }
+    .ficha-completa-header[aria-expanded="true"] .ficha-completa-toggle-hint i,
+    .ficha-completa-header:not(.collapsed) .ficha-completa-toggle-hint i {
+        transform: rotate(180deg);
+    }
+    .ficha-completa-toggle-hint i { transition: transform .2s ease; }
+
+    .ficha-completa-body {
+        padding: 0 1.1rem 1rem 1.1rem;
+        border-top:1px solid rgba(159, 147, 231, .15);
+    }
+    .ficha-block {
+        padding:.85rem 0;
+        border-bottom:1px dashed #f1f3f5;
+    }
+    .ficha-block:last-child { border-bottom:none; }
+    .ficha-block-title {
+        font-weight:700; font-size:.78rem;
+        color:var(--brand-primary-darker, #5e4fbf);
+        text-transform:uppercase; letter-spacing:.04em;
+        margin-bottom:.5rem;
+    }
+    .ficha-block-title i { color:var(--brand-primary, #9F93E7); }
+    .ficha-block-text {
+        color:var(--brand-text, #2F4157);
+        font-size:.92rem;
+        line-height:1.45;
+        white-space:pre-wrap;
+    }
+    .ficha-field {
+        display:flex; flex-wrap:wrap; gap:.35rem .65rem;
+        padding:.3rem 0;
+        font-size:.88rem;
+    }
+    .ficha-field-label {
+        font-weight:600;
+        color:var(--brand-text-muted, #5a6c80);
+        min-width:140px;
+        flex-shrink:0;
+    }
+    .ficha-field-value {
+        color:var(--brand-text, #2F4157);
+        flex:1;
+        white-space:pre-wrap;
+    }
+    .ficha-modalities-list { display:inline-flex; flex-wrap:wrap; gap:.3rem; }
+    .ficha-modality-tag {
+        background:rgba(159, 147, 231, .15);
+        color:var(--brand-primary-darker, #5e4fbf);
+        padding:.15rem .55rem;
+        border-radius:1rem;
+        font-size:.78rem;
+        font-weight:600;
+    }
+    .ficha-completa-actions {
+        margin-top:.85rem;
+        padding-top:.65rem;
+        border-top:1px solid #f1f3f5;
+        display:flex; gap:.45rem;
+        flex-wrap:wrap;
+    }
+
+    @media (max-width: 768px) {
+        .ficha-completa-header { flex-wrap:wrap; }
+        .ficha-completa-toggle-hint { font-size:.7rem; padding:.2rem .5rem; }
+        .ficha-field { flex-direction:column; gap:.15rem; }
+        .ficha-field-label { min-width:auto; }
+    }
+
     /* ====== Fase Reorg-A — Case selector global ====== */
     .case-selector {
         background: linear-gradient(135deg, rgba(159, 147, 231, .06) 0%, rgba(199, 217, 229, .15) 100%);
@@ -128,11 +242,175 @@
         border: 1px solid #e9ecef;
         white-space: nowrap;
     }
+    .case-selector-empty {
+        font-size: .85rem; color: var(--brand-text-muted, #5a6c80);
+        font-style: italic;
+    }
+
+    /* Botón Nueva Ficha */
+    .btn-new-case {
+        background: var(--brand-primary, #9F93E7);
+        color: #fff;
+        border: none;
+        border-radius: .4rem;
+        padding: .55rem 1rem;
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        white-space: nowrap;
+        transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(159, 147, 231, .25);
+    }
+    .btn-new-case:hover {
+        background: var(--brand-primary-dark, #7d6fd6);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(159, 147, 231, .4);
+    }
+    .btn-new-case i { font-size: .85rem; }
+
     @media (max-width: 768px) {
         .case-selector { flex-direction: column; align-items: stretch; }
         .case-selector-left { flex-direction: column; align-items: stretch; }
         .case-selector-label { width: 100%; }
         .case-selector-stats { text-align: center; }
+        .btn-new-case { width: 100%; justify-content: center; }
+    }
+
+    /* ============= Modal Nueva Ficha Clínica ============= */
+    .new-case-modal .modal-content { border-radius: .5rem; }
+    .new-case-modal .new-case-header {
+        background: linear-gradient(135deg, rgba(159, 147, 231, .12), rgba(199, 217, 229, .25));
+        border-bottom: 1px solid rgba(159, 147, 231, .25);
+    }
+    .new-case-modal .modal-title {
+        font-family: var(--brand-font-body);
+        color: var(--brand-text);
+        font-weight: 600;
+    }
+    .new-case-modal .new-case-body {
+        max-height: 75vh;
+        overflow-y: auto;
+        padding: 1rem 1.25rem;
+    }
+    .new-case-modal .new-case-intro {
+        background: rgba(255, 173, 70, .12);
+        border-left: 3px solid #ffad46;
+        padding: .55rem .8rem;
+        border-radius: .3rem;
+        font-size: .82rem;
+        color: #6c4500;
+        margin-bottom: 1rem;
+    }
+
+    /* Sección principal (recomendada) */
+    .new-case-modal .nc-section-main {
+        background: #faf8ff;
+        border: 1px solid rgba(159, 147, 231, .3);
+        border-left: 4px solid var(--brand-primary, #9F93E7);
+        border-radius: .4rem;
+        padding: .85rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .new-case-modal .nc-section-title {
+        font-weight: 700;
+        font-size: .85rem;
+        color: var(--brand-primary-darker, #5e4fbf);
+        margin-bottom: .65rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+    .new-case-modal .form-group label {
+        font-size: .8rem;
+        font-weight: 600;
+        color: var(--brand-text, #2F4157);
+        margin-bottom: .25rem;
+    }
+    .new-case-modal .form-group { margin-bottom: .75rem; }
+    .new-case-modal textarea.form-control { font-family: var(--brand-font-body); font-size: .88rem; }
+
+    /* Acordeón */
+    .new-case-modal .nc-accordion { display: flex; flex-direction: column; gap: .4rem; }
+    .new-case-modal .nc-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: .4rem;
+        overflow: hidden;
+    }
+    .new-case-modal .nc-card-header {
+        padding: .65rem .85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: .88rem;
+        color: var(--brand-text);
+        background: #fafbfc;
+        transition: background .12s ease;
+        user-select: none;
+    }
+    .new-case-modal .nc-card-header:hover { background: rgba(159, 147, 231, .08); }
+    .new-case-modal .nc-card-header i:first-child { color: var(--brand-primary-darker); }
+    .new-case-modal .nc-card-header span { flex: 1; }
+    .new-case-modal .nc-card-chevron {
+        font-size: .7rem; color: #adb5bd;
+        transition: transform .2s ease;
+    }
+    .new-case-modal .nc-card-header[aria-expanded="true"] .nc-card-chevron,
+    .new-case-modal .nc-card-header:not(.collapsed) .nc-card-chevron {
+        transform: rotate(180deg);
+    }
+    .new-case-modal .nc-card-body {
+        padding: .85rem 1rem;
+        border-top: 1px solid #f1f3f5;
+    }
+
+    /* Modalidades como chips */
+    .new-case-modal .nc-modalities {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: .5rem;
+        margin-bottom: .85rem;
+    }
+    .new-case-modal .nc-modality-chip {
+        cursor: pointer; margin: 0;
+    }
+    .new-case-modal .nc-modality-chip input[type="checkbox"] { display: none; }
+    .new-case-modal .nc-chip-content {
+        display: flex; align-items: center; gap: .45rem;
+        padding: .5rem .65rem;
+        background: #fff;
+        border: 1.5px solid #e9ecef;
+        border-radius: .35rem;
+        font-size: .82rem;
+        color: var(--brand-text);
+        transition: all .12s ease;
+    }
+    .new-case-modal .nc-chip-content i { color: var(--brand-primary-darker); font-size: .9rem; }
+    .new-case-modal .nc-modality-chip:hover .nc-chip-content {
+        border-color: var(--brand-primary);
+        background: rgba(159, 147, 231, .05);
+    }
+    .new-case-modal .nc-modality-chip input[type="checkbox"]:checked + .nc-chip-content {
+        background: var(--brand-primary);
+        color: #fff;
+        border-color: var(--brand-primary);
+    }
+    .new-case-modal .nc-modality-chip input[type="checkbox"]:checked + .nc-chip-content i { color: #fff; }
+
+    .new-case-modal .new-case-footer {
+        background: #fafbfc;
+        flex-wrap: wrap;
+        gap: .35rem;
+    }
+    .new-case-modal .new-case-hint { flex: 1; min-width: 200px; }
+
+    @media (max-width: 768px) {
+        .new-case-modal .new-case-body { max-height: 80vh; padding: .85rem .75rem; }
+        .new-case-modal .nc-modalities { grid-template-columns: 1fr 1fr; }
     }
 
     .expediente-tabs { background:#fff; border-radius:.5rem 0 0 0; border:1px solid #e9ecef; border-bottom:none; padding:0; }
@@ -1546,18 +1824,28 @@
                     @endif
                 </div>
             </div>
-            {{-- Fase 6b — Botón Descargar expediente completo en PDF --}}
+            {{-- Fase 6b + Reorg-A.2 — Botón descargar PDF context-aware:
+                 si hay caso seleccionado, descarga reporte del caso (con ficha completa);
+                 si no, descarga el expediente global del paciente. --}}
             <div class="ml-auto" style="flex-shrink:0;">
-                <a href="{{ url('expediente-pdf/' . $patient->id) }}" target="_blank" class="btn btn-primary btn-sm" title="Descargar expediente clínico en PDF">
-                    <i class="fas fa-file-pdf mr-1"></i> {{ translate('Descargar expediente') }}
+                @php
+                    $isCaseFiltered = isset($casoActivo) && is_numeric($casoActivo);
+                    $pdfUrl = url('expediente-pdf/' . $patient->id) . ($isCaseFiltered ? ('?caso=' . $casoActivo) : '');
+                    $pdfLabel = $isCaseFiltered ? translate('Descargar reporte del caso') : translate('Descargar expediente');
+                    $pdfTitle = $isCaseFiltered
+                        ? translate('Reporte clínico del caso seleccionado: ficha completa + sus evaluaciones + sus sesiones')
+                        : translate('Expediente completo del paciente: resumen de todos los casos, evaluaciones y sesiones');
+                @endphp
+                <a href="{{ $pdfUrl }}" target="_blank" class="btn btn-primary btn-sm" title="{{ $pdfTitle }}">
+                    <i class="fas fa-file-pdf mr-1"></i> {{ $pdfLabel }}
                 </a>
             </div>
         </div>
     </div>
 
     {{-- ============== Fase Reorg-A — Selector global de caso clínico ============== --}}
-    @if(isset($fichas) && $fichas->count() > 0)
-        <div class="case-selector" id="caseSelectorBar">
+    <div class="case-selector" id="caseSelectorBar">
+        @if(isset($fichas) && $fichas->count() > 0)
             <div class="case-selector-left">
                 <div class="case-selector-label">
                     <i class="fas fa-folder-open mr-1"></i> {{ translate('Caso clínico activo') }}
@@ -1598,8 +1886,23 @@
                 @endphp
                 {{ $statsText }}
             </div>
-        </div>
-    @endif
+        @else
+            <div class="case-selector-left">
+                <div class="case-selector-label">
+                    <i class="fas fa-folder-open mr-1"></i> {{ translate('Sin casos clínicos') }}
+                </div>
+                <span class="case-selector-empty">
+                    {{ translate('Este paciente aún no tiene fichas clínicas. Crea la primera para iniciar el tratamiento.') }}
+                </span>
+            </div>
+        @endif
+
+        {{-- Botón "Nueva ficha clínica" — siempre disponible --}}
+        <button type="button" class="btn-new-case" id="btnNewCase" title="Iniciar caso clínico nuevo para este paciente">
+            <i class="fas fa-folder-plus mr-1"></i>
+            <span>{{ translate('Nueva ficha clínica') }}</span>
+        </button>
+    </div>
 
     {{-- Tabs del expediente --}}
     <div class="expediente-tabs">
@@ -1636,6 +1939,179 @@
 
     {{-- =========================== TAB RESUMEN =========================== --}}
     <div class="tab-pane fade show active" id="tab-resumen" role="tabpanel">
+
+    @if(isset($fichaCompleta) && $fichaCompleta)
+        {{-- ===== Ficha clínica completa (visible solo cuando hay caso seleccionado) ===== --}}
+        @php
+            // Helpers para detectar si secciones tienen contenido
+            $hasAntecedentes = !empty($fichaCompleta->historial_medico) || !empty($fichaCompleta->enfermedades_cronicas)
+                || !empty($fichaCompleta->cirugias_previas) || !empty($fichaCompleta->medicamentos_actuales)
+                || !empty($fichaCompleta->alergias);
+            $hasLesion = !empty($fichaCompleta->fecha_inicio) || !empty($fichaCompleta->mecanismo_lesion_origen)
+                || !empty($fichaCompleta->evolucion_sintomas) || !empty($fichaCompleta->tratamientos_previos);
+            $hasEvalFisio = !empty($fichaCompleta->observacion_marcha) || !empty($fichaCompleta->observacion_otros)
+                || !empty($fichaCompleta->diagnostico_fisioterapeutico);
+            $hasObjetivos = !empty($fichaCompleta->corto_plazo) || !empty($fichaCompleta->mediano_plazo)
+                || !empty($fichaCompleta->largo_plazo);
+            $modalidadesSeleccionadas = collect([
+                'modalidades_ejercicio_terapeutico' => 'Ejercicio terapéutico',
+                'modalidades_electroterapia'        => 'Electroterapia',
+                'modalidades_masoterapia'           => 'Masoterapia',
+                'modalidades_estiramientos'         => 'Estiramientos',
+                'modalidades_tecaterapia'           => 'Tecarterapia',
+                'modalidades_puncion_seca'          => 'Punción seca',
+                'modalidades_electropuncion'        => 'Electropunción',
+            ])->filter(fn($lbl, $key) => (int) ($fichaCompleta->{$key} ?? 0) === 1)->values()->all();
+            $hasPlan = !empty($modalidadesSeleccionadas) || !empty($fichaCompleta->modalidades_otros);
+            $decoder = fn($v) => is_string($v) ? html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8') : $v;
+        @endphp
+
+        <div class="ficha-completa-card">
+            <div class="ficha-completa-header" id="fichaCompletaToggle" data-toggle="collapse" data-target="#fichaCompletaBody" aria-expanded="false">
+                <div class="ficha-completa-icon"><i class="fas fa-folder-open"></i></div>
+                <div class="ficha-completa-title-block">
+                    <div class="ficha-completa-title">
+                        {{ $decoder($fichaCompleta->diagnostico) ?: 'Ficha #' . $fichaCompleta->id }}
+                    </div>
+                    <div class="ficha-completa-meta">
+                        @if($fichaCompleta->fecha)
+                            Iniciada {{ \Carbon\Carbon::parse($fichaCompleta->fecha)->format('d/m/Y') }} ·
+                        @endif
+                        Caso #{{ $fichaCompleta->id }}
+                    </div>
+                </div>
+                <span class="ficha-completa-toggle-hint">
+                    <i class="fas fa-chevron-down"></i> {{ translate('Ver ficha completa') }}
+                </span>
+            </div>
+            <div id="fichaCompletaBody" class="collapse ficha-completa-body">
+
+                @if(!empty($fichaCompleta->motivo_consulta))
+                    <div class="ficha-block">
+                        <div class="ficha-block-title">{{ translate('Motivo de consulta') }}</div>
+                        <div class="ficha-block-text">{{ $decoder($fichaCompleta->motivo_consulta) }}</div>
+                    </div>
+                @endif
+
+                @if($hasAntecedentes)
+                    <div class="ficha-block">
+                        <div class="ficha-block-title"><i class="fas fa-notes-medical mr-1"></i>{{ translate('Antecedentes médicos') }}</div>
+                        @foreach([
+                            'historial_medico'     => 'Historial médico',
+                            'enfermedades_cronicas'=> 'Enfermedades crónicas',
+                            'cirugias_previas'     => 'Cirugías previas',
+                            'medicamentos_actuales'=> 'Medicamentos actuales',
+                            'alergias'             => 'Alergias',
+                        ] as $field => $lbl)
+                            @if(!empty($fichaCompleta->{$field}))
+                                <div class="ficha-field">
+                                    <span class="ficha-field-label">{{ $lbl }}:</span>
+                                    <span class="ficha-field-value">{{ $decoder($fichaCompleta->{$field}) }}</span>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+
+                @if($hasLesion)
+                    <div class="ficha-block">
+                        <div class="ficha-block-title"><i class="fas fa-heart-broken mr-1"></i>{{ translate('Historia de la lesión') }}</div>
+                        @if(!empty($fichaCompleta->fecha_inicio))
+                            <div class="ficha-field">
+                                <span class="ficha-field-label">Fecha de inicio:</span>
+                                <span class="ficha-field-value">{{ \Carbon\Carbon::parse($fichaCompleta->fecha_inicio)->format('d/m/Y') }}</span>
+                            </div>
+                        @endif
+                        @foreach([
+                            'mecanismo_lesion_origen' => 'Mecanismo / origen',
+                            'evolucion_sintomas'      => 'Evolución de los síntomas',
+                            'tratamientos_previos'    => 'Tratamientos previos',
+                        ] as $field => $lbl)
+                            @if(!empty($fichaCompleta->{$field}))
+                                <div class="ficha-field">
+                                    <span class="ficha-field-label">{{ $lbl }}:</span>
+                                    <span class="ficha-field-value">{{ $decoder($fichaCompleta->{$field}) }}</span>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+
+                @if($hasEvalFisio)
+                    <div class="ficha-block">
+                        <div class="ficha-block-title"><i class="fas fa-walking mr-1"></i>{{ translate('Evaluación fisioterapéutica inicial') }}</div>
+                        @foreach([
+                            'observacion_marcha'           => 'Marcha',
+                            'observacion_otros'            => 'Otras observaciones',
+                            'diagnostico_fisioterapeutico' => 'Diagnóstico fisioterapéutico',
+                        ] as $field => $lbl)
+                            @if(!empty($fichaCompleta->{$field}))
+                                <div class="ficha-field">
+                                    <span class="ficha-field-label">{{ $lbl }}:</span>
+                                    <span class="ficha-field-value">{{ $decoder($fichaCompleta->{$field}) }}</span>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+
+                @if($hasObjetivos)
+                    <div class="ficha-block">
+                        <div class="ficha-block-title"><i class="fas fa-bullseye mr-1"></i>{{ translate('Objetivos del tratamiento') }}</div>
+                        @foreach([
+                            'corto_plazo'   => 'Corto plazo',
+                            'mediano_plazo' => 'Mediano plazo',
+                            'largo_plazo'   => 'Largo plazo',
+                        ] as $field => $lbl)
+                            @if(!empty($fichaCompleta->{$field}))
+                                <div class="ficha-field">
+                                    <span class="ficha-field-label">{{ $lbl }}:</span>
+                                    <span class="ficha-field-value">{{ $decoder($fichaCompleta->{$field}) }}</span>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+
+                @if($hasPlan)
+                    <div class="ficha-block">
+                        <div class="ficha-block-title"><i class="fas fa-list-check mr-1"></i>{{ translate('Plan de tratamiento') }}</div>
+                        @if(!empty($modalidadesSeleccionadas))
+                            <div class="ficha-field">
+                                <span class="ficha-field-label">Modalidades:</span>
+                                <span class="ficha-modalities-list">
+                                    @foreach($modalidadesSeleccionadas as $m)
+                                        <span class="ficha-modality-tag">{{ $m }}</span>
+                                    @endforeach
+                                </span>
+                            </div>
+                        @endif
+                        @if(!empty($fichaCompleta->modalidades_otros))
+                            <div class="ficha-field">
+                                <span class="ficha-field-label">Otros tratamientos:</span>
+                                <span class="ficha-field-value">{{ $decoder($fichaCompleta->modalidades_otros) }}</span>
+                            </div>
+                        @endif
+                        @if(!empty($fichaCompleta->frecuencia_semana) || !empty($fichaCompleta->duracion_semanas))
+                            <div class="ficha-field">
+                                <span class="ficha-field-label">Plan:</span>
+                                <span class="ficha-field-value">
+                                    {{ $fichaCompleta->frecuencia_semana ?? 1 }} vez/sem ·
+                                    {{ $fichaCompleta->duracion_semanas ?? '?' }} semanas
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <div class="ficha-completa-actions">
+                    <a href="{{ url('fis-ficha') }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-external-link-alt mr-1"></i> {{ translate('Editar en formulario completo') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Stats cards --}}
     <div class="row mb-3">
@@ -2085,6 +2561,229 @@
                     <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cancelar') }}</button>
                     <button type="submit" class="btn btn-primary btn-sm" id="btnEnviarMsg">
                         <i class="fas fa-paper-plane mr-1"></i> {{ translate('Enviar') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ============== Quick-add — Modal de nueva ficha clínica ============== --}}
+<div class="modal fade new-case-modal" id="modalNewCase" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form id="formNewCase" autocomplete="off">
+                @csrf
+                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                <div class="modal-header new-case-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-folder-plus mr-1" style="color:var(--brand-primary, #9F93E7);"></i>
+                        {{ translate('Nueva ficha clínica') }} —
+                        <span class="text-muted" style="font-weight:400; font-size:.92rem;">{{ $patient->full_name }}</span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body new-case-body">
+                    <div class="new-case-intro">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        {{ translate('Solo el motivo y diagnóstico son recomendados al iniciar. El resto puedes completarlo después con más tiempo.') }}
+                    </div>
+
+                    {{-- ====== Sección 1: Identificación clínica (visible) ====== --}}
+                    <div class="nc-section nc-section-main">
+                        <div class="nc-section-title">
+                            <i class="fas fa-clipboard-list mr-1"></i> {{ translate('Identificación del caso') }}
+                            <span class="text-muted" style="font-size:.72rem; margin-left:.4rem;">{{ translate('(recomendado)') }}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Motivo de consulta') }} <span class="text-danger">*</span></label>
+                            <textarea name="motivo_consulta" class="form-control" rows="2" placeholder="¿Por qué viene? Síntomas principales, cuándo iniciaron, etc."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Diagnóstico inicial') }}</label>
+                            <input type="text" name="diagnostico" class="form-control" placeholder="Ej. Tendinopatía del manguito rotador">
+                        </div>
+                    </div>
+
+                    {{-- ====== Acordeón de secciones opcionales ====== --}}
+                    <div class="nc-accordion" id="newCaseAccordion">
+
+                        {{-- Antecedentes médicos --}}
+                        <div class="nc-card">
+                            <div class="nc-card-header" data-toggle="collapse" data-target="#nc-antecedentes">
+                                <i class="fas fa-notes-medical mr-2"></i>
+                                <span>{{ translate('Antecedentes médicos relevantes') }}</span>
+                                <i class="fas fa-chevron-down nc-card-chevron"></i>
+                            </div>
+                            <div id="nc-antecedentes" class="collapse">
+                                <div class="nc-card-body">
+                                    <div class="form-group">
+                                        <label>{{ translate('Historial médico') }}</label>
+                                        <textarea name="historial_medico" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Enfermedades crónicas') }}</label>
+                                        <textarea name="enfermedades_cronicas" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Cirugías previas') }}</label>
+                                        <textarea name="cirugias_previas" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Medicamentos actuales') }}</label>
+                                        <textarea name="medicamentos_actuales" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Alergias') }}</label>
+                                        <textarea name="alergias" class="form-control" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Historia de la lesión --}}
+                        <div class="nc-card">
+                            <div class="nc-card-header" data-toggle="collapse" data-target="#nc-lesion">
+                                <i class="fas fa-heart-broken mr-2"></i>
+                                <span>{{ translate('Historia de la lesión o condición') }}</span>
+                                <i class="fas fa-chevron-down nc-card-chevron"></i>
+                            </div>
+                            <div id="nc-lesion" class="collapse">
+                                <div class="nc-card-body">
+                                    <div class="form-row">
+                                        <div class="col-md-4 form-group">
+                                            <label>{{ translate('Fecha de inicio') }}</label>
+                                            <input type="date" name="fecha_inicio" class="form-control" max="{{ date('Y-m-d') }}">
+                                        </div>
+                                        <div class="col-md-8 form-group">
+                                            <label>{{ translate('Mecanismo de lesión / origen') }}</label>
+                                            <textarea name="mecanismo_lesion_origen" class="form-control" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Evolución de los síntomas') }}</label>
+                                        <textarea name="evolucion_sintomas" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Tratamientos previos') }}</label>
+                                        <textarea name="tratamientos_previos" class="form-control" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Evaluación fisioterapéutica --}}
+                        <div class="nc-card">
+                            <div class="nc-card-header" data-toggle="collapse" data-target="#nc-eval">
+                                <i class="fas fa-walking mr-2"></i>
+                                <span>{{ translate('Evaluación fisioterapéutica inicial') }}</span>
+                                <i class="fas fa-chevron-down nc-card-chevron"></i>
+                            </div>
+                            <div id="nc-eval" class="collapse">
+                                <div class="nc-card-body">
+                                    <p class="text-muted" style="font-size:.78rem;">{{ translate('Observación') }}:</p>
+                                    <div class="form-group">
+                                        <label>{{ translate('Marcha') }}</label>
+                                        <textarea name="observacion_marcha" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Otras observaciones') }}</label>
+                                        <textarea name="observacion_otros" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Diagnóstico fisioterapéutico') }}</label>
+                                        <textarea name="diagnostico_fisioterapeutico" class="form-control" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Objetivos --}}
+                        <div class="nc-card">
+                            <div class="nc-card-header" data-toggle="collapse" data-target="#nc-objetivos">
+                                <i class="fas fa-bullseye mr-2"></i>
+                                <span>{{ translate('Objetivos del tratamiento') }}</span>
+                                <i class="fas fa-chevron-down nc-card-chevron"></i>
+                            </div>
+                            <div id="nc-objetivos" class="collapse">
+                                <div class="nc-card-body">
+                                    <div class="form-group">
+                                        <label>{{ translate('Corto plazo') }}</label>
+                                        <textarea name="corto_plazo" class="form-control" rows="2" placeholder="Primeras 2-3 semanas"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Mediano plazo') }}</label>
+                                        <textarea name="mediano_plazo" class="form-control" rows="2" placeholder="1-2 meses"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Largo plazo') }}</label>
+                                        <textarea name="largo_plazo" class="form-control" rows="2" placeholder="3+ meses"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Plan de tratamiento --}}
+                        <div class="nc-card">
+                            <div class="nc-card-header" data-toggle="collapse" data-target="#nc-plan">
+                                <i class="fas fa-list-check mr-2"></i>
+                                <span>{{ translate('Plan de tratamiento') }}</span>
+                                <i class="fas fa-chevron-down nc-card-chevron"></i>
+                            </div>
+                            <div id="nc-plan" class="collapse">
+                                <div class="nc-card-body">
+                                    <p class="text-muted" style="font-size:.78rem;">{{ translate('Modalidades:') }}</p>
+                                    <div class="nc-modalities">
+                                        @php
+                                            $mods = [
+                                                'modalidades_ejercicio_terapeutico' => ['icon' => 'fa-dumbbell',          'label' => 'Ejercicio terapéutico'],
+                                                'modalidades_electroterapia'        => ['icon' => 'fa-bolt',              'label' => 'Electroterapia'],
+                                                'modalidades_masoterapia'           => ['icon' => 'fa-hands',             'label' => 'Masoterapia'],
+                                                'modalidades_estiramientos'         => ['icon' => 'fa-stretching-figure', 'label' => 'Estiramientos'],
+                                                'modalidades_tecaterapia'           => ['icon' => 'fa-wave-square',       'label' => 'Tecarterapia'],
+                                                'modalidades_puncion_seca'          => ['icon' => 'fa-syringe',           'label' => 'Punción seca'],
+                                                'modalidades_electropuncion'        => ['icon' => 'fa-charging-station',  'label' => 'Electropunción'],
+                                            ];
+                                        @endphp
+                                        @foreach($mods as $name => $m)
+                                            <label class="nc-modality-chip">
+                                                <input type="hidden" name="{{ $name }}" value="0">
+                                                <input type="checkbox" name="{{ $name }}" value="1">
+                                                <span class="nc-chip-content">
+                                                    <i class="fas {{ $m['icon'] }}"></i>
+                                                    <span>{{ $m['label'] }}</span>
+                                                </span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ translate('Otros tratamientos') }}</label>
+                                        <textarea name="modalidades_otros" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-md-6 form-group">
+                                            <label>{{ translate('Frecuencia (veces/semana)') }}</label>
+                                            <input type="number" name="frecuencia_semana" class="form-control" value="1" min="1" max="7">
+                                        </div>
+                                        <div class="col-md-6 form-group">
+                                            <label>{{ translate('Duración estimada (semanas)') }}</label>
+                                            <input type="number" name="duracion_semanas" class="form-control" value="10" min="1" max="104">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer new-case-footer">
+                    <span class="new-case-hint text-muted" style="font-size:.75rem; margin-right:auto;">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        {{ translate('La ficha se creará y quedará activa automáticamente') }}
+                    </span>
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cancelar') }}</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSaveNewCase">
+                        <i class="fas fa-save mr-1"></i> {{ translate('Crear ficha clínica') }}
                     </button>
                 </div>
             </form>
