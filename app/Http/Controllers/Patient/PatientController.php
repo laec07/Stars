@@ -177,21 +177,36 @@ class PatientController extends Controller
 
         $age = $patient->dob ? Carbon::parse($patient->dob)->age : null;
 
-        $timeline = \Illuminate\Support\Facades\DB::table('fis_historys')
+        // Fase Reorg-A — filtro por caso clínico vía query param ?caso=X|all
+        $casoParam = request()->input('caso', 'all');
+        $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+
+        $timelineQuery = \Illuminate\Support\Facades\DB::table('fis_historys')
             ->leftJoin('users', 'fis_historys.user_id', '=', 'users.id')
             ->where('fis_historys.patient_id', $id)
             ->where('fis_historys.status', 1)
             ->orderBy('fis_historys.fecha', 'desc')
-            ->orderBy('fis_historys.id', 'desc')
-            ->select(
-                'fis_historys.id',
-                'fis_historys.fecha',
-                'fis_historys.tabla_form',
-                'fis_historys.id_formulario',
-                'fis_historys.created_at',
-                'users.name as user_name'
-            )
-            ->get();
+            ->orderBy('fis_historys.id', 'desc');
+
+        if ($hasFichaIdColumn && $casoParam !== 'all' && $casoParam !== '') {
+            if ($casoParam === 'unassigned') {
+                $timelineQuery->whereNull('fis_historys.ficha_id');
+            } elseif (is_numeric($casoParam)) {
+                $timelineQuery->where('fis_historys.ficha_id', (int) $casoParam);
+            }
+        }
+
+        $timelineSelect = [
+            'fis_historys.id',
+            'fis_historys.fecha',
+            'fis_historys.tabla_form',
+            'fis_historys.id_formulario',
+            'fis_historys.created_at',
+            'users.name as user_name',
+        ];
+        if ($hasFichaIdColumn) $timelineSelect[] = 'fis_historys.ficha_id';
+
+        $timeline = $timelineQuery->select($timelineSelect)->get();
 
         // Etiqueta legible + icono + color + ruta destino para cada tabla_form
         $formMeta = [
@@ -213,8 +228,51 @@ class PatientController extends Controller
         $totalEvents = $timeline->count();
         $lastEvent = $timeline->first();
 
+        // Fase Reorg-A — Fichas del paciente para el case selector
+        // + estadísticas por caso (n eval, n sesiones, última actividad)
+        $fichas = \Illuminate\Support\Facades\DB::table('fis_fichas')
+            ->where('patient_id', $id)
+            ->where('status', 1)
+            ->orderBy('fecha', 'desc')
+            ->select('id', 'fecha', 'diagnostico', 'motivo_consulta')
+            ->get();
+
+        if ($fichas->count() > 0 && $hasFichaIdColumn) {
+            // Contar evaluaciones por ficha desde fis_historys
+            $evalCounts = \Illuminate\Support\Facades\DB::table('fis_historys')
+                ->where('patient_id', $id)
+                ->where('status', 1)
+                ->whereNotIn('tabla_form', ['fis_fichas'])
+                ->whereNotNull('ficha_id')
+                ->select('ficha_id', \Illuminate\Support\Facades\DB::raw('COUNT(*) as c'))
+                ->groupBy('ficha_id')
+                ->pluck('c', 'ficha_id')
+                ->toArray();
+
+            // Contar sesiones por ficha
+            $sesCounts = \Illuminate\Support\Facades\DB::table('fis_seguimientos')
+                ->where('patient_id', $id)
+                ->where(function ($q) {
+                    $q->where('status', 1)->orWhereNull('status');
+                })
+                ->whereNotNull('ficha_id')
+                ->select('ficha_id', \Illuminate\Support\Facades\DB::raw('COUNT(*) as c'))
+                ->groupBy('ficha_id')
+                ->pluck('c', 'ficha_id')
+                ->toArray();
+
+            $fichas = $fichas->map(function ($f) use ($evalCounts, $sesCounts) {
+                $f->eval_count = (int) ($evalCounts[$f->id] ?? 0);
+                $f->ses_count  = (int) ($sesCounts[$f->id] ?? 0);
+                return $f;
+            });
+        }
+
+        $casoActivo = $casoParam;
+
         return view('patient.summary', compact(
-            'patient', 'age', 'timeline', 'formMeta', 'counts', 'totalEvents', 'lastEvent'
+            'patient', 'age', 'timeline', 'formMeta', 'counts', 'totalEvents', 'lastEvent',
+            'fichas', 'casoActivo'
         ));
     }
 
@@ -261,6 +319,16 @@ class PatientController extends Controller
                 $query->where(function ($q) {
                     $q->where('s.status', 1)->orWhereNull('s.status');
                 });
+            }
+
+            // Filtro por caso clínico (ficha) — Fase Reorg-A
+            $fichaFilter = request()->input('ficha_id', null);
+            if ($fichaFilter !== null && $fichaFilter !== '' && $fichaFilter !== 'all') {
+                if ($fichaFilter === 'unassigned') {
+                    $query->whereNull('s.ficha_id');
+                } else {
+                    $query->where('s.ficha_id', (int) $fichaFilter);
+                }
             }
 
             $sesiones = $query->orderBy('s.fecha', 'desc')
@@ -746,6 +814,27 @@ class PatientController extends Controller
             $defs = \App\Support\EvolutionCharts::definitionsFor((int) $patientId);
             $charts = [];
 
+            // Filtro por caso clínico (ficha) — Fase Reorg-A
+            $fichaFilter = request()->input('ficha_id', null);
+            $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+            $allowedIdsByTable = null;
+            if ($hasFichaIdColumn && $fichaFilter !== null && $fichaFilter !== '' && $fichaFilter !== 'all') {
+                // Para filtrar por ficha en evaluaciones, hay que cruzar con fis_historys
+                // (la ficha_id vive ahí, no en las tablas fis_*).
+                $allowedIdsByTable = \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('patient_id', $patientId)
+                    ->where('status', 1)
+                    ->when($fichaFilter === 'unassigned',
+                        fn($q) => $q->whereNull('ficha_id'),
+                        fn($q) => $q->where('ficha_id', (int) $fichaFilter)
+                    )
+                    ->select('tabla_form', 'id_formulario')
+                    ->get()
+                    ->groupBy('tabla_form')
+                    ->map(fn($g) => $g->pluck('id_formulario')->all())
+                    ->toArray();
+            }
+
             foreach ($defs as $tabla => $def) {
                 $modelClass = $this->resolveEvaluationModel($tabla);
                 if (!$modelClass) continue;
@@ -756,10 +845,17 @@ class PatientController extends Controller
                     array_map(fn($s) => $s['name'], $def['series'])
                 );
 
-                $records = $modelClass::where('patient_id', $patientId)
-                    ->where('status', 1)
-                    ->orderBy('fecha', 'asc')
-                    ->get($columns);
+                $q = $modelClass::where('patient_id', $patientId)
+                    ->where('status', 1);
+
+                if ($allowedIdsByTable !== null) {
+                    // Si no hay IDs para esta tabla en este filtro, saltar
+                    $ids = $allowedIdsByTable[$tabla] ?? [];
+                    if (empty($ids)) continue;
+                    $q->whereIn($modelClass::make()->getKeyName(), $ids);
+                }
+
+                $records = $q->orderBy('fecha', 'asc')->get($columns);
 
                 if ($records->count() < 2) continue;
 

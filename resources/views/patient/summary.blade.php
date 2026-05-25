@@ -6,7 +6,10 @@
     window.PATIENT_CONTEXT = {
         id: {{ (int) $patient->id }},
         name: @json($patient->full_name),
-        uploadUrl: @json(url('seguimiento/upload-image'))
+        uploadUrl: @json(url('seguimiento/upload-image')),
+        // Fase Reorg-A — caso activo (vino por query param ?caso=X o default 'all')
+        activeCase: @json($casoActivo ?? 'all'),
+        fichas: @json(isset($fichas) ? $fichas : [])
     };
 </script>
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
@@ -76,6 +79,62 @@
     .bg-c-secondary { background:#6861ce; }
 
     /* Fase 2 - Tabs y sesiones */
+    /* ====== Fase Reorg-A — Case selector global ====== */
+    .case-selector {
+        background: linear-gradient(135deg, rgba(159, 147, 231, .06) 0%, rgba(199, 217, 229, .15) 100%);
+        border: 1px solid rgba(159, 147, 231, .25);
+        border-radius: .5rem;
+        padding: .65rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .case-selector-left { display:flex; align-items:center; gap:.75rem; flex:1; min-width:240px; }
+    .case-selector-label {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--brand-primary-darker, #5e4fbf);
+        white-space: nowrap;
+    }
+    .case-selector-label i { color: var(--brand-primary, #9F93E7); }
+    .case-selector-input {
+        flex: 1; min-width: 200px;
+        background: #fff;
+        border: 1px solid rgba(159, 147, 231, .35);
+        border-radius: .35rem;
+        padding: .45rem .65rem;
+        font-size: .9rem;
+        color: var(--brand-text, #2F4157);
+        font-family: var(--brand-font-body);
+        font-weight: 500;
+        cursor: pointer;
+        appearance: menulist;
+    }
+    .case-selector-input:focus {
+        outline: none;
+        border-color: var(--brand-primary, #9F93E7);
+        box-shadow: 0 0 0 3px rgba(159, 147, 231, .25);
+    }
+    .case-selector-stats {
+        font-size: .78rem;
+        color: var(--brand-text-muted, #5a6c80);
+        background: #fff;
+        padding: .4rem .7rem;
+        border-radius: 1rem;
+        border: 1px solid #e9ecef;
+        white-space: nowrap;
+    }
+    @media (max-width: 768px) {
+        .case-selector { flex-direction: column; align-items: stretch; }
+        .case-selector-left { flex-direction: column; align-items: stretch; }
+        .case-selector-label { width: 100%; }
+        .case-selector-stats { text-align: center; }
+    }
+
     .expediente-tabs { background:#fff; border-radius:.5rem 0 0 0; border:1px solid #e9ecef; border-bottom:none; padding:0; }
     .expediente-tabs .nav-tabs { border-bottom:1px solid #e9ecef; padding:0 1rem; margin:0; }
     .expediente-tabs .nav-link { color:#6c757d; border:none; border-bottom:3px solid transparent; padding:.85rem 1.1rem; font-weight:500; }
@@ -1496,6 +1555,52 @@
         </div>
     </div>
 
+    {{-- ============== Fase Reorg-A — Selector global de caso clínico ============== --}}
+    @if(isset($fichas) && $fichas->count() > 0)
+        <div class="case-selector" id="caseSelectorBar">
+            <div class="case-selector-left">
+                <div class="case-selector-label">
+                    <i class="fas fa-folder-open mr-1"></i> {{ translate('Caso clínico activo') }}
+                </div>
+                <select id="caseSelector" class="case-selector-input">
+                    <option value="all" {{ $casoActivo === 'all' ? 'selected' : '' }}>
+                        {{ translate('Todos los casos — vista global del paciente') }}
+                    </option>
+                    @foreach($fichas as $f)
+                        @php
+                            $fLabel = trim($f->diagnostico) ?: ('Ficha #' . $f->id);
+                            if (mb_strlen($fLabel) > 60) $fLabel = mb_substr($fLabel, 0, 60) . '…';
+                            $fDate = $f->fecha ? \Carbon\Carbon::parse($f->fecha)->format('d/m/Y') : '—';
+                        @endphp
+                        <option value="{{ $f->id }}" {{ (string)$casoActivo === (string)$f->id ? 'selected' : '' }}>
+                            {{ $fLabel }} · {{ $fDate }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="case-selector-stats" id="caseSelectorStats">
+                @php
+                    if ($casoActivo === 'all') {
+                        $statsText = $fichas->count() . ' ' . ($fichas->count() === 1 ? 'caso' : 'casos') . ' · vista completa';
+                    } else {
+                        $activeFicha = $fichas->firstWhere('id', (int) $casoActivo);
+                        if ($activeFicha) {
+                            $statsText = ($activeFicha->eval_count ?? 0) . ' evaluaciones · '
+                                . ($activeFicha->ses_count ?? 0) . ' sesiones';
+                            if (!empty($activeFicha->fecha)) {
+                                $days = \Carbon\Carbon::parse($activeFicha->fecha)->diffInDays(now());
+                                $statsText .= ' · iniciado hace ' . $days . ' día' . ($days === 1 ? '' : 's');
+                            }
+                        } else {
+                            $statsText = 'caso no encontrado';
+                        }
+                    }
+                @endphp
+                {{ $statsText }}
+            </div>
+        </div>
+    @endif
+
     {{-- Tabs del expediente --}}
     <div class="expediente-tabs">
         <ul class="nav nav-tabs" role="tablist">
@@ -1698,12 +1803,10 @@
             <div>
                 <h5>{{ translate('Evaluación unificada') }}</h5>
                 <small class="text-muted" id="eval-summary">{{ translate('Cargando...') }}</small>
-            </div>
-            <div class="eval-filter">
-                <label for="evalFichaFilter">{{ translate('Caso') }}:</label>
-                <select id="evalFichaFilter" class="form-control form-control-sm">
-                    <option value="all">{{ translate('Todas las evaluaciones') }}</option>
-                </select>
+                <div style="font-size:.72rem; color:#adb5bd; margin-top:.15rem;">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {{ translate('Filtra por caso clínico usando el selector arriba del expediente.') }}
+                </div>
             </div>
         </div>
 

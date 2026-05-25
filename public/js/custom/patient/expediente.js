@@ -9,7 +9,7 @@
 (function ($) {
     "use strict";
 
-    var ctx = window.PATIENT_CONTEXT || { id: null, name: '', uploadUrl: 'seguimiento/upload-image' };
+    var ctx = window.PATIENT_CONTEXT || { id: null, name: '', uploadUrl: 'seguimiento/upload-image', activeCase: 'all', fichas: [] };
     var state = {
         sesiones: [],
         fichas: [],
@@ -49,7 +49,102 @@
         DRAFT_TTL_MS: 7 * 24 * 60 * 60 * 1000 // 7 días
     };
 
+    // ========================================================================
+    // Fase Reorg-A — CaseManager: maneja el caso clínico activo del expediente
+    // ========================================================================
+    var CaseManager = {
+
+        /**
+         * Devuelve el caso activo actual ('all' o ficha_id como string).
+         */
+        Current: function () {
+            return ctx.activeCase || 'all';
+        },
+
+        /**
+         * Devuelve el query param para añadir a cualquier endpoint que filtre
+         * por caso. Si es 'all', devuelve cadena vacía.
+         * Ej: '?ficha_id=42' o '&ficha_id=42'
+         */
+        QueryParam: function (asPrefix) {
+            var caso = CaseManager.Current();
+            if (!caso || caso === 'all') return '';
+            return (asPrefix === '?' ? '?' : '&') + 'ficha_id=' + encodeURIComponent(caso);
+        },
+
+        /**
+         * Cambia el caso activo. Invalida caches y refetcha el tab visible.
+         */
+        Set: function (newCase) {
+            if (!newCase) newCase = 'all';
+            if (ctx.activeCase === newCase) return;
+            ctx.activeCase = newCase;
+
+            // Actualizar URL sin recargar
+            try {
+                var u = new URL(window.location.href);
+                if (newCase === 'all') u.searchParams.delete('caso');
+                else u.searchParams.set('caso', newCase);
+                window.history.replaceState({}, '', u.toString());
+            } catch (e) {}
+
+            // Invalidar caches de todos los tabs
+            state.loaded = false;
+            state.evaluacionesLoaded = false;
+            state.evolLoaded = false;
+            // Mensajes NO se filtran por caso — quedan tal cual
+
+            // Refetch del tab visible (el resumen necesita recarga de página
+            // porque su data viene server-side)
+            var $activeTab = $('.expediente-tabs .nav-link.active');
+            var tabHref = $activeTab.attr('href') || '#tab-resumen';
+
+            CaseManager.UpdateStatsBadge();
+
+            if (tabHref === '#tab-resumen') {
+                // El resumen es renderizado por el backend con el caso ya filtrado.
+                // Recargamos la página manteniendo el tab activo.
+                window.location.href = window.location.pathname +
+                    (newCase === 'all' ? '' : '?caso=' + encodeURIComponent(newCase));
+                return;
+            }
+            if (tabHref === '#tab-sesiones')   Manager.LoadSesiones();
+            if (tabHref === '#tab-evaluacion') EvaluacionManager.Load();
+            if (tabHref === '#tab-evolucion')  EvolucionManager.Load();
+        },
+
+        /**
+         * Actualiza el "X evaluaciones · Y sesiones" del badge del case selector.
+         */
+        UpdateStatsBadge: function () {
+            var $stats = $('#caseSelectorStats');
+            if (!$stats.length) return;
+            var caso = CaseManager.Current();
+            if (caso === 'all') {
+                var n = (ctx.fichas || []).length;
+                $stats.text(n + ' ' + (n === 1 ? 'caso' : 'casos') + ' · vista completa');
+                return;
+            }
+            var ficha = (ctx.fichas || []).find(function (f) { return String(f.id) === String(caso); });
+            if (!ficha) { $stats.text(''); return; }
+            var ev = ficha.eval_count || 0;
+            var se = ficha.ses_count  || 0;
+            $stats.text(ev + ' evaluaciones · ' + se + ' sesiones');
+        }
+    };
+
+    window.CaseManager = CaseManager;
+
     $(document).ready(function () {
+
+        // ====== Fase Reorg-A — Case selector ======
+        // Cuando cambia el caso seleccionado, invalida los caches de cada tab
+        // y refetcha el tab actualmente visible. Persiste en URL para preservar
+        // el caso al recargar / compartir el link.
+        $('#caseSelector').on('change', function () {
+            var newCase = $(this).val();
+            CaseManager.Set(newCase);
+        });
 
         // Lazy-load al abrir la pestaña Sesiones por primera vez
         $('#tab-sesiones-trigger').on('shown.bs.tab', function () {
@@ -297,7 +392,8 @@
             if (!ctx.id) return;
             state.loading = true;
 
-            var serviceUrl = 'patient-sesiones/' + ctx.id;
+            // Fase Reorg-A — añadir filtro de caso si está activo
+            var serviceUrl = 'patient-sesiones/' + ctx.id + CaseManager.QueryParam('?');
             JsManager.SendJsonAsyncON('GET', serviceUrl, '', onSuccess, onFailed);
 
             function onSuccess(jsonData) {
@@ -1006,9 +1102,15 @@
             if (!ctx.id) return;
             state.evaluacionesLoading = true;
 
+            // Fase Reorg-A — usar el caso activo global como filtro primario
+            // (sustituye el dropdown interno antiguo). Mantiene state.evalCurrentFilter
+            // sincronizado para compatibilidad con la lógica existente.
+            var caso = CaseManager.Current();
+            state.evalCurrentFilter = caso;
+
             var url = 'patient-evaluaciones/' + ctx.id;
-            if (state.evalCurrentFilter && state.evalCurrentFilter !== 'all') {
-                url += '?ficha_id=' + encodeURIComponent(state.evalCurrentFilter);
+            if (caso && caso !== 'all') {
+                url += '?ficha_id=' + encodeURIComponent(caso);
             }
 
             $('#eval-sections').html(
@@ -3498,7 +3600,9 @@
             if (!ctx.id) return;
             state.evolLoading = true;
 
-            JsManager.SendJsonAsyncON('GET', 'patient-evolution/' + ctx.id, '', onSuccess, onFailed);
+            // Fase Reorg-A — añadir filtro de caso si está activo
+            var url = 'patient-evolution/' + ctx.id + CaseManager.QueryParam('?');
+            JsManager.SendJsonAsyncON('GET', url, '', onSuccess, onFailed);
 
             function onSuccess(json) {
                 state.evolLoading = false;
