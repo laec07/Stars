@@ -82,18 +82,12 @@
             <nav class="navbar navbar-header navbar-expand-lg" data-background-color="blue2">
 
                 <div class="container-fluid">
-                    <div class="collapse" id="search-nav">
-                        <form class="navbar-left navbar-form nav-search mr-md-3">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <button type="submit" class="btn btn-search pr-1">
-                                        <i class="fa fa-search search-icon"></i>
-                                    </button>
-                                </div>
-                                <input type="text" placeholder="{{translate('Search')}} ..." class="form-control" />
-                            </div>
-                        </form>
-                    </div>
+                    {{-- Fase 8 — Botón Buscar (Ctrl+K) reemplaza el search input vacío de Atlantis --}}
+                    <button type="button" class="gsearch-trigger-btn" data-global-search-trigger title="Buscar pacientes, fichas y acciones (Ctrl+K)">
+                        <i class="fas fa-search"></i>
+                        <span class="gsearch-trigger-label">{{ translate('Buscar') }}…</span>
+                        <span class="gsearch-trigger-hint">Ctrl+K</span>
+                    </button>
                     <ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
 
                         <form id="language-change-form" class="float-start" action="{{ route('change.language') }}" method="POST">
@@ -292,6 +286,14 @@
                     </div>
                     <ul class="nav nav-primary">
 
+                        {{-- Fase 7 — Acceso directo al panel clínico (item estático, no requiere config en BD) --}}
+                        <li class="nav-item {{ Route::currentRouteName() == 'clinical.dashboard' ? 'active' : '' }}">
+                            <a href="{{ route('clinical.dashboard') }}">
+                                <i class="fas fa-heartbeat"></i>
+                                <p>{{ translate('Panel clínico') }}</p>
+                            </a>
+                        </li>
+
                         @foreach ($menuList->where('level', 1) as $item)
                         <li class="nav-item">
                             <a data-toggle="collapse" href="#base{{ $item->id }}" class="collapsed" aria-expanded="false">
@@ -367,6 +369,10 @@
 
     <!-- tel input -->
     <script src="{{ dsAsset('js/lib/tel-input/js/intlTelInput.js') }}"></script>
+
+    {{-- Fase 8 — Búsqueda global con Ctrl+K. Disponible en todas las páginas autenticadas. --}}
+    <script src="{{ dsAsset('js/custom/global-search.js?v=1') }}"></script>
+
     @stack('adminScripts')
 
 </body>

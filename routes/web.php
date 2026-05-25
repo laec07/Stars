@@ -147,6 +147,28 @@ Route::group(['middleware' => 'xssProtection'], function () {
         Route::group(['middleware' => 'verifyUserType'], function () {
             Route::get('error-display', [App\Http\Controllers\HomeController::class, 'errorDisplay'])->name('error.display');
             Route::get('/home', [App\Http\Controllers\Dashboard\DashboardController::class, 'home'])->name('home');
+
+            // Fase 7 — Dashboard clínico (complementario al dashboard de booking)
+            Route::get('panel-clinico', [App\Http\Controllers\Dashboard\ClinicalDashboardController::class, 'index'])->name('clinical.dashboard');
+            Route::get('panel-clinico-data', [App\Http\Controllers\Dashboard\ClinicalDashboardController::class, 'data'])->name('clinical.dashboard.data');
+
+            // Fase 8 — Búsqueda global (Ctrl+K)
+            Route::get('global-search', [App\Http\Controllers\Search\GlobalSearchController::class, 'search'])->name('global.search');
+
+            // Fase 11 — Datos consolidados de evolución del paciente (charts)
+            Route::get('patient-evolution/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'getPatientEvolution'])->name('patient.evolution');
+
+            // Fase 10 — Plantillas reutilizables de evaluación
+            Route::get('eval-templates',          [\App\Http\Controllers\FormFisios\EvalTemplateController::class, 'index'])->name('eval.templates.index');
+            Route::get('eval-templates/{id}',     [\App\Http\Controllers\FormFisios\EvalTemplateController::class, 'show'])->name('eval.templates.show');
+            Route::post('eval-templates',         [\App\Http\Controllers\FormFisios\EvalTemplateController::class, 'store'])->name('eval.templates.store');
+            Route::post('eval-templates/{id}/delete', [\App\Http\Controllers\FormFisios\EvalTemplateController::class, 'destroy'])->name('eval.templates.delete');
+
+            // Fase 9a — Mensajería al paciente (WhatsApp / SMS)
+            Route::get('patient-messages/{id}',  [App\Http\Controllers\Messaging\PatientMessagingController::class, 'listForPatient'])->name('patient.messages.list');
+            Route::get('message-templates',      [App\Http\Controllers\Messaging\PatientMessagingController::class, 'templates'])->name('messages.templates');
+            Route::get('message-render',         [App\Http\Controllers\Messaging\PatientMessagingController::class, 'renderTemplate'])->name('messages.render');
+            Route::post('send-patient-message',  [App\Http\Controllers\Messaging\PatientMessagingController::class, 'sendToPatient'])->name('patient.messages.send');
             Route::get('get-user-info', [App\Http\Controllers\UserManagement\UserController::class, 'getUserInfo'])->name('get.user.info');
             Route::get('get-role', [App\Http\Controllers\UserManagement\RoleController::class, 'getRoleInfo'])->name('get.role.info');
 

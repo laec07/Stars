@@ -731,6 +731,120 @@ class PatientController extends Controller
     }
 
     /**
+     * Fase 11 — Datos consolidados para gráficos de evolución del paciente.
+     * Devuelve solo las evaluaciones donde hay ≥2 registros (para poder graficar).
+     * En UNA sola request — evita N+1 al front.
+     */
+    public function getPatientEvolution($patientId)
+    {
+        try {
+            $patient = \App\Models\Patient\CmnPatient::find($patientId);
+            if (!$patient) {
+                return $this->apiResponse(['status' => '404', 'message' => 'Paciente no encontrado'], 404);
+            }
+
+            $defs = \App\Support\EvolutionCharts::definitionsFor((int) $patientId);
+            $charts = [];
+
+            foreach ($defs as $tabla => $def) {
+                $modelClass = $this->resolveEvaluationModel($tabla);
+                if (!$modelClass) continue;
+
+                // Columnas a recolectar: fecha + cada serie
+                $columns = array_merge(
+                    ['fecha'],
+                    array_map(fn($s) => $s['name'], $def['series'])
+                );
+
+                $records = $modelClass::where('patient_id', $patientId)
+                    ->where('status', 1)
+                    ->orderBy('fecha', 'asc')
+                    ->get($columns);
+
+                if ($records->count() < 2) continue;
+
+                // X axis: fechas (formato dd/mm)
+                $labels = $records->map(function ($r) {
+                    return $r->fecha
+                        ? \Carbon\Carbon::parse($r->fecha)->format('d/m/Y')
+                        : '—';
+                })->all();
+
+                // Una serie por cada definición — solo incluir si tiene al menos 1 valor no-null
+                $series = [];
+                foreach ($def['series'] as $s) {
+                    $values = $records->map(function ($r) use ($s) {
+                        $v = $r->{$s['name']} ?? null;
+                        if ($v === null || $v === '') return null;
+                        return is_numeric($v) ? (float) $v : null;
+                    })->all();
+
+                    // Calcular dirección de cambio entre primer y último valor no-null
+                    $firstNonNull = collect($values)->first(fn($v) => $v !== null);
+                    $lastNonNull  = collect($values)->reverse()->first(fn($v) => $v !== null);
+                    $delta = null;
+                    $isImprovement = null;
+                    if ($firstNonNull !== null && $lastNonNull !== null) {
+                        $delta = round($lastNonNull - $firstNonNull, 2);
+                        if ($delta != 0 && $s['direction'] !== 'none') {
+                            $isImprovement = $s['direction'] === 'higher'
+                                ? ($delta > 0)
+                                : ($delta < 0);
+                        }
+                    }
+
+                    // Solo agregar la serie si tiene al menos un dato
+                    $hasData = collect($values)->filter(fn($v) => $v !== null)->count() > 0;
+                    if (!$hasData) continue;
+
+                    $series[] = [
+                        'name'          => $s['name'],
+                        'label'         => $s['label'],
+                        'color'         => $s['color'],
+                        'direction'     => $s['direction'],
+                        'data'          => $values,
+                        'first'         => $firstNonNull,
+                        'last'          => $lastNonNull,
+                        'delta'         => $delta,
+                        'is_improvement'=> $isImprovement,
+                    ];
+                }
+
+                if (empty($series)) continue;
+
+                $charts[] = [
+                    'tabla'   => $tabla,
+                    'title'   => $def['title'],
+                    'icon'    => $def['icon'] ?? 'fa-chart-line',
+                    'y_label' => $def['y_label'] ?? '',
+                    'y_min'   => $def['y_min']  ?? null,
+                    'y_max'   => $def['y_max']  ?? null,
+                    'labels'  => $labels,
+                    'series'  => $series,
+                    'count'   => count($labels),
+                ];
+            }
+
+            return $this->apiResponse([
+                'status' => '1',
+                'data'   => [
+                    'patient_id'   => $patient->id,
+                    'patient_name' => $patient->full_name,
+                    'charts'       => $charts,
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('getPatientEvolution: ' . $e->getMessage());
+            return $this->apiResponse([
+                'status'  => '500',
+                'message' => 'Error cargando evolución',
+                'debug'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Whitelist tabla_form -> clase de modelo.
      * Sólo las 11 evaluaciones que tienen config inline son editables.
      */

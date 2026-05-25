@@ -6,7 +6,17 @@
       "Bash(php -l app/Http/Controllers/FormFisios/UtilityFisioController.php)",
       "Bash(php -l app/Models/FormFisios/UtilityFisio.php)",
       "Bash(php -l database/migrations/2026_05_19_120000_add_ficha_id_to_fis_historys.php)",
-      "Bash(node -e \"require\\('fs'\\).readFileSync\\('public/js/custom/patient/expediente.js','utf8'\\); console.log\\('JS file is readable'\\);\")"
+      "Bash(node -e \"require\\('fs'\\).readFileSync\\('public/js/custom/patient/expediente.js','utf8'\\); console.log\\('JS file is readable'\\);\")",
+      "Bash(php -l /c/DES/Stars/app/Http/Controllers/Dashboard/ClinicalDashboardController.php)",
+      "Bash(php -l /c/DES/Stars/app/Services/Messaging/MessagingService.php)",
+      "Bash(php -l /c/DES/Stars/app/Services/Messaging/WhatsAppCloudProvider.php)",
+      "Bash(php -l /c/DES/Stars/app/Services/Messaging/TwilioProvider.php)",
+      "Bash(php -l /c/DES/Stars/app/Services/Messaging/LogProvider.php)",
+      "Bash(php -l /c/DES/Stars/app/Http/Controllers/Messaging/PatientMessagingController.php)",
+      "Bash(php -l /c/DES/Stars/app/Models/Messaging/MsgLog.php)",
+      "Bash(php /c/DES/Stars/artisan route:list)",
+      "Bash(php -l /c/DES/Stars/app/Support/EvolutionCharts.php)",
+      "Bash(php -l /c/DES/Stars/app/Http/Controllers/Patient/PatientController.php)"
     ]
   }
 }

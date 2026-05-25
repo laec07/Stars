@@ -26,7 +26,19 @@
         evaluacionesLoading: false,
         evalFichas: [],
         evalCurrentFilter: 'all',
-        evalCollapseState: {}
+        evalCollapseState: {},
+
+        // Fase 9a — Mensajería
+        msgLoaded: false,
+        msgLoading: false,
+        msgTemplates: [],
+        msgCurrentTplKey: null,
+        msgProvider: 'log',
+
+        // Fase 11 — Evolución (gráficos)
+        evolLoaded: false,
+        evolLoading: false,
+        evolCharts: {} // { tabla: ChartInstance }
     };
 
     var CONFIG = {
@@ -51,6 +63,47 @@
             if (!state.evaluacionesLoaded && !state.evaluacionesLoading) {
                 EvaluacionManager.Load();
             }
+        });
+
+        // Lazy-load al abrir la pestaña Evolución (Fase 11)
+        $('#tab-evolucion-trigger').on('shown.bs.tab', function () {
+            if (!state.evolLoaded && !state.evolLoading) {
+                EvolucionManager.Load();
+            }
+        });
+
+        // Lazy-load al abrir la pestaña Mensajes (Fase 9a)
+        $('#tab-mensajes-trigger').on('shown.bs.tab', function () {
+            if (!state.msgLoaded && !state.msgLoading) {
+                MessagingManager.Load();
+            }
+        });
+
+        // Botón abrir modal de envío
+        $('#btnAbrirEnvioMsg').on('click', function () {
+            MessagingManager.OpenSendModal();
+        });
+
+        // Submit del formulario de envío
+        $('#formSendMsg').on('submit', function (e) {
+            e.preventDefault();
+            MessagingManager.Send();
+        });
+
+        // Click en plantilla
+        $(document).on('click', '.msg-template-btn', function () {
+            var key = $(this).data('tpl');
+            MessagingManager.SelectTemplate(key);
+        });
+
+        // Char count del body
+        $(document).on('input', '#msgBody', function () {
+            $('#msgCharCount').text($(this).val().length);
+        });
+
+        // Cambio en variables → re-renderizar preview
+        $(document).on('input change', '#msgVarFecha, #msgVarHora', function () {
+            MessagingManager.RerenderPreview();
         });
 
         // Filtro de ficha en la pestaña Evaluación
@@ -102,6 +155,41 @@
             e.stopPropagation();
             var key = $(this).data('key');
             EvaluacionManager.OpenComparison(key);
+        });
+
+        // Fase 10 — Dropdown de plantillas: cargar la lista al abrirse
+        $(document).on('show.bs.dropdown', '.eval-tpl-dropdown', function () {
+            TemplateManager.LoadList();
+        });
+
+        // Click en un item de plantilla → aplicar
+        $(document).on('click', '.eval-tpl-item', function (e) {
+            // Si fue click en el botón de delete, no aplicar
+            if ($(e.target).closest('.eval-tpl-item-delete').length) return;
+            e.preventDefault();
+            var id = $(this).data('id');
+            TemplateManager.Apply(id);
+        });
+
+        // Click en botón de borrar plantilla
+        $(document).on('click', '.eval-tpl-item-delete', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var id = $(this).data('id');
+            var name = $(this).data('name') || 'esta plantilla';
+            TemplateManager.Delete(id, name);
+        });
+
+        // Click en "Guardar como plantilla"
+        $(document).on('click', '#btnSaveAsTemplate', function (e) {
+            e.preventDefault();
+            TemplateManager.OpenSaveModal();
+        });
+
+        // Submit del modal de guardar plantilla
+        $('#formSaveEvalTpl').on('submit', function (e) {
+            e.preventDefault();
+            TemplateManager.Save();
         });
 
         // Submit del modal inline
@@ -3125,7 +3213,690 @@
 
         HasConfigFor: function (tableKey) {
             return !!EVAL_INLINE_CONFIGS[tableKey];
+        },
+
+        /**
+         * Fase 10 — Recolecta el payload actual del formulario para guardar
+         * como plantilla. Similar a Save() pero sin enviar — solo retorna el
+         * objeto con todos los valores actuales del modal.
+         * Excluye datos per-registro: patient_id, ficha_id, id.
+         */
+        CollectCurrentPayload: function () {
+            var cfg = EVAL_INLINE_CONFIGS[InlineFormManager.currentKey];
+            if (!cfg) return null;
+
+            var payload = {};
+            function isEmptyVal(v) { return v === null || v === undefined || v === ''; }
+
+            cfg.fields.forEach(function (f) {
+                if (f.type === 'section' || f.type === 'note' || f.type === 'image' ||
+                    f.type === 'body_map' || f.type === 'scale_legend') return;
+
+                if (f.type === 'gonio_movement') {
+                    (f.pairs || []).forEach(function (p) {
+                        var lv = $('#formEvalInline [name="' + p.nameLeft  + '"]').val();
+                        var rv = $('#formEvalInline [name="' + p.nameRight + '"]').val();
+                        if (!isEmptyVal(lv)) payload[p.nameLeft]  = lv;
+                        if (!isEmptyVal(rv)) payload[p.nameRight] = rv;
+                    });
+                    return;
+                }
+                if (f.type === 'postural_grid') {
+                    (f.prefixes || []).forEach(function (prefix) {
+                        (f.bodyParts || []).forEach(function (bp) {
+                            var n = prefix + '_' + bp.key;
+                            var v = $('#formEvalInline [name="' + n + '"]').val();
+                            if (!isEmptyVal(v)) payload[n] = v;
+                        });
+                    });
+                    return;
+                }
+                if (f.type === 'file_uploads') return; // archivos no se guardan en plantilla
+                if (f.type === 'bilateral_number' || f.type === 'bilateral_grade' || f.type === 'bilateral_text') {
+                    var lv2 = $('#formEvalInline [name="' + f.nameLeft  + '"]').val();
+                    var rv2 = $('#formEvalInline [name="' + f.nameRight + '"]').val();
+                    if (!isEmptyVal(lv2)) payload[f.nameLeft]  = lv2;
+                    if (!isEmptyVal(rv2)) payload[f.nameRight] = rv2;
+                    return;
+                }
+                if (f.type === 'dermatome') {
+                    var sel = $('#formEvalInline input[name="dermatome_' + f.code + '"]:checked').val() || '';
+                    if (sel === '') return;
+                    payload[f.code + '_zn'] = (sel === 'zn') ? 1 : 0;
+                    payload[f.code + '_zs'] = (sel === 'zs') ? 1 : 0;
+                    payload[f.code + '_za'] = (sel === 'za') ? 1 : 0;
+                    return;
+                }
+                if (!f.name) return;
+                var $el = $('#formEvalInline [name="' + f.name + '"]');
+                if (!$el.length) return;
+                var v = $el.val();
+                if (isEmptyVal(v)) return;
+                if (f.virtual && f.mapToFlags) {
+                    // expandir flags
+                    Object.keys(f.mapToFlags).forEach(function (k) {
+                        payload[f.mapToFlags[k]] = 0;
+                    });
+                    if (f.mapToFlags[v]) payload[f.mapToFlags[v]] = 1;
+                    return;
+                }
+                if (f.virtual) return;
+                payload[f.name] = v;
+            });
+
+            return payload;
         }
     };
+
+    // ========================================================================
+    // Fase 10 — TemplateManager: plantillas de evaluación
+    // ========================================================================
+    var TemplateManager = {
+
+        Apply: function (id) {
+            JsManager.StartProcessBar();
+            JsManager.SendJson('GET', 'eval-templates/' + id, '', function (json) {
+                JsManager.EndProcessBar();
+                if (!json || json.status != '1' || !json.data) {
+                    if (window.Message) Message.Notification('error', 'No se pudo cargar la plantilla.');
+                    return;
+                }
+                var data = json.data;
+                if (data.tabla_form !== InlineFormManager.currentKey) {
+                    if (window.Message) Message.Notification('warning', 'Esta plantilla no aplica a este tipo de evaluación.');
+                    return;
+                }
+                // Reutilizar PopulateForm de Fase 4a — sabe llenar todos los tipos de campo
+                InlineFormManager.PopulateForm(data.payload || {});
+                if (window.Message) Message.Notification('success', 'Plantilla aplicada: ' + (data.name || ''));
+            }, function (xhr) {
+                JsManager.EndProcessBar();
+                console.error('Apply template failed', xhr);
+                if (window.Message) Message.Notification('error', 'Error al aplicar la plantilla.');
+            });
+        },
+
+        LoadList: function () {
+            var tabla = InlineFormManager.currentKey;
+            if (!tabla) return;
+            var $list = $('#evalTplList');
+            $list.html('<div class="dropdown-header"><i class="fas fa-spinner fa-spin mr-1"></i> Cargando…</div>');
+
+            JsManager.SendJson('GET', 'eval-templates?tabla=' + encodeURIComponent(tabla), '', function (json) {
+                if (!json || json.status != '1' || !json.data) {
+                    $list.html('<div class="eval-tpl-empty">Error al cargar plantillas.</div>');
+                    return;
+                }
+                TemplateManager.RenderList(json.data.templates || []);
+            }, function () {
+                $list.html('<div class="eval-tpl-empty">Error de conexión.</div>');
+            });
+        },
+
+        RenderList: function (templates) {
+            var $list = $('#evalTplList');
+            if (!templates.length) {
+                $list.html(
+                    '<div class="dropdown-header">Plantillas</div>' +
+                    '<div class="eval-tpl-empty">' +
+                        'No hay plantillas guardadas para este tipo. Usa "Guardar como plantilla" abajo.' +
+                    '</div>'
+                );
+                return;
+            }
+
+            // Separar por scope (Personal primero, luego Global)
+            var personal = templates.filter(function (t) { return t.scope === 'personal'; });
+            var global   = templates.filter(function (t) { return t.scope === 'global'; });
+
+            var html = '';
+
+            if (personal.length) {
+                html += '<div class="dropdown-header"><i class="fas fa-user mr-1"></i> Mis plantillas</div>';
+                personal.forEach(function (t) { html += TemplateManager.RenderItem(t); });
+            }
+            if (global.length) {
+                if (personal.length) html += '<div class="dropdown-divider"></div>';
+                html += '<div class="dropdown-header"><i class="fas fa-users mr-1"></i> Plantillas del equipo</div>';
+                global.forEach(function (t) { html += TemplateManager.RenderItem(t); });
+            }
+            $list.html(html);
+        },
+
+        RenderItem: function (t) {
+            var scopeClass = t.scope === 'global' ? 'global' : 'personal';
+            var scopeLabel = t.scope === 'global' ? 'GLOBAL' : 'PERSONAL';
+            var deleteBtn = t.is_owner
+                ? '<button type="button" class="eval-tpl-item-delete" ' +
+                    'data-id="' + t.id + '" data-name="' + Manager.EscapeHtml(t.name) + '" ' +
+                    'title="Eliminar plantilla"><i class="fas fa-trash-alt"></i></button>'
+                : '';
+            var description = t.description
+                ? Manager.EscapeHtml(t.description.length > 50 ? t.description.substring(0, 50) + '…' : t.description)
+                : '';
+            var creator = t.creator_name && !t.is_owner
+                ? ' · por ' + Manager.EscapeHtml(t.creator_name)
+                : '';
+            return (
+                '<div class="eval-tpl-item" data-id="' + t.id + '">' +
+                    '<div class="eval-tpl-info">' +
+                        '<div class="eval-tpl-name">' + Manager.EscapeHtml(t.name) + '</div>' +
+                        (description || creator
+                            ? '<div class="eval-tpl-meta">' + description + creator + '</div>'
+                            : '') +
+                    '</div>' +
+                    '<span class="eval-tpl-scope-badge ' + scopeClass + '">' + scopeLabel + '</span>' +
+                    deleteBtn +
+                '</div>'
+            );
+        },
+
+        OpenSaveModal: function () {
+            var tabla = InlineFormManager.currentKey;
+            if (!tabla) {
+                if (window.Message) Message.Notification('warning', 'Abre primero una evaluación.');
+                return;
+            }
+            // Verificar que haya datos para guardar
+            var payload = InlineFormManager.CollectCurrentPayload();
+            if (!payload || Object.keys(payload).length === 0) {
+                if (window.Message) Message.Notification('warning', 'Llena algunos campos antes de guardar como plantilla.');
+                return;
+            }
+            $('#saveTplId').val('');
+            $('#saveTplTabla').val(tabla);
+            $('#saveTplName').val('');
+            $('#saveTplDescription').val('');
+            $('input[name="saveTplScope"][value="personal"]').prop('checked', true);
+
+            // Cerrar el dropdown si estaba abierto
+            $('.eval-tpl-dropdown').removeClass('show');
+            $('.eval-tpl-menu').removeClass('show');
+
+            $('#modalSaveEvalTpl').modal('show');
+            setTimeout(function () { $('#saveTplName').focus(); }, 200);
+        },
+
+        Save: function () {
+            var name = ($('#saveTplName').val() || '').trim();
+            if (!name) {
+                if (window.Message) Message.Notification('warning', 'Ponle un nombre a la plantilla.');
+                return;
+            }
+            var payload = InlineFormManager.CollectCurrentPayload();
+            if (!payload || Object.keys(payload).length === 0) {
+                if (window.Message) Message.Notification('warning', 'No hay datos que guardar.');
+                return;
+            }
+
+            var data = {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                tabla_form: $('#saveTplTabla').val() || InlineFormManager.currentKey,
+                name: name,
+                description: ($('#saveTplDescription').val() || '').trim(),
+                scope: $('input[name="saveTplScope"]:checked').val() || 'personal',
+                payload: JSON.stringify(payload)
+            };
+            var id = $('#saveTplId').val();
+            if (id) data.id = id;
+
+            JsManager.StartProcessBar();
+            JsManager.SendJson('POST', 'eval-templates', data, function (json) {
+                JsManager.EndProcessBar();
+                if (json && (json.status == '1' || json.status === 1)) {
+                    if (window.Message) Message.Notification('success', 'Plantilla guardada.');
+                    $('#modalSaveEvalTpl').modal('hide');
+                } else {
+                    if (window.Message) Message.Notification('error', 'No se pudo guardar la plantilla.');
+                }
+            }, function (xhr) {
+                JsManager.EndProcessBar();
+                console.error('Save template failed', xhr);
+                var msg = 'Error al guardar la plantilla.';
+                try {
+                    var resp = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
+                    if (resp && resp.message) msg += ' ' + resp.message;
+                } catch (e) {}
+                if (window.Message) Message.Notification('error', msg);
+            });
+        },
+
+        Delete: function (id, name) {
+            if (!id) return;
+            var msg = '¿Eliminar la plantilla "' + name + '"?';
+            if (window.Message && typeof Message.Prompt === 'function') {
+                if (!Message.Prompt(msg)) return;
+            } else if (!window.confirm(msg)) {
+                return;
+            }
+            JsManager.StartProcessBar();
+            JsManager.SendJson('POST', 'eval-templates/' + id + '/delete', {
+                _token: $('meta[name="csrf-token"]').attr('content')
+            }, function (json) {
+                JsManager.EndProcessBar();
+                if (json && (json.status == '1' || json.status === 1)) {
+                    if (window.Message) Message.Notification('success', 'Plantilla eliminada.');
+                    TemplateManager.LoadList();
+                } else {
+                    if (window.Message) Message.Notification('error', 'No se pudo eliminar la plantilla.');
+                }
+            }, function () {
+                JsManager.EndProcessBar();
+                if (window.Message) Message.Notification('error', 'Error al eliminar la plantilla.');
+            });
+        }
+    };
+
+    window.TemplateManager = TemplateManager;
+
+    // ========================================================================
+    // Fase 11 — EvolucionManager: gráficos de evolución temporal del paciente
+    // ========================================================================
+    var EvolucionManager = {
+
+        Load: function () {
+            if (!ctx.id) return;
+            state.evolLoading = true;
+
+            JsManager.SendJsonAsyncON('GET', 'patient-evolution/' + ctx.id, '', onSuccess, onFailed);
+
+            function onSuccess(json) {
+                state.evolLoading = false;
+                state.evolLoaded  = true;
+                if (!json || json.status != '1' || !json.data) {
+                    EvolucionManager.RenderEmpty('Error al cargar evolución.');
+                    return;
+                }
+                EvolucionManager.Render(json.data.charts || []);
+            }
+            function onFailed(xhr) {
+                state.evolLoading = false;
+                console.error('Evolucion load failed', xhr);
+                EvolucionManager.RenderEmpty('No se pudo cargar la evolución.');
+            }
+        },
+
+        RenderEmpty: function (msg) {
+            $('#evolGrid').html(
+                '<div class="evol-empty-card">' +
+                    '<i class="fas fa-chart-line"></i>' +
+                    '<div>' + Manager.EscapeHtml(msg) + '</div>' +
+                '</div>'
+            );
+        },
+
+        Render: function (charts) {
+            // Destruir charts previos
+            Object.keys(state.evolCharts).forEach(function (k) {
+                try { state.evolCharts[k].destroy(); } catch (e) {}
+            });
+            state.evolCharts = {};
+
+            if (!charts.length) {
+                $('#evolGrid').html(
+                    '<div class="evol-empty-card">' +
+                        '<i class="fas fa-chart-line"></i>' +
+                        '<div>Aún no hay suficientes evaluaciones para mostrar evolución.</div>' +
+                        '<div style="font-size:.78rem; color:#adb5bd; margin-top:.4rem;">' +
+                            'Se requieren al menos 2 evaluaciones del mismo tipo.' +
+                        '</div>' +
+                    '</div>'
+                );
+                return;
+            }
+
+            // Generar cards y luego instanciar los charts
+            var html = charts.map(function (c) {
+                var summaryHtml = c.series.map(function (s) {
+                    var deltaClass = s.is_improvement === true ? 'up' :
+                                     s.is_improvement === false ? 'down' : 'none';
+                    var deltaSign = s.delta > 0 ? '+' : '';
+                    var deltaText = s.delta === null
+                        ? ''
+                        : '<span class="evol-summary-delta ' + deltaClass + '">' + deltaSign + s.delta + '</span>';
+                    return (
+                        '<span class="evol-summary-item">' +
+                            '<span class="evol-summary-dot" style="background:' + s.color + ';"></span>' +
+                            Manager.EscapeHtml(s.label) +
+                            deltaText +
+                        '</span>'
+                    );
+                }).join('');
+
+                return (
+                    '<div class="evol-card" data-tabla="' + Manager.EscapeHtml(c.tabla) + '">' +
+                        '<div class="evol-card-header">' +
+                            '<div class="evol-card-icon"><i class="fas ' + Manager.EscapeHtml(c.icon) + '"></i></div>' +
+                            '<div class="evol-card-title">' + Manager.EscapeHtml(c.title) + '</div>' +
+                            '<div class="evol-card-meta">' + c.count + ' eval.</div>' +
+                        '</div>' +
+                        '<div class="evol-chart-wrap">' +
+                            '<canvas data-evol-canvas="' + Manager.EscapeHtml(c.tabla) + '"></canvas>' +
+                        '</div>' +
+                        '<div class="evol-series-summary">' + summaryHtml + '</div>' +
+                    '</div>'
+                );
+            }).join('');
+
+            $('#evolGrid').html(html);
+
+            // Instanciar Chart.js para cada canvas
+            charts.forEach(function (c) {
+                EvolucionManager.RenderChart(c);
+            });
+        },
+
+        RenderChart: function (c) {
+            var canvas = document.querySelector('[data-evol-canvas="' + c.tabla + '"]');
+            if (!canvas || typeof Chart === 'undefined') return;
+
+            // Datasets de Chart.js
+            var datasets = c.series.map(function (s) {
+                return {
+                    label: s.label,
+                    data: s.data,
+                    borderColor: s.color,
+                    backgroundColor: EvolucionManager.HexToRgba(s.color, 0.12),
+                    borderWidth: 2.5,
+                    tension: 0.30,
+                    pointBackgroundColor: s.color,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    spanGaps: true,
+                    fill: c.series.length === 1   // single-line → fill area; multi-line → solo línea
+                };
+            });
+
+            var yOpts = {
+                ticks: { font: { size: 10 }, color: '#5a6c80' },
+                grid:  { color: '#f1f3f5' },
+                title: c.y_label ? { display: true, text: c.y_label, font: { size: 11 }, color: '#5a6c80' } : { display: false }
+            };
+            if (c.y_min !== null && c.y_min !== undefined) yOpts.min = c.y_min;
+            if (c.y_max !== null && c.y_max !== undefined) yOpts.max = c.y_max;
+            yOpts.beginAtZero = (c.y_min === null || c.y_min === undefined || c.y_min === 0);
+
+            state.evolCharts[c.tabla] = new Chart(canvas, {
+                type: 'line',
+                data: { labels: c.labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', intersect: false, axis: 'x' },
+                    plugins: {
+                        legend: {
+                            display: datasets.length > 1,
+                            position: 'bottom',
+                            labels: { font: { size: 10 }, color: '#2F4157', padding: 8, boxWidth: 10, boxHeight: 6 }
+                        },
+                        tooltip: {
+                            backgroundColor: '#2F4157',
+                            padding: 9,
+                            titleFont: { weight: '600', size: 11 },
+                            bodyFont: { size: 11 },
+                            callbacks: {
+                                label: function (ctx) {
+                                    return ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y : '—');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 }, color: '#5a6c80', maxRotation: 0, autoSkipPadding: 12 }
+                        },
+                        y: yOpts
+                    }
+                }
+            });
+        },
+
+        HexToRgba: function (hex, alpha) {
+            if (!hex) return 'rgba(159,147,231,' + alpha + ')';
+            var h = hex.replace('#', '');
+            if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+            var r = parseInt(h.substr(0, 2), 16);
+            var g = parseInt(h.substr(2, 2), 16);
+            var b = parseInt(h.substr(4, 2), 16);
+            return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+        }
+    };
+
+    window.EvolucionManager = EvolucionManager;
+
+    // ========================================================================
+    // Fase 9a — MessagingManager: tab Mensajes + modal de envío
+    // ========================================================================
+    var MessagingManager = {
+
+        Load: function () {
+            if (!ctx.id) return;
+            state.msgLoading = true;
+
+            // Carga en paralelo: plantillas + historial
+            $.when(
+                $.ajax({
+                    url: JsManager.BaseUrl() + '/message-templates',
+                    dataType: 'json'
+                }),
+                $.ajax({
+                    url: JsManager.BaseUrl() + '/patient-messages/' + ctx.id,
+                    dataType: 'json'
+                })
+            ).done(function (tplResp, msgResp) {
+                state.msgLoading = false;
+                state.msgLoaded  = true;
+
+                var tplData = tplResp[0] && tplResp[0].data ? tplResp[0].data : {};
+                var msgData = msgResp[0] && msgResp[0].data ? msgResp[0].data : {};
+
+                state.msgTemplates = tplData.templates || [];
+                state.msgProvider  = tplData.provider || msgData.current_provider || 'log';
+
+                MessagingManager.RenderProviderHint();
+                MessagingManager.RenderMessageList(msgData.messages || []);
+            }).fail(function (xhr) {
+                state.msgLoading = false;
+                console.error('MessagingManager.Load failed', xhr);
+                $('#msgList').html(
+                    '<div class="empty-state">' +
+                        '<i class="fas fa-exclamation-triangle"></i>' +
+                        '<span>No se pudo cargar el historial de mensajes.</span>' +
+                    '</div>'
+                );
+            });
+        },
+
+        RenderProviderHint: function () {
+            var $hint = $('#msgProviderHint');
+            if (state.msgProvider === 'log') {
+                $hint.html(
+                    '<i class="fas fa-info-circle mr-1"></i>' +
+                    '<strong>Modo simulación:</strong> los mensajes se registran pero no se envían. ' +
+                    'Para activar envíos reales, configura WhatsApp Cloud API en <code>.env</code>.'
+                ).addClass('visible');
+            } else {
+                $hint.removeClass('visible').empty();
+            }
+        },
+
+        RenderMessageList: function (messages) {
+            var $list = $('#msgList');
+            if (!messages || !messages.length) {
+                $list.html(
+                    '<div class="empty-state">' +
+                        '<i class="fas fa-comment-dots"></i>' +
+                        '<span>Aún no se ha enviado ningún mensaje a este paciente.</span>' +
+                    '</div>'
+                );
+                return;
+            }
+
+            var html = messages.map(function (m) {
+                var statusClass = m.status === 'failed' ? 'failed' :
+                                  m.status === 'queued' ? 'queued' : '';
+                var channelLabel = (m.channel || 'log').toUpperCase();
+                var tplLabel = m.template_key && m.template_key !== 'free'
+                    ? '<span class="msg-card-template">' + Manager.EscapeHtml(m.template_key) + '</span>'
+                    : '';
+                var when = m.sent_at || m.created_at;
+                var whenLabel = when ? new Date(when).toLocaleString('es-ES', {
+                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                }) : '—';
+
+                return (
+                    '<div class="msg-card ' + statusClass + '">' +
+                        '<div class="msg-card-header">' +
+                            '<span class="msg-card-channel ' + (m.channel || 'log') + '">' +
+                                (m.channel === 'whatsapp' ? '<i class="fab fa-whatsapp mr-1"></i>' : '') +
+                                channelLabel +
+                            '</span>' +
+                            '<span class="msg-card-status ' + m.status + '">' + Manager.EscapeHtml(m.status) + '</span>' +
+                            tplLabel +
+                            '<span class="msg-card-meta">' +
+                                whenLabel +
+                                (m.user_name ? ' · ' + Manager.EscapeHtml(m.user_name) : '') +
+                            '</span>' +
+                        '</div>' +
+                        '<div class="msg-card-body">' + Manager.EscapeHtml(m.body || '') + '</div>' +
+                        (m.error ? '<div class="msg-card-error"><i class="fas fa-exclamation-triangle mr-1"></i>' + Manager.EscapeHtml(m.error) + '</div>' : '') +
+                    '</div>'
+                );
+            }).join('');
+
+            $list.html(html);
+        },
+
+        OpenSendModal: function () {
+            if (!state.msgTemplates.length) {
+                // Si no se ha cargado el tab todavía, cargar plantillas primero
+                MessagingManager.Load();
+                setTimeout(function () { MessagingManager.OpenSendModal(); }, 300);
+                return;
+            }
+
+            // Set nombre destinatario
+            $('#msgToName').text(ctx.name || '—');
+
+            // Set provider badge
+            var $badge = $('#msgProviderBadge');
+            $badge.removeClass('provider-log');
+            if (state.msgProvider === 'log') {
+                $badge.addClass('provider-log')
+                      .text('Provider: log (simulación)');
+            } else {
+                $badge.text('Provider: ' + state.msgProvider);
+            }
+
+            // Render plantillas como botones
+            var html = state.msgTemplates.map(function (t) {
+                return '<button type="button" class="msg-template-btn" data-tpl="' + Manager.EscapeHtml(t.key) + '">' +
+                            '<i class="fas ' + Manager.EscapeHtml(t.icon || 'fa-comment') + '"></i>' +
+                            '<span>' + Manager.EscapeHtml(t.label) + '</span>' +
+                       '</button>';
+            }).join('');
+            $('#msgTemplateGrid').html(html);
+
+            // Reset
+            $('#msgBody').val('').trigger('input');
+            $('#msgVarFecha').val('');
+            $('#msgVarHora').val('');
+            $('#msgVarsRow').hide();
+            state.msgCurrentTplKey = null;
+            $('.msg-template-btn').removeClass('active');
+
+            // Pre-seleccionar plantilla "reminder" por defecto
+            MessagingManager.SelectTemplate('reminder');
+
+            $('#modalSendMsg').modal('show');
+        },
+
+        SelectTemplate: function (key) {
+            state.msgCurrentTplKey = key;
+            $('.msg-template-btn').removeClass('active');
+            $('.msg-template-btn[data-tpl="' + key + '"]').addClass('active');
+
+            // Mostrar campos de variables solo si la plantilla las usa
+            var tpl = state.msgTemplates.find(function (t) { return t.key === key; });
+            var needsVars = tpl && tpl.body && /\{fecha\}|\{hora\}/.test(tpl.body);
+            $('#msgVarsRow').toggle(!!needsVars);
+
+            MessagingManager.RerenderPreview();
+        },
+
+        RerenderPreview: function () {
+            if (!state.msgCurrentTplKey) return;
+            var params = {
+                template_key: state.msgCurrentTplKey,
+                patient_id:   ctx.id,
+                'vars[fecha]': $('#msgVarFecha').val() || '',
+                'vars[hora]':  $('#msgVarHora').val()  || ''
+            };
+            $.ajax({
+                url: JsManager.BaseUrl() + '/message-render',
+                data: params,
+                dataType: 'json',
+                success: function (json) {
+                    if (json && json.data && json.data.body !== undefined) {
+                        // Solo actualizar si el textarea no ha sido editado manualmente
+                        // ...o si está vacío (primera vez)
+                        var current = $('#msgBody').val();
+                        var isFresh = !current || current === '' || state.msgCurrentTplKey;
+                        if (isFresh) {
+                            $('#msgBody').val(json.data.body).trigger('input');
+                        }
+                    }
+                }
+            });
+        },
+
+        Send: function () {
+            var body = ($('#msgBody').val() || '').trim();
+            if (!body) {
+                if (window.Message) Message.Notification('warning', 'Escribe un mensaje antes de enviar.');
+                return;
+            }
+
+            var payload = {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                patient_id: ctx.id,
+                template_key: state.msgCurrentTplKey || 'free',
+                body: body
+            };
+
+            JsManager.StartProcessBar();
+            JsManager.SendJson('POST', 'send-patient-message', payload, onSuccess, onFailed);
+
+            function onSuccess(json) {
+                JsManager.EndProcessBar();
+                if (json && (json.status == '1' || json.status === 1)) {
+                    if (window.Message) Message.Success('save');
+                    $('#modalSendMsg').modal('hide');
+                    state.msgLoaded = false;
+                    MessagingManager.Load();
+                } else {
+                    var msg = (json && json.error) || (json && json.data && json.data.error) || 'No se pudo enviar el mensaje.';
+                    if (window.Message) Message.Notification('error', msg);
+                }
+            }
+            function onFailed(xhr) {
+                JsManager.EndProcessBar();
+                console.error('send msg failed', xhr);
+                var msg = 'Error al enviar el mensaje.';
+                try {
+                    var resp = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
+                    if (resp && resp.message) msg += ' ' + resp.message;
+                    if (resp && resp.data && resp.data.error) msg += ' ' + resp.data.error;
+                } catch (e) {}
+                if (window.Message) Message.Notification('error', msg);
+            }
+        }
+    };
+
+    // Exponer para debugging desde consola
+    window.MessagingManager = MessagingManager;
 
 })(jQuery);

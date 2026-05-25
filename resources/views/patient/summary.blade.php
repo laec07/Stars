@@ -10,6 +10,8 @@
     };
 </script>
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+{{-- Fase 11 — Chart.js para los gráficos de evolución --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{{ dsAsset('js/custom/patient/expediente.js') }}"></script>
 @endpush
 
@@ -918,6 +920,388 @@
         .expediente-tabs .nav-link { padding:.65rem .75rem; font-size:.85rem; }
     }
 
+    /* ============== Fase 10 — Plantillas de evaluación ============== */
+    .inline-eval-header { display:flex; align-items:center; }
+    .inline-eval-header .modal-title { flex:1; }
+
+    .eval-tpl-dropdown .eval-tpl-toggle {
+        font-size:.78rem; font-weight:600;
+        padding:.25rem .65rem;
+        border-radius:.3rem;
+    }
+    .eval-tpl-menu {
+        min-width:280px; max-width:340px;
+        max-height:380px; overflow-y:auto;
+        padding:.35rem 0;
+        font-family:var(--brand-font-body);
+    }
+    .eval-tpl-menu .dropdown-header {
+        font-size:.7rem; font-weight:700;
+        color:var(--brand-text-muted);
+        text-transform:uppercase; letter-spacing:.04em;
+        padding:.4rem 1rem .2rem;
+    }
+    .eval-tpl-empty {
+        font-size:.82rem; color:#adb5bd; font-style:italic;
+        padding:.55rem 1rem;
+    }
+    .eval-tpl-item {
+        display:flex; align-items:flex-start;
+        gap:.5rem;
+        padding:.45rem 1rem;
+        cursor:pointer;
+        border-left:3px solid transparent;
+        transition:background .12s ease, border-color .12s ease;
+    }
+    .eval-tpl-item:hover {
+        background:rgba(159, 147, 231, .10);
+        border-left-color:var(--brand-primary, #9F93E7);
+    }
+    .eval-tpl-item .eval-tpl-info { flex:1; min-width:0; }
+    .eval-tpl-item .eval-tpl-name {
+        font-weight:600; font-size:.88rem;
+        color:var(--brand-text);
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .eval-tpl-item .eval-tpl-meta {
+        font-size:.7rem; color:var(--brand-text-muted); margin-top:.1rem;
+    }
+    .eval-tpl-scope-badge {
+        font-size:.62rem; font-weight:700;
+        padding:.1rem .4rem; border-radius:.6rem;
+        text-transform:uppercase; letter-spacing:.04em;
+        flex-shrink:0; margin-top:.2rem;
+    }
+    .eval-tpl-scope-badge.personal { background:rgba(159, 147, 231, .15); color:var(--brand-primary-darker); }
+    .eval-tpl-scope-badge.global   { background:rgba(199, 217, 229, .35); color:#1d5e6b; }
+    .eval-tpl-item-delete {
+        background:transparent; border:none; cursor:pointer;
+        color:#cfd5dd; padding:.15rem .3rem;
+        font-size:.85rem; line-height:1;
+        flex-shrink:0;
+    }
+    .eval-tpl-item-delete:hover { color:#dc3545; }
+
+    /* Modal de guardar plantilla */
+    .eval-tpl-save-modal .modal-title { color:var(--brand-text); }
+    .tpl-scope-options { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-top:.2rem; }
+    .tpl-scope-option { cursor:pointer; margin:0; }
+    .tpl-scope-option input[type="radio"] { display:none; }
+    .tpl-scope-card {
+        border:2px solid #e9ecef;
+        border-radius:.4rem;
+        padding:.7rem .9rem;
+        transition:all .15s ease;
+        font-size:.82rem;
+        color:var(--brand-text);
+        background:#fff;
+    }
+    .tpl-scope-card i { color:var(--brand-primary-darker); }
+    .tpl-scope-option input[type="radio"]:checked + .tpl-scope-card {
+        border-color:var(--brand-primary);
+        background:rgba(159, 147, 231, .08);
+    }
+    .tpl-scope-desc { font-size:.7rem; color:var(--brand-text-muted); margin-top:.15rem; }
+
+    @media (max-width: 576px) {
+        .tpl-scope-options { grid-template-columns:1fr; }
+        .eval-tpl-menu { min-width:240px; }
+    }
+
+    /* ============== Fase 11 — Tab Evolución (gráficos) ============== */
+    .evol-header {
+        display:flex; align-items:flex-start; gap:1rem;
+        margin-bottom:1.2rem; padding:.85rem 1rem;
+        background:#fff;
+        border:1px solid #e9ecef;
+        border-left:4px solid var(--brand-primary, #9F93E7);
+        border-radius:.4rem;
+    }
+    .evol-header-text { flex:1; min-width:0; }
+    .evol-header h4 {
+        margin:0 0 .15rem 0;
+        font-size:1.05rem;
+        color:var(--brand-text);
+        font-family:var(--brand-font-body);
+    }
+    .evol-header h4 i { color:var(--brand-primary, #9F93E7); }
+    .evol-subtitle { font-size:.82rem; color:var(--brand-text-muted); }
+
+    .evol-legend {
+        display:flex; flex-direction:column;
+        gap:.25rem;
+        font-size:.72rem;
+        color:var(--brand-text-muted);
+        flex-shrink:0;
+    }
+    .evol-legend-item { display:inline-flex; align-items:center; gap:.4rem; }
+    .evol-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .evol-legend-dot.up   { background:#31ce36; }
+    .evol-legend-dot.down { background:#dc3545; }
+    .evol-legend-dot.none { background:#cfd5dd; }
+
+    .evol-grid {
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:1rem;
+    }
+    .evol-card {
+        background:#fff;
+        border:1px solid #e9ecef;
+        border-radius:.5rem;
+        box-shadow:var(--brand-shadow-sm);
+        padding:1rem;
+        display:flex;
+        flex-direction:column;
+        min-width:0;
+    }
+    .evol-card-header {
+        display:flex; align-items:center; gap:.5rem;
+        padding-bottom:.5rem;
+        margin-bottom:.65rem;
+        border-bottom:1px solid #f1f3f5;
+    }
+    .evol-card-icon {
+        width:34px; height:34px; border-radius:.4rem;
+        background:rgba(159, 147, 231, .15);
+        color:var(--brand-primary-darker);
+        display:flex; align-items:center; justify-content:center;
+        font-size:.95rem;
+        flex-shrink:0;
+    }
+    .evol-card-title {
+        font-weight:700;
+        font-size:.95rem;
+        color:var(--brand-text);
+        flex:1; min-width:0;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .evol-card-meta {
+        font-size:.7rem;
+        color:var(--brand-text-muted);
+        flex-shrink:0;
+    }
+    .evol-chart-wrap {
+        position:relative;
+        height:220px;
+        margin-bottom:.6rem;
+    }
+    .evol-series-summary {
+        display:flex; flex-wrap:wrap;
+        gap:.4rem .55rem;
+        padding-top:.5rem;
+        border-top:1px dashed #f1f3f5;
+        font-size:.72rem;
+    }
+    .evol-summary-item {
+        display:inline-flex; align-items:center; gap:.3rem;
+        padding:.2rem .5rem;
+        border-radius:1rem;
+        background:#f8f9fc;
+        color:var(--brand-text);
+    }
+    .evol-summary-item .evol-summary-dot {
+        width:8px; height:8px; border-radius:50%; flex-shrink:0;
+    }
+    .evol-summary-delta {
+        font-weight:700;
+        font-size:.72rem;
+        padding:.05rem .35rem;
+        border-radius:.6rem;
+        margin-left:.15rem;
+    }
+    .evol-summary-delta.up   { background:#d1e7dd; color:#0a3622; }
+    .evol-summary-delta.down { background:#f8d7da; color:#842029; }
+    .evol-summary-delta.none { background:#e9ecef; color:#495057; }
+
+    .evol-empty-card {
+        grid-column: 1 / -1;
+        text-align:center;
+        color:#adb5bd;
+        padding:2.5rem 1rem;
+        background:#fafbfc;
+        border-radius:.4rem;
+        border:1px dashed #dee2e6;
+    }
+    .evol-empty-card i { font-size:2.2rem; color:#dee2e6; margin-bottom:.5rem; display:block; }
+
+    @media (max-width: 992px) {
+        .evol-grid { grid-template-columns: 1fr; }
+        .evol-header { flex-direction:column; }
+        .evol-legend { flex-direction:row; flex-wrap:wrap; gap:.65rem; }
+    }
+    @media (max-width: 576px) {
+        .evol-chart-wrap { height:200px; }
+    }
+
+    /* ============== Fase 9a — Tab Mensajes + Modal envío ============== */
+    .msg-tab-header {
+        display:flex; align-items:flex-start; gap:1rem;
+        margin-bottom:1rem; padding:.75rem 1rem;
+        background:#fff;
+        border:1px solid #e9ecef;
+        border-left:4px solid #25D366;
+        border-radius:.4rem;
+    }
+    .msg-tab-title-block { flex:1; min-width:0; }
+    .msg-tab-title-block h4 {
+        margin:0 0 .15rem 0;
+        font-size:1.05rem;
+        color:var(--brand-text);
+        font-family:var(--brand-font-body);
+    }
+    .msg-tab-title-block h4 .fab { color:#25D366; }
+    .msg-tab-subtitle { font-size:.85rem; color:var(--brand-text-muted); }
+
+    .msg-provider-hint {
+        background:rgba(199, 217, 229, .25);
+        color:#1d5e6b;
+        padding:.5rem .8rem;
+        border-radius:.3rem;
+        font-size:.78rem;
+        margin-bottom:.85rem;
+        display:none;
+    }
+    .msg-provider-hint.visible { display:block; }
+
+    .msg-list .msg-card {
+        background:#fff;
+        border:1px solid #e9ecef;
+        border-radius:.4rem;
+        padding:.85rem 1rem;
+        margin-bottom:.75rem;
+        box-shadow:var(--brand-shadow-sm);
+        position:relative;
+        border-left:4px solid #25D366;
+    }
+    .msg-list .msg-card.failed { border-left-color:#dc3545; }
+    .msg-list .msg-card.queued { border-left-color:#ffad46; }
+    .msg-card-header {
+        display:flex; align-items:center; gap:.65rem;
+        margin-bottom:.4rem;
+        font-size:.82rem;
+        color:var(--brand-text-muted);
+    }
+    .msg-card-channel {
+        background:#e8f8ed; color:#1a7a36;
+        padding:.1rem .5rem; border-radius:1rem;
+        font-size:.7rem; font-weight:600;
+        text-transform:uppercase;
+    }
+    .msg-card-channel.sms { background:rgba(199, 217, 229, .35); color:#1d5e6b; }
+    .msg-card-channel.log { background:#f1f3f5; color:#6c757d; }
+    .msg-card-status {
+        font-size:.7rem; font-weight:600;
+        padding:.1rem .5rem; border-radius:1rem;
+    }
+    .msg-card-status.sent      { background:#e8f8ed; color:#1a7a36; }
+    .msg-card-status.queued    { background:#fff4d6; color:#996800; }
+    .msg-card-status.failed    { background:#fde2e1; color:#a8201a; }
+    .msg-card-status.delivered { background:rgba(159, 147, 231, .15); color:var(--brand-primary-darker); }
+
+    .msg-card-template {
+        font-size:.7rem; color:var(--brand-primary-darker);
+        background:rgba(159, 147, 231, .12);
+        padding:.1rem .5rem; border-radius:1rem;
+        font-weight:600;
+    }
+    .msg-card-meta { margin-left:auto; font-size:.72rem; color:var(--brand-text-muted); }
+    .msg-card-body {
+        white-space:pre-wrap;
+        color:var(--brand-text);
+        font-size:.92rem;
+        line-height:1.45;
+        background:#faf8ff;
+        border-radius:.3rem;
+        padding:.6rem .75rem;
+    }
+    .msg-card-error {
+        background:#fde2e1; color:#a8201a;
+        padding:.4rem .7rem; border-radius:.25rem;
+        font-size:.78rem; margin-top:.4rem;
+        font-family:monospace;
+    }
+
+    /* Modal envío */
+    .msg-send-modal .modal-title { color:var(--brand-text); }
+    .msg-template-grid {
+        display:grid;
+        grid-template-columns:repeat(3, 1fr);
+        gap:.5rem;
+        margin-bottom:1rem;
+    }
+    .msg-template-btn {
+        background:#fff;
+        border:1px solid #e9ecef;
+        border-radius:.4rem;
+        padding:.6rem .5rem;
+        text-align:center;
+        cursor:pointer;
+        transition:all .15s ease;
+        font-size:.8rem;
+        color:var(--brand-text);
+        font-weight:600;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:.3rem;
+    }
+    .msg-template-btn:hover {
+        background:rgba(159, 147, 231, .1);
+        border-color:var(--brand-primary);
+    }
+    .msg-template-btn.active {
+        background:var(--brand-primary);
+        color:#fff;
+        border-color:var(--brand-primary);
+    }
+    .msg-template-btn i { font-size:1.15rem; color:var(--brand-primary-darker); }
+    .msg-template-btn.active i { color:#fff; }
+
+    .msg-vars-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:.75rem; }
+    .msg-vars-row .form-group { margin-bottom:0; }
+
+    .msg-preview-wrap label { font-size:.85rem; color:var(--brand-text); font-weight:600; }
+    .msg-char-count { font-size:.72rem; color:var(--brand-text-muted); font-weight:400; }
+    .msg-preview-textarea {
+        font-family:var(--brand-font-body);
+        font-size:.92rem;
+        white-space:pre-wrap;
+        min-height:160px;
+        background:#faf8ff;
+    }
+
+    .msg-helpers {
+        font-size:.72rem; color:var(--brand-text-muted);
+        margin-top:.5rem; padding:.4rem .65rem;
+        background:rgba(255, 173, 70, .08);
+        border-radius:.25rem;
+    }
+    .msg-helpers code {
+        background:rgba(159, 147, 231, .15);
+        color:var(--brand-primary-darker);
+        padding:1px 5px; border-radius:.2rem;
+        font-size:.7rem;
+    }
+
+    .msg-provider-badge {
+        font-size:.72rem;
+        background:#f1f3f5;
+        color:#5a6c80;
+        padding:.2rem .6rem;
+        border-radius:1rem;
+        margin-right:auto;
+    }
+    .msg-provider-badge.provider-log {
+        background:rgba(255, 173, 70, .15); color:#996800;
+    }
+
+    @media (max-width: 768px) {
+        .msg-template-grid { grid-template-columns:repeat(2, 1fr); }
+        .msg-vars-row { grid-template-columns:1fr; }
+        .msg-tab-header { flex-direction:column; align-items:stretch; }
+    }
+
     /* ============== Fase 4c — Botón Comparar en cada sección ============== */
     .eval-compare-row {
         display:flex; justify-content:flex-end;
@@ -1130,6 +1514,16 @@
                     <i class="fas fa-clipboard-list mr-1"></i> {{ translate('Evaluación') }}
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#tab-evolucion" role="tab" id="tab-evolucion-trigger">
+                    <i class="fas fa-chart-line mr-1"></i> {{ translate('Evolución') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#tab-mensajes" role="tab" id="tab-mensajes-trigger">
+                    <i class="fab fa-whatsapp mr-1"></i> {{ translate('Mensajes') }}
+                </a>
+            </li>
         </ul>
     </div>
 
@@ -1327,6 +1721,60 @@
 
     </div> {{-- /tab-evaluacion --}}
 
+    {{-- =========================== TAB EVOLUCIÓN (Fase 11) =========================== --}}
+    <div class="tab-pane fade" id="tab-evolucion" role="tabpanel">
+        <div class="evol-header">
+            <div class="evol-header-text">
+                <h4><i class="fas fa-chart-line mr-1"></i> {{ translate('Evolución del paciente') }}</h4>
+                <div class="evol-subtitle">
+                    {{ translate('Visualización de progreso a través de las evaluaciones registradas. Solo se muestran los tipos con 2 o más evaluaciones.') }}
+                </div>
+            </div>
+            <div class="evol-legend">
+                <span class="evol-legend-item"><span class="evol-legend-dot up"></span> mejora</span>
+                <span class="evol-legend-item"><span class="evol-legend-dot down"></span> retroceso</span>
+                <span class="evol-legend-item"><span class="evol-legend-dot none"></span> sin cambio</span>
+            </div>
+        </div>
+
+        <div id="evolGrid" class="evol-grid">
+            <div class="empty-state">
+                <i class="fas fa-chart-line"></i>
+                <span>{{ translate('Cargando gráficos de evolución…') }}</span>
+            </div>
+        </div>
+    </div> {{-- /tab-evolucion --}}
+
+    {{-- =========================== TAB MENSAJES (Fase 9a) =========================== --}}
+    <div class="tab-pane fade" id="tab-mensajes" role="tabpanel">
+        <div class="msg-tab-header">
+            <div class="msg-tab-title-block">
+                <h4><i class="fab fa-whatsapp mr-1"></i> Mensajes con {{ explode(' ', trim($patient->full_name))[0] ?? '' }}</h4>
+                <div class="msg-tab-subtitle">
+                    @if($patient->phone_no)
+                        Teléfono: <strong>{{ $patient->phone_no }}</strong>
+                    @else
+                        <span class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i> Sin teléfono registrado — edita el perfil para agregarlo.</span>
+                    @endif
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" id="btnAbrirEnvioMsg" {{ empty($patient->phone_no) ? 'disabled' : '' }}>
+                <i class="fas fa-paper-plane mr-1"></i> {{ translate('Enviar mensaje') }}
+            </button>
+        </div>
+
+        <div class="msg-provider-hint" id="msgProviderHint">
+            {{-- inyectado por JS según el provider activo --}}
+        </div>
+
+        <div id="msgList" class="msg-list">
+            <div class="empty-state">
+                <i class="fas fa-comment-dots"></i>
+                {{ translate('Cargando mensajes…') }}
+            </div>
+        </div>
+    </div> {{-- /tab-mensajes --}}
+
     </div> {{-- /tab-content --}}
 
 </div>
@@ -1440,8 +1888,23 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form id="formEvalInline" autocomplete="off">
-                <div class="modal-header">
+                <div class="modal-header inline-eval-header">
                     <h5 class="modal-title" id="modalEvalInlineTitle">{{ translate('Nueva evaluación') }}</h5>
+                    {{-- Fase 10 — Botón de plantillas (dropdown) --}}
+                    <div class="eval-tpl-dropdown dropdown ml-auto mr-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle eval-tpl-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-clone mr-1"></i> {{ translate('Plantillas') }}
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right eval-tpl-menu" id="evalTplMenu">
+                            <div class="eval-tpl-menu-section" id="evalTplList">
+                                <div class="dropdown-header"><i class="fas fa-spinner fa-spin mr-1"></i> Cargando…</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" id="btnSaveAsTemplate">
+                                <i class="fas fa-bookmark mr-1"></i> {{ translate('Guardar como plantilla') }}
+                            </a>
+                        </div>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body" style="max-height:75vh; overflow-y:auto;">
@@ -1462,6 +1925,119 @@
                     <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cerrar') }}</button>
                     <button type="submit" class="btn btn-success btn-sm" id="btnEvalInlineSave">
                         <i class="fas fa-save mr-1"></i> {{ translate('Guardar evaluación') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ============== Fase 9a — Modal de envío de mensaje ============== --}}
+<div class="modal fade msg-send-modal" id="modalSendMsg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form id="formSendMsg" autocomplete="off">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fab fa-whatsapp mr-1" style="color:#25D366;"></i>
+                        {{ translate('Enviar mensaje a') }} <span id="msgToName">—</span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    {{-- Selección de plantilla --}}
+                    <div class="msg-template-grid" id="msgTemplateGrid">
+                        {{-- Inyectado por JS --}}
+                    </div>
+
+                    {{-- Variables editables --}}
+                    <div class="msg-vars-row" id="msgVarsRow" style="display:none;">
+                        <div class="form-group">
+                            <label>{{ translate('Fecha (opcional)') }}</label>
+                            <input type="text" id="msgVarFecha" class="form-control" placeholder="ej. 25 de mayo">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Hora (opcional)') }}</label>
+                            <input type="text" id="msgVarHora" class="form-control" placeholder="ej. 10:00">
+                        </div>
+                    </div>
+
+                    {{-- Vista previa / editor del mensaje --}}
+                    <div class="msg-preview-wrap">
+                        <label class="d-flex align-items-center justify-content-between mb-1">
+                            <span><i class="fas fa-eye mr-1"></i> {{ translate('Vista previa (editable)') }}</span>
+                            <span class="msg-char-count"><span id="msgCharCount">0</span> caracteres</span>
+                        </label>
+                        <textarea id="msgBody" class="form-control msg-preview-textarea" rows="9" placeholder="{{ translate('Selecciona una plantilla o escribe un mensaje libre…') }}"></textarea>
+                    </div>
+
+                    <div class="msg-helpers">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        {{ translate('Variables disponibles:') }}
+                        <code>{paciente}</code>, <code>{clinic_name}</code>, <code>{fecha}</code>, <code>{hora}</code>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span class="msg-provider-badge" id="msgProviderBadge"></span>
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cancelar') }}</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnEnviarMsg">
+                        <i class="fas fa-paper-plane mr-1"></i> {{ translate('Enviar') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ============== Fase 10 — Modal para guardar plantilla de evaluación ============== --}}
+<div class="modal fade eval-tpl-save-modal" id="modalSaveEvalTpl" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="formSaveEvalTpl" autocomplete="off">
+                <input type="hidden" id="saveTplId" value="">
+                <input type="hidden" id="saveTplTabla" value="">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-bookmark mr-1" style="color:var(--brand-primary, #9F93E7);"></i>
+                        <span id="saveTplModalTitle">{{ translate('Guardar como plantilla') }}</span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>{{ translate('Nombre') }}<span style="color:#dc3545;"> *</span></label>
+                        <input type="text" id="saveTplName" class="form-control" required maxlength="191" placeholder="Ej. Hombro doloroso fase 1">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ translate('Descripción (opcional)') }}</label>
+                        <textarea id="saveTplDescription" class="form-control" rows="2" maxlength="1000" placeholder="Para qué tipo de paciente, observaciones, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ translate('Visibilidad') }}</label>
+                        <div class="tpl-scope-options">
+                            <label class="tpl-scope-option">
+                                <input type="radio" name="saveTplScope" value="personal" checked>
+                                <div class="tpl-scope-card">
+                                    <i class="fas fa-user mr-1"></i>
+                                    <strong>{{ translate('Personal') }}</strong>
+                                    <div class="tpl-scope-desc">Solo tú la verás</div>
+                                </div>
+                            </label>
+                            <label class="tpl-scope-option">
+                                <input type="radio" name="saveTplScope" value="global">
+                                <div class="tpl-scope-card">
+                                    <i class="fas fa-users mr-1"></i>
+                                    <strong>{{ translate('Global') }}</strong>
+                                    <div class="tpl-scope-desc">Disponible para todo el equipo</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cancelar') }}</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save mr-1"></i> {{ translate('Guardar plantilla') }}
                     </button>
                 </div>
             </form>
