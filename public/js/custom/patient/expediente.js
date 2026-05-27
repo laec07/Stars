@@ -302,6 +302,67 @@
             if (key) state.evalCollapseState[key] = $section.hasClass('collapsed');
         });
 
+        // Launcher de nueva evaluación — click en un chip abre el modal inline
+        // del tipo correspondiente. La ficha activa se preselecciona en PopulateFichaSelect.
+        $(document).on('click', '[data-action="launch-eval"]', function (e) {
+            e.preventDefault();
+            var $btn = $(this);
+            if ($btn.is(':disabled') || $btn.prop('disabled')) return;
+            var key = $btn.data('key');
+            if (!key) return;
+            InlineFormManager.Open(key);
+        });
+
+        // Launcher — toggle ocultar/mostrar tipos en modo compacto.
+        $(document).on('click', '[data-action="toggle-launcher"]', function (e) {
+            e.preventDefault();
+            var $box = $('#eval-launcher');
+            var nowCollapsed = !$box.hasClass('collapsed');
+            $box.toggleClass('collapsed', nowCollapsed);
+            $(this).find('.lt-label').text(nowCollapsed ? 'Mostrar tipos' : 'Ocultar');
+            try { localStorage.setItem('hh_eval_launcher_collapsed', nowCollapsed ? '1' : '0'); } catch (err) {}
+        });
+
+        // Launcher — atajo "Crear ficha clínica" desde el aviso (delegar al modal Quick-add).
+        $(document).on('click', '[data-action="open-new-case"]', function (e) {
+            e.preventDefault();
+            if (window.NewCaseManager && typeof NewCaseManager.Open === 'function') {
+                NewCaseManager.Open();
+            } else {
+                // Fallback: abrir formulario standalone si NewCaseManager no está disponible
+                var url = EvaluacionManager.UrlForForm('fis_fichas');
+                if (url) window.open(url, '_blank');
+            }
+        });
+
+        // ====== Deep links del Resumen ======
+
+        // "Ver →" en "Resumen por tipo de evaluación" → cambia al tab Evaluación,
+        // expande la sección de ese tipo y hace scroll. Si la data aún no se cargó,
+        // arma un trigger one-shot que se ejecuta al terminar de renderizar.
+        $(document).on('click', '[data-action="goto-eval-section"]', function (e) {
+            e.preventDefault();
+            var key = $(this).data('key');
+            if (!key) return;
+            EvaluacionManager.FocusSection(key);
+        });
+
+        // "Ver evaluación" en el Timeline → abre el modal inline con el registro
+        // pre-cargado. Si el tipo no tiene config inline declarativa, abre el
+        // formulario externo como fallback.
+        $(document).on('click', '[data-action="view-event"]', function (e) {
+            e.preventDefault();
+            var $a = $(this);
+            var key = $a.data('key');
+            var id  = $a.data('id');
+            var fallback = $a.data('fallback');
+            if (key && id && InlineFormManager.HasConfigFor(key)) {
+                InlineFormManager.OpenEdit(key, id);
+            } else if (fallback) {
+                window.open(fallback, '_blank');
+            }
+        });
+
         // Fase 3b — botón "+ Agregar inline" abre el modal genérico
         $(document).on('click', '.eval-add-inline', function (e) {
             e.preventDefault();
@@ -485,8 +546,11 @@
             function onSuccess(jsonData) {
                 state.loading = false;
                 if (jsonData.status == '1' && jsonData.data) {
-                    state.sesiones = jsonData.data.sesiones || [];
-                    state.fichas = jsonData.data.fichas || [];
+                    // Decodificar entidades HTML (ñ, á, etc.) que vienen escapadas
+                    // por el middleware xssProtection. Hace que todos los consumidores
+                    // (lista, dropdowns, summary) muestren texto limpio.
+                    state.sesiones = Manager.DecodeEntitiesDeep(jsonData.data.sesiones || []);
+                    state.fichas   = Manager.DecodeEntitiesDeep(jsonData.data.fichas || []);
                     state.loaded = true;
                     Manager.RenderList();
                     Manager.PopulateFichasDropdown();
@@ -1202,14 +1266,19 @@
             $('#eval-sections').html(
                 '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Cargando evaluaciones...</div>'
             );
+            // Ocultar launcher hasta que tengamos los datos (necesita state.evalFichas)
+            $('#eval-launcher').hide();
 
             JsManager.SendJsonAsyncON('GET', url, '', onSuccess, onFailed);
 
             function onSuccess(json) {
                 state.evaluacionesLoading = false;
                 if (json.status == '1' && json.data) {
-                    state.evaluaciones = json.data.evaluaciones || {};
-                    state.evalFichas   = json.data.fichas || [];
+                    // Decodificar entidades HTML una sola vez al recibir la data.
+                    // El middleware xssProtection escapa al guardar (ñ → &ntilde;),
+                    // así todos los consumidores (badges, dropdowns, filtros) verán texto limpio.
+                    state.evaluaciones = Manager.DecodeEntitiesDeep(json.data.evaluaciones || {});
+                    state.evalFichas   = Manager.DecodeEntitiesDeep(json.data.fichas || []);
                     state.evaluacionesLoaded = true;
                     EvaluacionManager.PopulateFichaFilter();
                     EvaluacionManager.Render(!!json.data.has_ficha_id_column);
@@ -1279,14 +1348,24 @@
                 : 'Sin evaluaciones registradas todavía.';
             $('#eval-summary').text(summary);
 
+            // Launcher: SIEMPRE visible. Prominente cuando no hay datos, colapsable cuando sí.
+            EvaluacionManager.RenderLauncher(totalEvents === 0);
+
             if (totalEvents === 0) {
+                // En lugar de un empty state ciego, mostramos un mensaje contextual.
+                // El launcher (arriba) ya provee la acción para crear la primera evaluación.
+                var caso = state.evalCurrentFilter;
+                var hasCase = caso && caso !== 'all' && caso !== 'unassigned';
+                var msg = hasCase
+                    ? 'No hay evaluaciones registradas para este caso todavía. Usa el panel de arriba para iniciar la primera.'
+                    : (caso === 'unassigned'
+                        ? 'No hay evaluaciones sin ficha asignada.'
+                        : 'Este paciente aún no tiene evaluaciones. Usa el panel de arriba para registrar la primera.');
                 $('#eval-sections').html(
                     '<div class="empty-state">' +
                     '<i class="far fa-clipboard"></i>' +
-                    'No hay evaluaciones registradas para este caso.' +
-                    '<div style="font-size:.78rem; color:#adb5bd; margin-top:.6rem;">' +
-                    'Puedes crear una desde los formularios clínicos del menú.' +
-                    '</div></div>'
+                    Manager.EscapeHtml(msg) +
+                    '</div>'
                 );
                 return;
             }
@@ -1304,6 +1383,85 @@
             }).join('');
 
             $('#eval-sections').html(html);
+        },
+
+        /**
+         * Renderiza el launcher (grid de tipos para iniciar nueva evaluación).
+         * - prominent=true → modo "empty": pinta CTA grande, expandido por defecto.
+         * - prominent=false → modo "compacto": colapsable, recuerda preferencia en localStorage.
+         */
+        RenderLauncher: function (prominent) {
+            var $box = $('#eval-launcher');
+            if (!$box.length) return;
+
+            var hasFichas = state.evalFichas && state.evalFichas.length > 0;
+            var caso = state.evalCurrentFilter;
+            var hasActiveCase = caso && /^\d+$/.test(caso);
+
+            // Determinar estado colapsado: en modo prominente siempre expandido;
+            // en modo compacto respetar preferencia (default: expandido).
+            var collapseKey = 'hh_eval_launcher_collapsed';
+            var collapsed = false;
+            if (!prominent) {
+                try { collapsed = localStorage.getItem(collapseKey) === '1'; } catch (e) {}
+            }
+
+            var titleHtml = prominent
+                ? '<div class="eval-launcher-empty-cta">' +
+                    '<h6><i class="fas fa-plus-circle mr-1"></i> Iniciar una evaluación</h6>' +
+                    '<p>Selecciona el tipo de evaluación que quieres registrar. Quedará vinculada al caso clínico activo.</p>' +
+                  '</div>'
+                : '<div class="eval-launcher-head">' +
+                    '<h6 class="eval-launcher-title"><i class="fas fa-plus-circle"></i> Nueva evaluación</h6>' +
+                    '<span class="eval-launcher-sub">Vinculada al caso activo</span>' +
+                    '<button type="button" class="eval-launcher-toggle" data-action="toggle-launcher">' +
+                        '<span class="lt-label">' + (collapsed ? 'Mostrar tipos' : 'Ocultar') + '</span>' +
+                        '<i class="fas fa-chevron-down"></i>' +
+                    '</button>' +
+                  '</div>';
+
+            // Aviso si no hay ficha clínica creada todavía.
+            var warnHtml = '';
+            if (!hasFichas) {
+                var fichaUrl = EvaluacionManager.UrlForForm('fis_fichas') || '#';
+                warnHtml =
+                    '<div class="eval-launcher-warn">' +
+                    '<i class="fas fa-exclamation-triangle"></i>' +
+                    '<span>Este paciente no tiene una ficha clínica todavía. ' +
+                    '<a href="#" data-action="open-new-case">Crear ficha clínica</a> antes de registrar evaluaciones.</span>' +
+                    '</div>';
+            } else if (!hasActiveCase) {
+                warnHtml =
+                    '<div class="eval-launcher-warn" style="background:#e7f3ff; color:#0c5da0; border-color:#bcdcff;">' +
+                    '<i class="fas fa-info-circle"></i>' +
+                    '<span>No hay un caso seleccionado. La evaluación se vinculará a la ficha más reciente. ' +
+                    'Puedes elegir otra desde el selector de caso clínico.</span>' +
+                    '</div>';
+            }
+
+            // Grid de chips por tipo
+            var chipsHtml = EVAL_ORDER.map(function (key) {
+                var meta = EVAL_META[key] || { label: key, icon: 'fa-file', color: 'secondary' };
+                var disabled = !hasFichas ? ' disabled' : '';
+                return (
+                    '<button type="button" class="eval-launcher-chip" data-action="launch-eval" data-key="' +
+                        Manager.EscapeHtml(key) + '"' + disabled + '>' +
+                        '<span class="lc-icon bg-c-' + meta.color + '"><i class="fas ' + meta.icon + '"></i></span>' +
+                        '<span class="lc-label">' + Manager.EscapeHtml(meta.label) + '</span>' +
+                        '<i class="fas fa-plus lc-plus"></i>' +
+                    '</button>'
+                );
+            }).join('');
+
+            var classes = 'eval-launcher';
+            if (prominent) classes += ' is-empty';
+            if (collapsed) classes += ' collapsed';
+
+            $box.attr('class', classes).html(
+                titleHtml +
+                warnHtml +
+                '<div class="eval-launcher-grid">' + chipsHtml + '</div>'
+            ).show();
         },
 
         RenderSection: function (key, rows, hasFichaIdColumn) {
@@ -1445,6 +1603,65 @@
             if (!tableKey || tableKey.indexOf('fis_') !== 0) return null;
             var slug = tableKey.replace('fis_', 'fis-');
             return slug;
+        },
+
+        /**
+         * Deep link helper: activa el tab Evaluación, espera la carga si hace falta,
+         * expande la sección del tipo dado y hace scroll hasta ella.
+         * Resuelve la condición de carrera entre "click en Resumen" y "evaluaciones aún no cargadas".
+         */
+        FocusSection: function (key) {
+            if (!key) return;
+
+            // 1) Activar el tab Evaluación (Bootstrap maneja el shown.bs.tab).
+            var $trigger = $('#tab-evaluacion-trigger');
+            var alreadyActive = $trigger.hasClass('active');
+            if (!alreadyActive) {
+                $trigger.tab('show');
+            }
+
+            // 2) Función que realiza el scroll + expand una vez que la sección ya existe en el DOM.
+            function doFocus() {
+                var $section = $('#eval-sections .eval-section[data-key="' + key + '"]');
+                if (!$section.length) {
+                    // No hay sección para ese tipo todavía (tipo desconocido o sin orden).
+                    // Hacemos scroll al inicio del tab al menos.
+                    var $tab = $('#tab-evaluacion');
+                    if ($tab.length) $tab[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    return;
+                }
+                // Expandir si está colapsada
+                if ($section.hasClass('collapsed')) {
+                    $section.removeClass('collapsed');
+                    $section.find('.eval-section-header').removeClass('collapsed');
+                    state.evalCollapseState[key] = false;
+                }
+                // Highlight breve para indicar el destino
+                $section.css('transition', 'box-shadow .3s ease');
+                $section.css('box-shadow', '0 0 0 3px rgba(159,147,231,.45)');
+                setTimeout(function () { $section.css('box-shadow', ''); }, 1200);
+                // Scroll suave
+                $section[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // 3) Si las evaluaciones ya están cargadas y renderizadas, focus inmediato.
+            //    Si no, esperar a que terminen.
+            if (state.evaluacionesLoaded) {
+                // Pequeño delay para que el tab termine de animarse
+                setTimeout(doFocus, alreadyActive ? 0 : 220);
+            } else {
+                // Trigger one-shot: poll cada 100ms hasta máx 5s
+                var attempts = 0;
+                var iv = setInterval(function () {
+                    attempts++;
+                    if (state.evaluacionesLoaded) {
+                        clearInterval(iv);
+                        setTimeout(doFocus, 80);
+                    } else if (attempts > 50) {
+                        clearInterval(iv);
+                    }
+                }, 100);
+            }
         },
 
         RenderError: function (msgHtml) {

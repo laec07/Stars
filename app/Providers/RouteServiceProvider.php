@@ -14,10 +14,13 @@ class RouteServiceProvider extends ServiceProvider
      * The path to the "home" route for your application.
      *
      * This is used by Laravel authentication to redirect users after login.
+     * Cambiado a /panel-clinico para que Healing Hands aterrice en el
+     * dashboard clínico al iniciar sesión. Main Dashboard sigue accesible
+     * desde el menú vía route('home').
      *
      * @var string
      */
-    public const HOME = '/home';
+    public const HOME = '/panel-clinico';
     public const ClientDashboard = '/client-dashboard';
 
     /**

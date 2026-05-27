@@ -2,14 +2,37 @@
 @section('content')
 
 @push("adminScripts")
+@php
+    // Decode helper local — entidades HTML del middleware xssProtection.
+    // Replicado aquí porque @push("adminScripts") corre antes del cuerpo.
+    $ctxDecoder = fn($v) => is_string($v) ? html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8') : $v;
+    // Normalizar fichas para el JS: campos de texto decodificados (ñ, á, ó, etc.).
+    // $fichas puede venir como Collection de stdClass (query builder) o de modelos
+    // Eloquent, así que normalizamos a array genéricamente.
+    $ctxFichas = isset($fichas)
+        ? collect($fichas)->map(function ($f) use ($ctxDecoder) {
+            if (is_array($f)) {
+                $a = $f;
+            } elseif (is_object($f) && method_exists($f, 'toArray')) {
+                $a = $f->toArray();
+            } else {
+                $a = (array) $f; // stdClass u otros
+            }
+            foreach (['diagnostico', 'motivo_consulta'] as $col) {
+                if (isset($a[$col])) $a[$col] = $ctxDecoder($a[$col]);
+            }
+            return $a;
+        })->all()
+        : [];
+@endphp
 <script>
     window.PATIENT_CONTEXT = {
         id: {{ (int) $patient->id }},
-        name: @json($patient->full_name),
+        name: @json($ctxDecoder($patient->full_name)),
         uploadUrl: @json(url('seguimiento/upload-image')),
         // Fase Reorg-A — caso activo (vino por query param ?caso=X o default 'all')
         activeCase: @json($casoActivo ?? 'all'),
-        fichas: @json(isset($fichas) ? $fichas : [])
+        fichas: @json($ctxFichas)
     };
 </script>
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
@@ -606,12 +629,84 @@
 
     .eval-empty-section { color:#adb5bd; font-size:.85rem; font-style:italic; padding:.5rem 0; }
 
+    /* Launcher de nueva evaluación — grid de chips por tipo */
+    .eval-launcher {
+        background:#fff; border:1px solid #e9ecef; border-radius:.5rem;
+        padding:1rem 1.1rem; margin-bottom:1rem;
+    }
+    .eval-launcher.is-empty { background:linear-gradient(135deg, rgba(159,147,231,.06) 0%, rgba(159,147,231,.02) 100%); border-color:rgba(159,147,231,.35); }
+    .eval-launcher-head {
+        display:flex; align-items:center; flex-wrap:wrap; gap:.4rem .8rem; margin-bottom:.7rem;
+    }
+    .eval-launcher-head .eval-launcher-title {
+        margin:0; font-size:.95rem; font-weight:600; color:#212529;
+        display:flex; align-items:center; gap:.45rem;
+    }
+    .eval-launcher-head .eval-launcher-title i { color:var(--brand-primary-darker); }
+    .eval-launcher-head .eval-launcher-sub { font-size:.78rem; color:#6c757d; margin-left:.2rem; }
+    .eval-launcher-toggle {
+        margin-left:auto; background:none; border:none; cursor:pointer;
+        color:#6c757d; font-size:.78rem; padding:.2rem .5rem; border-radius:.3rem;
+        display:inline-flex; align-items:center; gap:.3rem;
+    }
+    .eval-launcher-toggle:hover { background:#f1f3f5; color:#212529; }
+    .eval-launcher-toggle i { transition:transform .15s; }
+    .eval-launcher.collapsed .eval-launcher-toggle i { transform:rotate(-90deg); }
+    .eval-launcher.collapsed .eval-launcher-grid { display:none; }
+    .eval-launcher.collapsed .eval-launcher-warn { display:none; }
+
+    .eval-launcher-warn {
+        background:#fff4d6; color:#996800; border:1px solid #f0d68a;
+        padding:.45rem .7rem; border-radius:.35rem; font-size:.78rem;
+        margin-bottom:.7rem;
+        display:flex; align-items:center; gap:.45rem;
+    }
+    .eval-launcher-warn a { color:#7a4f00; text-decoration:underline; font-weight:500; }
+
+    .eval-launcher-grid {
+        display:grid; gap:.5rem;
+        grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+    }
+    .eval-launcher-chip {
+        display:flex; align-items:center; gap:.55rem;
+        background:#fff; border:1px solid #e9ecef; border-radius:.45rem;
+        padding:.55rem .7rem; cursor:pointer; text-align:left;
+        font-size:.83rem; color:#212529;
+        transition:border-color .15s, box-shadow .15s, transform .05s;
+        min-height:48px; width:100%;
+    }
+    .eval-launcher-chip:hover:not(:disabled) {
+        border-color:var(--brand-primary-darker);
+        box-shadow:0 2px 8px rgba(159,147,231,.18);
+    }
+    .eval-launcher-chip:active:not(:disabled) { transform:translateY(1px); }
+    .eval-launcher-chip:disabled { opacity:.5; cursor:not-allowed; }
+    .eval-launcher-chip .lc-icon {
+        width:30px; height:30px; border-radius:.35rem;
+        display:flex; align-items:center; justify-content:center;
+        color:#fff; font-size:.82rem; flex-shrink:0;
+    }
+    .eval-launcher-chip .lc-label { flex:1; line-height:1.15; }
+    .eval-launcher-chip .lc-plus { color:#adb5bd; font-size:.85rem; }
+    .eval-launcher-chip:hover:not(:disabled) .lc-plus { color:var(--brand-primary-darker); }
+
+    .eval-launcher-empty-cta {
+        text-align:center; padding:.6rem 0 .9rem 0;
+    }
+    .eval-launcher-empty-cta h6 {
+        margin:0 0 .25rem 0; color:var(--brand-primary-darker); font-weight:600;
+    }
+    .eval-launcher-empty-cta p {
+        margin:0; color:#6c757d; font-size:.83rem;
+    }
+
     @media (max-width: 768px) {
         .eval-section-body { padding:.4rem .8rem .8rem 1rem; }
         .eval-section-body .eval-row { flex-wrap:wrap; }
         .eval-section-body .eval-row-date { width:auto; margin-right:.5rem; }
         .eval-filter { width:100%; margin-left:0; }
         .eval-filter select { flex:1; }
+        .eval-launcher-grid { grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
     }
 
     /* Fase 3b - Modal inline genérico para crear evaluaciones */
@@ -1775,6 +1870,16 @@
 
 <div class="page-inner">
 
+    @php
+        // Helper global de decode de entidades HTML.
+        // El middleware xssProtection codifica al guardar (ñ → &ntilde;);
+        // aquí decodificamos para mostrar texto limpio en pantalla.
+        // Idempotente: aplicado dos veces produce el mismo resultado.
+        if (!isset($decoder)) {
+            $decoder = fn($v) => is_string($v) ? html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8') : $v;
+        }
+    @endphp
+
     <a href="{{ route('patient') }}" class="expediente-back">
         <i class="fas fa-arrow-left"></i> {{ translate('Volver a pacientes') }}
     </a>
@@ -1856,7 +1961,8 @@
                     </option>
                     @foreach($fichas as $f)
                         @php
-                            $fLabel = trim($f->diagnostico) ?: ('Ficha #' . $f->id);
+                            $fDiag = trim($decoder($f->diagnostico ?? ''));
+                            $fLabel = $fDiag !== '' ? $fDiag : ('Ficha #' . $f->id);
                             if (mb_strlen($fLabel) > 60) $fLabel = mb_substr($fLabel, 0, 60) . '…';
                             $fDate = $f->fecha ? \Carbon\Carbon::parse($f->fecha)->format('d/m/Y') : '—';
                         @endphp
@@ -2184,11 +2290,11 @@
                                 </div>
                                 <div class="label">{{ translate($meta['label']) }}</div>
                                 <div class="count">{{ $counts[$key] }}</div>
-                                @if(\Illuminate\Support\Facades\Route::has($meta['route']))
-                                    <a href="{{ route($meta['route']) }}">
-                                        {{ translate('Ir') }} <i class="fas fa-arrow-right"></i>
-                                    </a>
-                                @endif
+                                {{-- Deep link: cambia al tab Evaluación y expande la sección de este tipo --}}
+                                <a href="#" data-action="goto-eval-section" data-key="{{ $key }}"
+                                   title="{{ translate('Ver evaluaciones de este tipo') }}">
+                                    {{ translate('Ver') }} <i class="fas fa-arrow-right"></i>
+                                </a>
                             </div>
                         @endif
                     @endforeach
@@ -2227,7 +2333,24 @@
                                         @if($event->user_name)
                                             {{ translate('por') }} {{ $event->user_name }}
                                         @endif
-                                        @if($meta['route'] && \Illuminate\Support\Facades\Route::has($meta['route']))
+                                        {{-- Deep link al registro específico:
+                                             - Si la evaluación tiene config inline (JS lo decide) → abre modal pre-cargado.
+                                             - Si no, fallback al formulario externo.
+                                             Aquí siempre emitimos el botón con la info del registro;
+                                             el handler JS decide el destino real. --}}
+                                        @if($event->id_formulario)
+                                            · <a href="#" data-action="view-event"
+                                                 data-key="{{ $event->tabla_form }}"
+                                                 data-id="{{ $event->id_formulario }}"
+                                                 @if($meta['route'] && \Illuminate\Support\Facades\Route::has($meta['route']))
+                                                    data-fallback="{{ route($meta['route']) }}"
+                                                 @endif
+                                                 style="color:var(--brand-primary-darker);"
+                                                 title="{{ translate('Ver esta evaluación') }}">
+                                                {{ translate('Ver evaluación') }}
+                                                <i class="fas fa-eye" style="font-size:.7rem;"></i>
+                                            </a>
+                                        @elseif($meta['route'] && \Illuminate\Support\Facades\Route::has($meta['route']))
                                             · <a href="{{ route($meta['route']) }}" style="color:var(--brand-primary-darker);">{{ translate('Abrir formulario') }} <i class="fas fa-external-link-alt" style="font-size:.7rem;"></i></a>
                                         @endif
                                     </div>
@@ -2286,16 +2409,14 @@
             </div>
         </div>
 
+        {{-- Launcher: grid de tipos para iniciar una nueva evaluación vinculada al caso activo --}}
+        <div id="eval-launcher" class="eval-launcher" style="display:none;"></div>
+
         <div id="eval-sections">
             <div class="empty-state">
                 <i class="fas fa-clipboard-list"></i>
                 {{ translate('Cargando evaluaciones...') }}
             </div>
-        </div>
-
-        <div class="text-muted mt-3" style="font-size:.78rem;">
-            <i class="fas fa-info-circle"></i>
-            {{ translate('Las evaluaciones se cargan desde la bitácora clínica. Al crear una nueva desde el botón "Agregar", quedará vinculada al caso seleccionado.') }}
         </div>
 
     </div> {{-- /tab-evaluacion --}}

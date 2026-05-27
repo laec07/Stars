@@ -286,33 +286,50 @@
                     </div>
                     <ul class="nav nav-primary">
 
-                        {{-- Fase 7 — Acceso directo al panel clínico (item estático, no requiere config en BD) --}}
-                        <li class="nav-item {{ Route::currentRouteName() == 'clinical.dashboard' ? 'active' : '' }}">
-                            <a href="{{ route('clinical.dashboard') }}">
-                                <i class="fas fa-heartbeat"></i>
-                                <p>{{ translate('Panel clínico') }}</p>
-                            </a>
-                        </li>
-
                         @foreach ($menuList->where('level', 1) as $item)
-                        <li class="nav-item">
-                            <a data-toggle="collapse" href="#base{{ $item->id }}" class="collapsed" aria-expanded="false">
-                                <i class="{{ $item->icon }}"></i>
-                                <p>{{ translate($item->display_name) }}</p>
-                                <span class="caret"></span>
-                            </a>
-                            <div class="collapse" id="base{{ $item->id }}">
-                                <ul class="nav nav-collapse">
-                                    @foreach ($menuList->where('level', 2)->where('resource_id', $item->id) as $item1)
-                                    <li>
-                                        <a href="{{ route($item1->method) }}">
-                                            <span class="sub-item"> {{ translate($item1->display_name) }}</span>
-                                        </a>
-                                    </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </li>
+                            @php
+                                // Healing Hands — el item "Panel clínico" se inyecta como primer
+                                // sub-item del grupo "Dashboard". Otros sub-items (Main Dashboard, etc.)
+                                // siguen viniendo de la BD. Esto permite agrupar todos los dashboards
+                                // que se vayan construyendo bajo un solo nodo.
+                                $isDashboardGroup = mb_strtolower(trim($item->display_name)) === 'dashboard';
+                                $isClinicalActive = Route::currentRouteName() == 'clinical.dashboard';
+                                // El grupo Dashboard debe verse "activo" si estamos en panel clínico,
+                                // y debe arrancar expandido en ese caso.
+                                $groupActiveClass = ($isDashboardGroup && $isClinicalActive) ? 'active' : '';
+                                $collapseShow     = ($isDashboardGroup && $isClinicalActive) ? 'show' : '';
+                                $toggleCollapsed  = ($isDashboardGroup && $isClinicalActive) ? '' : 'collapsed';
+                                $ariaExpanded     = ($isDashboardGroup && $isClinicalActive) ? 'true' : 'false';
+                            @endphp
+                            <li class="nav-item {{ $groupActiveClass }}">
+                                <a data-toggle="collapse" href="#base{{ $item->id }}" class="{{ $toggleCollapsed }}" aria-expanded="{{ $ariaExpanded }}">
+                                    <i class="{{ $item->icon }}"></i>
+                                    <p>{{ translate($item->display_name) }}</p>
+                                    <span class="caret"></span>
+                                </a>
+                                <div class="collapse {{ $collapseShow }}" id="base{{ $item->id }}">
+                                    <ul class="nav nav-collapse">
+                                        {{-- Panel clínico como sub-item principal del grupo Dashboard --}}
+                                        @if($isDashboardGroup)
+                                            <li class="{{ $isClinicalActive ? 'active' : '' }}">
+                                                <a href="{{ route('clinical.dashboard') }}">
+                                                    <span class="sub-item">
+                                                        <i class="fas fa-heartbeat mr-1"></i>
+                                                        {{ translate('Panel clínico') }}
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @foreach ($menuList->where('level', 2)->where('resource_id', $item->id) as $item1)
+                                            <li>
+                                                <a href="{{ route($item1->method) }}">
+                                                    <span class="sub-item"> {{ translate($item1->display_name) }}</span>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </li>
                         @endforeach
 
                     </ul>
