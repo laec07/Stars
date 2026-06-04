@@ -57,6 +57,8 @@ class PatientController extends Controller
                     [
                 'full_name' => $data->full_name,
                 'phone_no' => $data->phone_no,
+                // Nivel 2.6 — opt-in WhatsApp ('1' acepta / '0' rechaza / null no preguntado)
+                'wa_optin' => $data->filled('wa_optin') ? ($data->wa_optin == '1' || $data->wa_optin === 1 || $data->wa_optin === true ? 1 : 0) : null,
                 'email' => $data->email,
                 'dob' => $data->dob,
                 'treated' => $data->treated,
@@ -112,6 +114,8 @@ class PatientController extends Controller
                     $patient->update([
                         'full_name' => $data->full_name,
                         'phone_no' => $data->phone_no,
+                        // Nivel 2.6 — opt-in WhatsApp
+                        'wa_optin' => $data->filled('wa_optin') ? ($data->wa_optin == '1' || $data->wa_optin === 1 || $data->wa_optin === true ? 1 : 0) : $patient->wa_optin,
                         'email' => $data->email,
                         'dob' => $data->dob,
                         'treated' => $data->treated,
@@ -153,12 +157,210 @@ class PatientController extends Controller
     public function getAllPatient()
     {
         try {
-            $data = CmnPatient::select('*')
-             ->where('status', 1)
-            ->get();
+            // Nivel 1.1 — Enriquecer cada paciente con datos clínicos derivados
+            // (edad, último evento, casos, evaluaciones, estado, iniciales, cumpleaños).
+            // Hecho en SQL con subqueries para evitar N+1.
+            $today = Carbon::now()->toDateString();
+            $monthStart = Carbon::now()->startOfMonth()->toDateString();
+            $monthEnd   = Carbon::now()->endOfMonth()->toDateString();
+            $weekStart  = Carbon::now()->startOfWeek()->toDateString();
+            $threshold90 = Carbon::now()->subDays(90)->toDateString();
+
+            $hasFichaIdColumn = \Illuminate\Support\Facades\Schema::hasColumn('fis_historys', 'ficha_id');
+
+            $patients = CmnPatient::where('cmn_patients.status', 1)
+                ->select('cmn_patients.*')
+                ->selectSub(
+                    \Illuminate\Support\Facades\DB::table('fis_fichas')
+                        ->whereColumn('fis_fichas.patient_id', 'cmn_patients.id')
+                        ->where('fis_fichas.status', 1)
+                        ->selectRaw('COUNT(*)'),
+                    'case_count'
+                )
+                ->selectSub(
+                    \Illuminate\Support\Facades\DB::table('fis_fichas')
+                        ->whereColumn('fis_fichas.patient_id', 'cmn_patients.id')
+                        ->where('fis_fichas.status', 1)
+                        ->whereNull('fis_fichas.fecha_alta')
+                        ->selectRaw('COUNT(*)'),
+                    'open_case_count'
+                )
+                ->selectSub(
+                    \Illuminate\Support\Facades\DB::table('fis_historys')
+                        ->whereColumn('fis_historys.patient_id', 'cmn_patients.id')
+                        ->where('fis_historys.status', 1)
+                        ->selectRaw('COUNT(*)'),
+                    'event_count'
+                )
+                ->selectSub(
+                    \Illuminate\Support\Facades\DB::table('fis_historys')
+                        ->whereColumn('fis_historys.patient_id', 'cmn_patients.id')
+                        ->where('fis_historys.status', 1)
+                        // Excluir fichas y adjuntos: solo cuenta evaluaciones reales.
+                        ->whereNotIn('fis_historys.tabla_form', ['fis_fichas', 'fis_adjuntos'])
+                        ->selectRaw('COUNT(*)'),
+                    'evaluation_count'
+                )
+                ->selectSub(
+                    \Illuminate\Support\Facades\DB::table('fis_historys')
+                        ->whereColumn('fis_historys.patient_id', 'cmn_patients.id')
+                        ->where('fis_historys.status', 1)
+                        ->selectRaw('MAX(fecha)'),
+                    'last_visit'
+                )
+                ->get();
+
+            // Hidratar wa_optin como booleano explícito (1 = acepta WhatsApp)
+            $patients->transform(function ($p) {
+                $p->wa_optin_yes = ((int) $p->wa_optin) === 1;
+                return $p;
+            });
+
+            $data = $patients->map(function ($p) use ($today, $monthStart, $monthEnd, $weekStart, $threshold90) {
+                $arr = $p->toArray();
+
+                // Edad calculada
+                $arr['age'] = $p->dob ? Carbon::parse($p->dob)->age : null;
+
+                // Iniciales (máx 2) — para el avatar
+                $name = trim($p->full_name ?? '');
+                $parts = preg_split('/\s+/', $name);
+                $initials = '';
+                if (count($parts) >= 1 && $parts[0] !== '') $initials .= mb_substr($parts[0], 0, 1);
+                if (count($parts) >= 2 && $parts[1] !== '') $initials .= mb_substr($parts[1], 0, 1);
+                $arr['initials'] = mb_strtoupper($initials ?: '?');
+
+                // Color del avatar — hash determinístico del nombre, devuelve clase 1..8
+                $arr['avatar_color'] = (crc32($name) % 8) + 1;
+
+                // Días desde la última visita
+                $arr['days_since_visit'] = null;
+                if (!empty($arr['last_visit'])) {
+                    $arr['days_since_visit'] = Carbon::parse($arr['last_visit'])->diffInDays(Carbon::now());
+                }
+
+                // Estado clínico computado
+                $arr['has_open_case'] = ((int) ($arr['open_case_count'] ?? 0)) > 0;
+                $arr['seen_this_week'] = !empty($arr['last_visit']) && $arr['last_visit'] >= $weekStart;
+                $arr['inactive_long'] = !empty($arr['last_visit']) && $arr['last_visit'] < $threshold90;
+                $arr['no_visits'] = empty($arr['last_visit']);
+
+                // Cumpleaños este mes
+                $arr['birthday_this_month'] = false;
+                $arr['birthday_md'] = null;
+                if ($p->dob) {
+                    $dob = Carbon::parse($p->dob);
+                    $thisYearBday = Carbon::createFromDate(Carbon::now()->year, $dob->month, $dob->day)->toDateString();
+                    $arr['birthday_this_month'] = ($thisYearBday >= $monthStart && $thisYearBday <= $monthEnd);
+                    $arr['birthday_md'] = $dob->format('m-d');
+                }
+
+                // Etiqueta principal de estado (en orden de prioridad)
+                if ($arr['has_open_case']) {
+                    $arr['status_label'] = 'caso_abierto';
+                } elseif ($arr['no_visits']) {
+                    $arr['status_label'] = 'sin_visitas';
+                } elseif ($arr['inactive_long']) {
+                    $arr['status_label'] = 'inactivo';
+                } else {
+                    $arr['status_label'] = 'activo';
+                }
+
+                return $arr;
+            });
+
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {
-            return $this->apiResponse(['status' => '403', 'data' => $qx], 400);
+            return $this->apiResponse(['status' => '403', 'data' => $qx->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Nivel 2.2 — Buscar pacientes similares para detectar duplicados al alta.
+     * Recibe ?name=... y/o ?phone=... y devuelve hasta 5 matches con un score.
+     *  - Nombre: LIKE sobre cada palabra (case-insensitive, normalizado).
+     *  - Teléfono: match exacto en los últimos 8 dígitos (ignora prefijos
+     *    internacionales y separadores). Suficiente para Guatemala (+502 ####-####).
+     * No incluye al paciente que se está editando (?exclude_id=).
+     */
+    public function findDuplicates(Request $request)
+    {
+        try {
+            $name  = trim((string) $request->input('name', ''));
+            $phone = trim((string) $request->input('phone', ''));
+            $excludeId = (int) $request->input('exclude_id', 0);
+
+            // Necesitamos al menos 3 caracteres de nombre o 4 dígitos de teléfono
+            $phoneDigits = preg_replace('/\D+/', '', $phone);
+            $phoneTail = strlen($phoneDigits) >= 8 ? substr($phoneDigits, -8) : $phoneDigits;
+            $hasName  = mb_strlen($name) >= 3;
+            $hasPhone = strlen($phoneTail) >= 4;
+
+            if (! $hasName && ! $hasPhone) {
+                return $this->apiResponse(['status' => '1', 'data' => []], 200);
+            }
+
+            $q = CmnPatient::where('status', 1)
+                ->select('id', 'full_name', 'phone_no', 'email', 'dob');
+
+            if ($excludeId > 0) {
+                $q->where('id', '!=', $excludeId);
+            }
+
+            $q->where(function ($outer) use ($name, $phoneTail, $hasName, $hasPhone) {
+                if ($hasName) {
+                    // Cada palabra >2 chars como AND interno → cualquier campo
+                    $words = array_filter(preg_split('/\s+/', $name), fn($w) => mb_strlen($w) >= 3);
+                    foreach ($words as $w) {
+                        $outer->orWhere('full_name', 'LIKE', '%' . $w . '%');
+                    }
+                }
+                if ($hasPhone) {
+                    $outer->orWhereRaw("REPLACE(REPLACE(REPLACE(phone_no,' ',''),'-',''),'+','') LIKE ?", ['%' . $phoneTail]);
+                }
+            });
+
+            $matches = $q->limit(5)->get();
+
+            // Enriquecer con iniciales y color (mismo algoritmo que getAllPatient)
+            $data = $matches->map(function ($p) use ($name, $phoneTail) {
+                $fname = trim($p->full_name ?? '');
+                $parts = preg_split('/\s+/', $fname);
+                $ini = '';
+                if (!empty($parts[0])) $ini .= mb_substr($parts[0], 0, 1);
+                if (!empty($parts[1])) $ini .= mb_substr($parts[1], 0, 1);
+
+                // Score simple para ordenar visualmente
+                $score = 0;
+                if ($phoneTail) {
+                    $pdig = preg_replace('/\D+/', '', $p->phone_no ?? '');
+                    if (strlen($pdig) >= strlen($phoneTail) && substr($pdig, -strlen($phoneTail)) === $phoneTail) {
+                        $score += 100; // teléfono exacto = casi seguro duplicado
+                    }
+                }
+                if ($name) {
+                    similar_text(mb_strtolower($name), mb_strtolower($fname), $pct);
+                    $score += (int) $pct;
+                }
+
+                return [
+                    'id' => $p->id,
+                    'full_name' => $fname,
+                    'phone_no' => $p->phone_no,
+                    'email' => $p->email,
+                    'dob' => $p->dob,
+                    'initials' => mb_strtoupper($ini ?: '?'),
+                    'avatar_color' => (crc32($fname) % 8) + 1,
+                    'score' => $score,
+                ];
+            })
+            ->sortByDesc('score')
+            ->values()
+            ->all();
+
+            return $this->apiResponse(['status' => '1', 'data' => $data], 200);
+        } catch (Exception $qx) {
+            return $this->apiResponse(['status' => '403', 'data' => $qx->getMessage()], 400);
         }
     }
 
@@ -222,11 +424,20 @@ class PatientController extends Controller
             'fis_evalineps'      => ['label' => 'Alineación postural',   'icon' => 'fa-walking',      'color' => 'secondary', 'route' => 'evalineps.info'],
             'fis_electros'       => ['label' => 'Electroterapia',        'icon' => 'fa-bolt',         'color' => 'primary',   'route' => 'electros.info'],
             'fis_ultras'         => ['label' => 'Ultrasonido',           'icon' => 'fa-broadcast-tower','color' => 'primary', 'route' => 'ultras.info'],
+            // Fase 15 — Adjuntos. Como no hay una "vista listado" externa, dejamos route=null;
+            // el blade omite el link cuando route es null.
+            'fis_adjuntos'       => ['label' => 'Adjunto agregado',      'icon' => 'fa-paperclip',    'color' => 'secondary', 'route' => null],
         ];
 
         $counts = $timeline->groupBy('tabla_form')->map->count();
         $totalEvents = $timeline->count();
         $lastEvent = $timeline->first();
+
+        // Adjuntos no son "evaluaciones": se cuentan aparte (para el badge de la
+        // ficha) y se excluyen del "Resumen por tipo de evaluación" y del stat
+        // "Tipos de evaluación". El timeline ($timeline) sí los conserva como eventos.
+        $adjuntosCount = (int) ($counts['fis_adjuntos'] ?? 0);
+        $counts = $counts->except(['fis_adjuntos']);
 
         // Fase Reorg-A — Fichas del paciente para el case selector
         // + estadísticas por caso (n eval, n sesiones, última actividad)
@@ -238,11 +449,11 @@ class PatientController extends Controller
             ->get();
 
         if ($fichas->count() > 0 && $hasFichaIdColumn) {
-            // Contar evaluaciones por ficha desde fis_historys
+            // Contar evaluaciones por ficha desde fis_historys (sin fichas ni adjuntos)
             $evalCounts = \Illuminate\Support\Facades\DB::table('fis_historys')
                 ->where('patient_id', $id)
                 ->where('status', 1)
-                ->whereNotIn('tabla_form', ['fis_fichas'])
+                ->whereNotIn('tabla_form', ['fis_fichas', 'fis_adjuntos'])
                 ->whereNotNull('ficha_id')
                 ->select('ficha_id', \Illuminate\Support\Facades\DB::raw('COUNT(*) as c'))
                 ->groupBy('ficha_id')
@@ -282,7 +493,7 @@ class PatientController extends Controller
 
         return view('patient.summary', compact(
             'patient', 'age', 'timeline', 'formMeta', 'counts', 'totalEvents', 'lastEvent',
-            'fichas', 'casoActivo', 'fichaCompleta'
+            'fichas', 'casoActivo', 'fichaCompleta', 'adjuntosCount'
         ));
     }
 
@@ -398,7 +609,9 @@ class PatientController extends Controller
                 ->leftJoin('users as u', 'h.user_id', '=', 'u.id')
                 ->where('h.patient_id', $id)
                 ->where('h.status', 1)
-                ->whereNotIn('h.tabla_form', ['fis_fichas']);
+                // Excluir fichas (se muestran aparte) y adjuntos (tienen su propio tab):
+                // ninguno es una "evaluación".
+                ->whereNotIn('h.tabla_form', ['fis_fichas', 'fis_adjuntos']);
 
             if ($hasFichaIdColumn && $fichaFilter !== null && $fichaFilter !== '' && $fichaFilter !== 'all') {
                 if ($fichaFilter === 'unassigned') {

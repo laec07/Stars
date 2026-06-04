@@ -688,10 +688,20 @@ document.addEventListener('DOMContentLoaded', function () {
                                     resizeImage(file, 600, 600, function(blob) {
                                         var formData = new FormData();
                                         formData.append('image', blob, 'image.jpg');
-                                        
+
                                         var token = document.querySelector('meta[name="csrf-token"]');
                                         if (token) {
                                             formData.append('_token', token.getAttribute('content'));
+                                        }
+
+                                        // Fase 15 — patient_id para organizar la imagen en
+                                        // uploadfiles/seguimientos/{paciente}/. Se toma del
+                                        // form de seguimiento o del selector de paciente.
+                                        var pid = (document.querySelector('#seguimiento_patient_id') || {}).value
+                                               || (document.querySelector('#patient_id') || {}).value
+                                               || '';
+                                        if (pid) {
+                                            formData.append('patient_id', pid);
                                         }
                                         
                                         var xhr = new XMLHttpRequest();

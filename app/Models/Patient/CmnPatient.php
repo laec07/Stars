@@ -17,6 +17,7 @@ class CmnPatient extends Model
         'user_id',
         'full_name',
         'phone_no',
+        'wa_optin',
         'email',
         'dob',
         'treated',

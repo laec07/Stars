@@ -23,6 +23,48 @@ class UtilityRepository
         return $filePath;
     }
 
+    /**
+     * Carpeta de almacenamiento de un paciente. Todo lo del paciente se
+     * centraliza bajo una única carpeta raíz:
+     *
+     *   uploadfiles/adjuntos/{Nombre_Apellido}_{id}
+     *
+     * Si se indica $subdir, devuelve esa subcarpeta dentro de la del paciente:
+     *
+     *   patientFolder(87)                  → uploadfiles/adjuntos/Ana_Gerhardt_87
+     *   patientFolder(87, 'seguimientos')  → uploadfiles/adjuntos/Ana_Gerhardt_87/seguimientos
+     *
+     * El nombre se decodifica (entidades del middleware xssProtection),
+     * se translitera a ASCII (á→a, ñ→n) y se sanitiza para ser un nombre de
+     * carpeta válido. Se añade el id del paciente como sufijo para evitar
+     * colisiones entre homónimos. Devuelve null si no se puede resolver el
+     * paciente (el caller decide el fallback).
+     */
+    public static function patientFolder($patientId, string $subdir = ''): ?string
+    {
+        $patientId = (int) $patientId;
+        if ($patientId <= 0) return null;
+
+        $patient = \App\Models\Patient\CmnPatient::find($patientId);
+        if (!$patient) return null;
+
+        $name = trim((string) $patient->full_name);
+        $name = html_entity_decode($name, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $ascii = \Illuminate\Support\Str::ascii($name);
+        $slug  = preg_replace('/[^A-Za-z0-9]+/', '_', $ascii);
+        $slug  = trim($slug, '_');
+        if ($slug === '') $slug = 'paciente';
+
+        $folder = 'uploadfiles/adjuntos/' . $slug . '_' . $patientId;
+
+        if ($subdir !== '') {
+            $folder .= '/' . trim($subdir, '/');
+        }
+
+        return $folder;
+    }
+
     public static function hex2Rgba($color, $opacity = 1)
     {
 

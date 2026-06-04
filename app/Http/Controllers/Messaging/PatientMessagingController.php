@@ -210,4 +210,111 @@ class PatientMessagingController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Nivel 3.1 — Envío masivo de mensajes.
+     *
+     * POST mass-message-send
+     *   patient_ids[]    (req) array de IDs
+     *   channel          ('whatsapp' default)
+     *   template_key     ('free' o nombre de plantilla)
+     *   body             (texto si free)
+     *   vars[*]
+     *   require_optin    (bool, default true) — si true, excluye pacientes con wa_optin != 1
+     *
+     * Respuesta: { total, sent, failed, skipped, results: [{ id, name, status, error? }] }
+     */
+    public function sendBulk(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'patient_ids'   => 'required|array|min:1|max:200',
+                'patient_ids.*' => 'integer|exists:cmn_patients,id',
+                'channel'       => 'nullable|in:whatsapp,sms,log',
+                'template_key'  => 'nullable|string|max:64',
+                'body'          => 'nullable|string|max:4000',
+                'require_optin' => 'nullable|boolean',
+            ]);
+            if ($validator->fails()) {
+                return $this->apiResponse(['status' => '422', 'data' => $validator->errors()], 422);
+            }
+
+            $patientIds   = $request->input('patient_ids');
+            $requireOptin = $request->boolean('require_optin', true);
+            $channel      = $request->input('channel');
+            $templateKey  = $request->input('template_key');
+            $body         = $request->input('body');
+            $varsBase     = (array) $request->input('vars', []);
+
+            $patients = CmnPatient::whereIn('id', $patientIds)->where('status', 1)->get();
+
+            $results = [];
+            $sent = 0; $failed = 0; $skipped = 0;
+
+            foreach ($patients as $patient) {
+                $row = ['id' => $patient->id, 'name' => $patient->full_name];
+
+                // Reglas de skip
+                if (empty($patient->phone_no)) {
+                    $row['status'] = 'skipped';
+                    $row['reason'] = 'sin_telefono';
+                    $skipped++;
+                    $results[] = $row;
+                    continue;
+                }
+                if ($requireOptin && (int) $patient->wa_optin !== 1) {
+                    $row['status'] = 'skipped';
+                    $row['reason'] = 'sin_optin';
+                    $skipped++;
+                    $results[] = $row;
+                    continue;
+                }
+
+                try {
+                    $opts = [
+                        'channel'      => $channel,
+                        'template_key' => $templateKey,
+                        'vars'         => $varsBase,
+                    ];
+                    if (!empty($body)) {
+                        $opts['body'] = $body;
+                    }
+                    $log = $this->svc->sendToPatient($patient, $opts);
+                    if ($log->status === 'failed') {
+                        $failed++;
+                        $row['status'] = 'failed';
+                        $row['error']  = $log->error;
+                    } else {
+                        $sent++;
+                        $row['status'] = 'sent';
+                    }
+                } catch (\Throwable $e) {
+                    $failed++;
+                    $row['status'] = 'failed';
+                    $row['error']  = $e->getMessage();
+                    \Illuminate\Support\Facades\Log::error('sendBulk row #' . $patient->id . ': ' . $e->getMessage());
+                }
+                $results[] = $row;
+            }
+
+            return $this->apiResponse([
+                'status' => '1',
+                'data'   => [
+                    'total'    => count($patientIds),
+                    'sent'     => $sent,
+                    'failed'   => $failed,
+                    'skipped'  => $skipped,
+                    'results'  => $results,
+                    'provider' => $this->svc->currentProvider(),
+                ],
+            ], 200);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('sendBulk endpoint: ' . $e->getMessage());
+            return $this->apiResponse([
+                'status' => '500',
+                'message' => 'Error en envío masivo',
+                'debug'  => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

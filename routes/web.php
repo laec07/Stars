@@ -164,11 +164,19 @@ Route::group(['middleware' => 'xssProtection'], function () {
             Route::post('eval-templates',         [\App\Http\Controllers\FormFisios\EvalTemplateController::class, 'store'])->name('eval.templates.store');
             Route::post('eval-templates/{id}/delete', [\App\Http\Controllers\FormFisios\EvalTemplateController::class, 'destroy'])->name('eval.templates.delete');
 
+            // Fase 15 — Adjuntos de ficha clínica (exámenes, fotos, documentos, recetas)
+            Route::get('adjuntos/{patientId}',     [\App\Http\Controllers\FormFisios\AdjuntoController::class, 'index'])->name('adjuntos.index');
+            Route::post('adjuntos',                [\App\Http\Controllers\FormFisios\AdjuntoController::class, 'store'])->name('adjuntos.store');
+            Route::post('adjuntos/{id}/delete',    [\App\Http\Controllers\FormFisios\AdjuntoController::class, 'destroy'])->name('adjuntos.delete');
+            Route::get('adjuntos/{id}/download',   [\App\Http\Controllers\FormFisios\AdjuntoController::class, 'download'])->name('adjuntos.download');
+
             // Fase 9a — Mensajería al paciente (WhatsApp / SMS)
             Route::get('patient-messages/{id}',  [App\Http\Controllers\Messaging\PatientMessagingController::class, 'listForPatient'])->name('patient.messages.list');
             Route::get('message-templates',      [App\Http\Controllers\Messaging\PatientMessagingController::class, 'templates'])->name('messages.templates');
             Route::get('message-render',         [App\Http\Controllers\Messaging\PatientMessagingController::class, 'renderTemplate'])->name('messages.render');
             Route::post('send-patient-message',  [App\Http\Controllers\Messaging\PatientMessagingController::class, 'sendToPatient'])->name('patient.messages.send');
+            // Nivel 3.1 — Envío masivo de mensajes
+            Route::post('mass-message-send',     [App\Http\Controllers\Messaging\PatientMessagingController::class, 'sendBulk'])->name('patient.messages.bulk');
             Route::get('get-user-info', [App\Http\Controllers\UserManagement\UserController::class, 'getUserInfo'])->name('get.user.info');
             Route::get('get-role', [App\Http\Controllers\UserManagement\RoleController::class, 'getRoleInfo'])->name('get.role.info');
 
@@ -221,6 +229,8 @@ Route::group(['middleware' => 'xssProtection'], function () {
 
             //get patient
             Route::get('get-patient', [\App\Http\Controllers\Patient\PatientController::class, 'getAllPatient'])->name('patient.get');
+            // Nivel 2.2 — buscar duplicados al tipear en el drawer de alta
+            Route::get('patient-duplicates', [\App\Http\Controllers\Patient\PatientController::class, 'findDuplicates'])->name('patient.duplicates');
 
             //get business holiday
             Route::get('get-business-holiday', [App\Http\Controllers\Settings\BusinessHolidayController::class, 'getBusinessHoliday'])->name('get.business.holiday');

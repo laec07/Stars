@@ -34,6 +34,32 @@
         activeCase: @json($casoActivo ?? 'all'),
         fichas: @json($ctxFichas)
     };
+
+    // Nivel 1.4 — Registrar este paciente en "Recientes" al abrir el expediente.
+    (function () {
+        try {
+            var KEY = 'hh.patientList.recents';
+            var MAX = 6;
+            var p = window.PATIENT_CONTEXT;
+            if (!p || !p.id) return;
+            // Iniciales y color (mismo algoritmo que el backend)
+            var name = String(p.name || '').trim();
+            var parts = name.split(/\s+/);
+            var ini = ((parts[0] || '')[0] || '') + ((parts[1] || '')[0] || '');
+            ini = (ini || '?').toUpperCase();
+            // hash determinístico simple para color 1..8
+            var h = 0;
+            for (var i = 0; i < name.length; i++) { h = ((h << 5) - h + name.charCodeAt(i)) | 0; }
+            var color = (Math.abs(h) % 8) + 1;
+
+            var raw = localStorage.getItem(KEY);
+            var list = raw ? JSON.parse(raw) : [];
+            list = list.filter(function (x) { return x.id !== p.id; });
+            list.unshift({ id: p.id, full_name: p.name, initials: ini, avatar_color: color });
+            list = list.slice(0, MAX);
+            localStorage.setItem(KEY, JSON.stringify(list));
+        } catch (e) { /* silencioso */ }
+    })();
 </script>
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 {{-- Fase 11 — Chart.js para los gráficos de evolución --}}
@@ -707,6 +733,237 @@
         .eval-filter { width:100%; margin-left:0; }
         .eval-filter select { flex:1; }
         .eval-launcher-grid { grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
+    }
+
+    /* ====== Fase 15 — Adjuntos (tablet-first) ====== */
+    .adj-header {
+        display:flex; flex-wrap:wrap; align-items:center; gap:.6rem 1rem;
+        margin-bottom:1rem;
+    }
+    .adj-header h5 { margin:0; }
+    .adj-summary-pill {
+        background:rgba(159,147,231,.10); color:var(--brand-primary-darker);
+        border:1px solid rgba(159,147,231,.35); padding:.3rem .75rem;
+        border-radius:1rem; font-size:.78rem; font-weight:500;
+    }
+
+    /* Zona drop + acciones principales */
+    .adj-dropzone {
+        position:relative;
+        border:2px dashed rgba(159,147,231,.45);
+        background:linear-gradient(135deg, rgba(159,147,231,.04) 0%, rgba(159,147,231,.01) 100%);
+        border-radius:.6rem;
+        padding:1.4rem 1rem;
+        text-align:center;
+        margin-bottom:1rem;
+        transition:background .15s, border-color .15s;
+    }
+    .adj-dropzone.is-dragover {
+        background:rgba(159,147,231,.10);
+        border-color:var(--brand-primary-darker);
+    }
+    .adj-dropzone-title {
+        font-size:.92rem; font-weight:600; color:#495057; margin-bottom:.2rem;
+    }
+    .adj-dropzone-hint {
+        font-size:.78rem; color:#6c757d; margin-bottom:.9rem;
+    }
+    .adj-actions {
+        display:flex; flex-wrap:wrap; gap:.6rem; justify-content:center;
+    }
+    .adj-btn-action {
+        display:inline-flex; align-items:center; gap:.45rem;
+        background:#fff; border:1px solid #e9ecef; border-radius:.45rem;
+        padding:.7rem 1.1rem; font-size:.88rem; color:#212529; cursor:pointer;
+        min-height:52px;  /* touch target tablet */
+        transition:border-color .15s, box-shadow .15s, background .15s;
+    }
+    .adj-btn-action:hover {
+        border-color:var(--brand-primary-darker);
+        box-shadow:0 2px 8px rgba(159,147,231,.18);
+        background:#fff;
+    }
+    .adj-btn-action.is-primary {
+        background:var(--brand-primary-darker); color:#fff; border-color:var(--brand-primary-darker);
+    }
+    .adj-btn-action.is-primary:hover { background:#7c6dc7; }
+    .adj-btn-action i { font-size:1rem; }
+
+    /* Categoría chips de filtro */
+    .adj-filters {
+        display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.9rem;
+    }
+    .adj-filter-chip {
+        background:#fff; border:1px solid #e9ecef; border-radius:1rem;
+        padding:.32rem .8rem; font-size:.8rem; color:#495057; cursor:pointer;
+        display:inline-flex; align-items:center; gap:.35rem;
+        min-height:34px;
+        transition:background .15s, border-color .15s;
+    }
+    .adj-filter-chip:hover { border-color:var(--brand-primary-darker); }
+    .adj-filter-chip.is-active {
+        background:var(--brand-primary-darker); color:#fff; border-color:var(--brand-primary-darker);
+    }
+    .adj-filter-chip .chip-count {
+        background:rgba(0,0,0,.08); padding:.05rem .45rem; border-radius:1rem;
+        font-size:.72rem; font-weight:600;
+    }
+    .adj-filter-chip.is-active .chip-count { background:rgba(255,255,255,.25); }
+
+    /* Cuota */
+    .adj-quota {
+        background:#f8f9fa; border:1px solid #e9ecef; border-radius:.4rem;
+        padding:.55rem .8rem; margin-bottom:.9rem; font-size:.78rem; color:#495057;
+        display:flex; align-items:center; gap:.6rem;
+    }
+    .adj-quota.is-warn { background:#fff4d6; border-color:#f0d68a; color:#7a4f00; }
+    .adj-quota-bar { flex:1; height:6px; background:#e9ecef; border-radius:3px; overflow:hidden; }
+    .adj-quota-bar-fill { height:100%; background:var(--brand-primary-darker); transition:width .25s; }
+    .adj-quota.is-warn .adj-quota-bar-fill { background:#d9a236; }
+
+    /* Grid de tarjetas */
+    .adj-grid {
+        display:grid; gap:.85rem;
+        grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+    }
+    .adj-card {
+        background:#fff; border:1px solid #e9ecef; border-radius:.5rem;
+        overflow:hidden;
+        display:flex; flex-direction:column;
+        transition:border-color .15s, box-shadow .15s, transform .05s;
+        cursor:pointer;
+    }
+    .adj-card:hover {
+        border-color:var(--brand-primary-darker);
+        box-shadow:0 4px 14px rgba(159,147,231,.18);
+        transform:translateY(-1px);
+    }
+    .adj-card-thumb {
+        position:relative;
+        width:100%; aspect-ratio:4/3;
+        background:#f1f3f5;
+        display:flex; align-items:center; justify-content:center;
+        overflow:hidden;
+    }
+    .adj-card-thumb img {
+        width:100%; height:100%; object-fit:cover;
+        display:block;
+    }
+    .adj-card-thumb .adj-thumb-icon {
+        font-size:2.4rem; color:#adb5bd;
+    }
+    .adj-card-thumb .adj-thumb-icon.is-pdf { color:#dc3545; }
+    .adj-card-thumb .adj-thumb-icon.is-doc { color:#0d6efd; }
+    .adj-card-thumb .adj-thumb-icon.is-img { color:var(--brand-primary-darker); }
+    .adj-card-body {
+        padding:.55rem .65rem;
+        display:flex; flex-direction:column; gap:.15rem;
+        flex:1;
+    }
+    .adj-card-name {
+        font-size:.82rem; color:#212529; font-weight:500;
+        line-height:1.2;
+        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+        overflow:hidden;
+        word-break:break-word;
+    }
+    .adj-card-meta {
+        font-size:.7rem; color:#6c757d;
+        display:flex; justify-content:space-between; align-items:center;
+        margin-top:.25rem;
+    }
+    .adj-card-cat {
+        display:inline-block; font-size:.65rem;
+        padding:.05rem .45rem; border-radius:.7rem;
+        background:rgba(159,147,231,.12); color:var(--brand-primary-darker);
+        font-weight:600; text-transform:uppercase; letter-spacing:.03em;
+    }
+    .adj-card-actions {
+        position:absolute; top:.4rem; right:.4rem;
+        display:flex; gap:.25rem;
+        opacity:0; transition:opacity .15s;
+    }
+    .adj-card:hover .adj-card-actions { opacity:1; }
+    .adj-card-actions button {
+        background:rgba(255,255,255,.92); border:1px solid rgba(0,0,0,.08);
+        border-radius:.3rem; width:32px; height:32px;
+        display:flex; align-items:center; justify-content:center;
+        color:#495057; cursor:pointer; font-size:.8rem;
+    }
+    .adj-card-actions button:hover { background:#fff; color:#212529; }
+    .adj-card-actions button.adj-btn-danger { color:#dc3545; }
+    .adj-card-actions button.adj-btn-danger:hover { background:#dc3545; color:#fff; }
+    /* En tablet/táctil mostramos siempre las acciones porque no hay hover */
+    @media (hover: none) {
+        .adj-card-actions { opacity:1; }
+        .adj-card-actions button { background:#fff; }
+    }
+
+    /* Modal preview */
+    .adj-preview-modal .modal-dialog { max-width: 92vw; }
+    .adj-preview-modal .modal-content { background:#212529; color:#fff; border-radius:.4rem; }
+    .adj-preview-modal .modal-header { border-bottom:1px solid rgba(255,255,255,.1); padding:.7rem 1rem; }
+    .adj-preview-modal .modal-title { color:#fff; font-size:.95rem; }
+    .adj-preview-modal .close { color:#fff; opacity:.8; text-shadow:none; font-size:1.6rem; }
+    .adj-preview-modal .modal-body {
+        padding:0; min-height:60vh;
+        display:flex; align-items:center; justify-content:center;
+        background:#000;
+    }
+    .adj-preview-modal .adj-preview-img {
+        max-width:100%; max-height:78vh; object-fit:contain;
+    }
+    .adj-preview-modal .adj-preview-pdf {
+        width:100%; height:78vh; border:none; background:#fff;
+    }
+    .adj-preview-modal .modal-footer {
+        background:#1a1d20; border-top:1px solid rgba(255,255,255,.1);
+        padding:.6rem 1rem; gap:.4rem;
+    }
+
+    /* Modal upload (confirmación de categoría/descripción) */
+    .adj-upload-modal .upload-queue {
+        max-height:240px; overflow-y:auto;
+        border:1px solid #e9ecef; border-radius:.4rem;
+        margin-bottom:.8rem;
+    }
+    .adj-upload-modal .upload-queue-item {
+        display:flex; align-items:center; gap:.6rem;
+        padding:.5rem .7rem; border-bottom:1px solid #f1f3f5;
+        font-size:.85rem;
+    }
+    .adj-upload-modal .upload-queue-item:last-child { border-bottom:none; }
+    .adj-upload-modal .upload-queue-item .uq-icon {
+        width:36px; height:36px; border-radius:.3rem; background:#f1f3f5;
+        display:flex; align-items:center; justify-content:center;
+        flex-shrink:0; color:var(--brand-primary-darker);
+    }
+    .adj-upload-modal .upload-queue-item .uq-info { flex:1; min-width:0; }
+    .adj-upload-modal .upload-queue-item .uq-name {
+        font-weight:500; color:#212529; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .adj-upload-modal .upload-queue-item .uq-size {
+        font-size:.72rem; color:#6c757d;
+    }
+    .adj-upload-modal .upload-queue-item .uq-remove {
+        background:none; border:none; color:#6c757d; cursor:pointer;
+        padding:.3rem .5rem; border-radius:.3rem;
+    }
+    .adj-upload-modal .upload-queue-item .uq-remove:hover { background:#fee; color:#dc3545; }
+    .adj-upload-modal .progress { height:6px; }
+    .adj-upload-modal .progress-bar { background:var(--brand-primary-darker); }
+
+    .adj-empty {
+        text-align:center; padding:2rem 1rem; color:#adb5bd;
+    }
+    .adj-empty i { font-size:2.4rem; display:block; margin-bottom:.6rem; }
+
+    @media (max-width: 768px) {
+        .adj-dropzone { padding:1rem .7rem; }
+        .adj-actions { flex-direction:column; }
+        .adj-btn-action { width:100%; justify-content:center; }
+        .adj-grid { grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:.6rem; }
+        .adj-card-thumb { aspect-ratio:1/1; }
     }
 
     /* Fase 3b - Modal inline genérico para crear evaluaciones */
@@ -2034,6 +2291,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#tab-adjuntos" role="tab" id="tab-adjuntos-trigger">
+                    <i class="fas fa-paperclip mr-1"></i> {{ translate('Adjuntos') }}
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#tab-mensajes" role="tab" id="tab-mensajes-trigger">
                     <i class="fab fa-whatsapp mr-1"></i> {{ translate('Mensajes') }}
                 </a>
@@ -2084,6 +2346,12 @@
                             Iniciada {{ \Carbon\Carbon::parse($fichaCompleta->fecha)->format('d/m/Y') }} ·
                         @endif
                         Caso #{{ $fichaCompleta->id }}
+                        @php $adjCount = (int) ($adjuntosCount ?? 0); @endphp
+                        @if($adjCount > 0)
+                            · <span title="{{ translate('Archivos adjuntos en este caso') }}">
+                                <i class="fas fa-paperclip"></i> {{ $adjCount }} {{ $adjCount === 1 ? translate('adjunto') : translate('adjuntos') }}
+                            </span>
+                        @endif
                     </div>
                 </div>
                 <span class="ficha-completa-toggle-hint">
@@ -2444,6 +2712,65 @@
             </div>
         </div>
     </div> {{-- /tab-evolucion --}}
+
+    {{-- =========================== TAB ADJUNTOS (Fase 15) =========================== --}}
+    <div class="tab-pane fade" id="tab-adjuntos" role="tabpanel">
+
+        <div class="adj-header">
+            <div>
+                <h5><i class="fas fa-paperclip mr-1"></i> {{ translate('Adjuntos') }}</h5>
+                <small class="text-muted" id="adj-summary">{{ translate('Cargando...') }}</small>
+                <div style="font-size:.72rem; color:#adb5bd; margin-top:.15rem;">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {{ translate('Los archivos se vinculan al caso clínico activo. Filtra desde el selector arriba.') }}
+                </div>
+            </div>
+        </div>
+
+        {{-- Zona drop + acciones --}}
+        <div id="adj-dropzone" class="adj-dropzone">
+            <div class="adj-dropzone-title">
+                <i class="fas fa-cloud-upload-alt mr-1"></i> {{ translate('Sube exámenes, fotos clínicas, documentos o recetas') }}
+            </div>
+            <div class="adj-dropzone-hint">
+                {{ translate('Arrastra archivos aquí o usa los botones de abajo. JPG, PNG, PDF, DOC, DOCX. Máx 20 MB por archivo.') }}
+            </div>
+            <div class="adj-actions">
+                {{-- En tablet/móvil, capture="environment" abre directo la cámara trasera --}}
+                <button type="button" class="adj-btn-action is-primary" data-action="adj-camera">
+                    <i class="fas fa-camera"></i> {{ translate('Tomar foto') }}
+                </button>
+                <button type="button" class="adj-btn-action" data-action="adj-pick">
+                    <i class="fas fa-folder-open"></i> {{ translate('Subir archivo') }}
+                </button>
+            </div>
+            {{-- Inputs ocultos para el picker y la cámara --}}
+            <input type="file" id="adjFileInput" multiple
+                   accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                   style="display:none;">
+            <input type="file" id="adjCameraInput" accept="image/*" capture="environment"
+                   style="display:none;">
+        </div>
+
+        {{-- Cuota --}}
+        <div id="adj-quota" class="adj-quota" style="display:none;">
+            <i class="fas fa-database"></i>
+            <span class="adj-quota-text">—</span>
+            <div class="adj-quota-bar"><div class="adj-quota-bar-fill" style="width:0%"></div></div>
+        </div>
+
+        {{-- Filtros por categoría --}}
+        <div id="adj-filters" class="adj-filters"></div>
+
+        {{-- Grid de adjuntos --}}
+        <div id="adj-grid" class="adj-grid">
+            <div class="adj-empty">
+                <i class="fas fa-spinner fa-spin"></i>
+                {{ translate('Cargando adjuntos…') }}
+            </div>
+        </div>
+
+    </div> {{-- /tab-adjuntos --}}
 
     {{-- =========================== TAB MENSAJES (Fase 9a) =========================== --}}
     <div class="tab-pane fade" id="tab-mensajes" role="tabpanel">
@@ -2990,6 +3317,100 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cerrar') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- =============== MODAL UPLOAD DE ADJUNTOS (Fase 15) =============== --}}
+<div class="modal fade adj-upload-modal" id="modalAdjUpload" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form id="formAdjUpload" autocomplete="off">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cloud-upload-alt mr-1"></i>
+                        {{ translate('Subir adjuntos') }}
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{-- Cola de archivos seleccionados --}}
+                    <div class="upload-queue" id="adjUploadQueue"></div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label style="font-size:.78rem; color:#495057; font-weight:600; text-transform:uppercase;">
+                                {{ translate('Categoría') }}
+                            </label>
+                            <select id="adjUploadCategoria" class="form-control form-control-sm">
+                                <option value="examenes">🩻 Exámenes (RX, RMN, lab)</option>
+                                <option value="fotos_clinicas">📸 Fotos clínicas</option>
+                                <option value="documentos">📄 Documentos médicos</option>
+                                <option value="recetas">💊 Recetas</option>
+                                <option value="otros" selected>📎 Otros</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label style="font-size:.78rem; color:#495057; font-weight:600; text-transform:uppercase;">
+                                {{ translate('Vincular a caso clínico') }}
+                            </label>
+                            <select id="adjUploadFichaId" class="form-control form-control-sm">
+                                <option value="">— {{ translate('General del paciente (sin caso)') }} —</option>
+                                {{-- Resto se llena dinámicamente en JS --}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size:.78rem; color:#495057; font-weight:600; text-transform:uppercase;">
+                            {{ translate('Descripción') }} <span class="text-muted" style="text-transform:none; font-weight:400;">({{ translate('opcional, se aplica a todos los archivos del lote') }})</span>
+                        </label>
+                        <textarea id="adjUploadDescripcion" class="form-control form-control-sm" rows="2"
+                                  placeholder="{{ translate('Ej. Radiografía AP de columna lumbar — Dr. Pérez 25/05/2026') }}"></textarea>
+                    </div>
+
+                    <div class="progress" style="display:none;" id="adjUploadProgressWrap">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             id="adjUploadProgress" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+                        {{ translate('Cancelar') }}
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnAdjUploadConfirm">
+                        <i class="fas fa-upload mr-1"></i> {{ translate('Subir') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- =============== MODAL PREVIEW DE ADJUNTO (Fase 15) =============== --}}
+<div class="modal fade adj-preview-modal" id="modalAdjPreview" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adjPreviewTitle">—</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="adjPreviewBody">
+                {{-- Inyectado por JS: <img> o <iframe> según tipo --}}
+            </div>
+            <div class="modal-footer">
+                <span class="text-muted mr-auto" id="adjPreviewMeta" style="font-size:.78rem;"></span>
+                <a href="#" id="adjPreviewDownload" class="btn btn-default btn-sm" target="_blank">
+                    <i class="fas fa-download mr-1"></i> {{ translate('Descargar') }}
+                </a>
+                <button type="button" class="btn btn-danger btn-sm" id="btnAdjPreviewDelete">
+                    <i class="fas fa-trash mr-1"></i> {{ translate('Eliminar') }}
+                </button>
             </div>
         </div>
     </div>

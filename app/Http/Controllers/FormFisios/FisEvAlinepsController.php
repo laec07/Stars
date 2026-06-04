@@ -79,13 +79,19 @@ class FisEvAlinepsController extends Controller
             $cleanData = $this->cleanRequestData($request);
             $cleanData['user_id'] = Auth::id();
 
+            // Carpeta destino: uploadfiles/adjuntos/{Nombre_Apellido}_{id}/evalin
+            // Centraliza las fotos de alineación postural bajo la carpeta del paciente.
+            // Fallback a uploadfiles/ raíz si no se resuelve el paciente.
+            $patientId = $request->input('patient_id');
+            $evalinFolder = UtilityRepository::patientFolder($patientId, 'evalin');
+
             // Guardar fotos corrección laestrada
             for ($i = 1; $i <= 4; $i++) {
                 if ($request->hasFile("foto$i")) {
                     // Obtener el archivo real
                     $file = $request->file("foto$i");
                     // Guardar el archivo usando UtilityRepository
-                    $cleanData["foto$i"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg']);
+                    $cleanData["foto$i"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg'], $evalinFolder);
                 }
             }
             
@@ -94,7 +100,6 @@ class FisEvAlinepsController extends Controller
 
             // Crear entrada en la bitácora laestradas
             $tabla='fis_evalineps';
-            $patientId = $request->input('patient_id');
            UtilityFisioController::logEntry($patientId, $tabla, $form->id,1);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
@@ -130,6 +135,11 @@ class FisEvAlinepsController extends Controller
             }
 
             $fillableData = $this->cleanRequestData($request);
+
+            // Carpeta destino: uploadfiles/adjuntos/{Nombre_Apellido}_{id}/evalin
+            // Se resuelve desde el patient_id del registro existente.
+            $evalinFolder = UtilityRepository::patientFolder($evalineps->patient_id, 'evalin');
+
             // Actualizar fotos — usar el MISMO método que createformEvalineps
             // (UtilityRepository::saveFile → public/uploadfiles/) para que las URLs
             // queden consistentes y servibles sin requerir `php artisan storage:link`.
@@ -147,7 +157,7 @@ class FisEvAlinepsController extends Controller
                         }
                     }
                     $file = $request->file("foto$i");
-                    $fillableData["foto$i"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg']);
+                    $fillableData["foto$i"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg'], $evalinFolder);
                 } else if ($request->has("foto{$i}_old")) {
                     // Mantener foto antigua si no sube nueva
                     $fillableData["foto$i"] = $request->input("foto{$i}_old");

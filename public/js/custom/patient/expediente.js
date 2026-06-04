@@ -38,7 +38,16 @@
         // Fase 11 — Evolución (gráficos)
         evolLoaded: false,
         evolLoading: false,
-        evolCharts: {} // { tabla: ChartInstance }
+        evolCharts: {}, // { tabla: ChartInstance }
+
+        // Fase 15 — Adjuntos
+        adjLoaded: false,
+        adjLoading: false,
+        adjItems: [],
+        adjSummary: null,
+        adjFilterCategoria: '',
+        adjUploadQueue: [],
+        adjPreviewCurrent: null
     };
 
     var CONFIG = {
@@ -92,6 +101,7 @@
             state.loaded = false;
             state.evaluacionesLoaded = false;
             state.evolLoaded = false;
+            state.adjLoaded = false;
             // Mensajes NO se filtran por caso — quedan tal cual
 
             // Refetch del tab visible (el resumen necesita recarga de página
@@ -111,6 +121,7 @@
             if (tabHref === '#tab-sesiones')   Manager.LoadSesiones();
             if (tabHref === '#tab-evaluacion') EvaluacionManager.Load();
             if (tabHref === '#tab-evolucion')  EvolucionManager.Load();
+            if (tabHref === '#tab-adjuntos')   AdjuntoManager.Load();
         },
 
         /**
@@ -260,6 +271,13 @@
             }
         });
 
+        // Lazy-load al abrir la pestaña Adjuntos (Fase 15)
+        $('#tab-adjuntos-trigger').on('shown.bs.tab', function () {
+            if (!state.adjLoaded && !state.adjLoading) {
+                AdjuntoManager.Load();
+            }
+        });
+
         // Botón abrir modal de envío
         $('#btnAbrirEnvioMsg').on('click', function () {
             MessagingManager.OpenSendModal();
@@ -340,22 +358,45 @@
         // "Ver →" en "Resumen por tipo de evaluación" → cambia al tab Evaluación,
         // expande la sección de ese tipo y hace scroll. Si la data aún no se cargó,
         // arma un trigger one-shot que se ejecuta al terminar de renderizar.
+        // Caso especial: fis_adjuntos no es una sección del tab Evaluación,
+        // tiene su propio tab → redirige ahí.
         $(document).on('click', '[data-action="goto-eval-section"]', function (e) {
             e.preventDefault();
             var key = $(this).data('key');
             if (!key) return;
+            if (key === 'fis_adjuntos') {
+                $('#tab-adjuntos-trigger').tab('show');
+                return;
+            }
             EvaluacionManager.FocusSection(key);
         });
 
         // "Ver evaluación" en el Timeline → abre el modal inline con el registro
         // pre-cargado. Si el tipo no tiene config inline declarativa, abre el
-        // formulario externo como fallback.
+        // formulario externo como fallback. Caso especial: fis_adjuntos abre el
+        // modal preview del adjunto (carga la data si hace falta).
         $(document).on('click', '[data-action="view-event"]', function (e) {
             e.preventDefault();
             var $a = $(this);
             var key = $a.data('key');
             var id  = $a.data('id');
             var fallback = $a.data('fallback');
+            if (key === 'fis_adjuntos' && id) {
+                // Asegurar que los adjuntos estén cargados antes de abrir el preview
+                $('#tab-adjuntos-trigger').tab('show');
+                var tryOpen = function () {
+                    if (state.adjLoaded) {
+                        AdjuntoManager.OpenPreview(id);
+                    } else if (!state.adjLoading) {
+                        AdjuntoManager.Load();
+                        setTimeout(tryOpen, 400);
+                    } else {
+                        setTimeout(tryOpen, 250);
+                    }
+                };
+                tryOpen();
+                return;
+            }
             if (key && id && InlineFormManager.HasConfigFor(key)) {
                 InlineFormManager.OpenEdit(key, id);
             } else if (fallback) {
@@ -1091,6 +1132,9 @@
                 var fd = new FormData();
                 var safeName = (originalName || 'foto').replace(/\.[^.]+$/, '') + '_' + Date.now() + '.jpg';
                 fd.append('image', blob, safeName);
+                // Fase 15 — enviar patient_id para que las imágenes de seguimiento
+                // se guarden en uploadfiles/seguimientos/{paciente}/
+                if (ctx.id) fd.append('patient_id', ctx.id);
 
                 var csrf = $('meta[name="csrf-token"]').attr('content');
                 $.ajax({
@@ -4305,5 +4349,488 @@
 
     // Exponer para debugging desde consola
     window.MessagingManager = MessagingManager;
+
+    // ========================================================================
+    // AdjuntoManager (Fase 15): Adjuntos de ficha clínica.
+    // Maneja: carga, render del grid, filtros por categoría, cuota, upload
+    // (con cámara o picker), preview (imagen/PDF) y delete.
+    // ========================================================================
+
+    // Iconos por mime para thumbnails de no-imagen
+    var ADJ_ICON_MAP = {
+        'application/pdf':                                                            { icon: 'fa-file-pdf', cls: 'is-pdf' },
+        'application/msword':                                                         { icon: 'fa-file-word', cls: 'is-doc' },
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document':    { icon: 'fa-file-word', cls: 'is-doc' },
+        'application/vnd.ms-excel':                                                   { icon: 'fa-file-excel', cls: 'is-doc' },
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':          { icon: 'fa-file-excel', cls: 'is-doc' },
+        'text/plain':                                                                 { icon: 'fa-file-alt', cls: 'is-doc' }
+    };
+
+    var ADJ_CATEGORIAS = [
+        { key: 'examenes',       label: 'Exámenes',        icon: 'fa-x-ray' },
+        { key: 'fotos_clinicas', label: 'Fotos clínicas',  icon: 'fa-camera' },
+        { key: 'documentos',     label: 'Documentos',      icon: 'fa-file-medical' },
+        { key: 'recetas',        label: 'Recetas',         icon: 'fa-prescription' },
+        { key: 'otros',          label: 'Otros',           icon: 'fa-paperclip' }
+    ];
+
+    var AdjuntoManager = {
+
+        // ---- Carga + render principal -----------------------------------
+
+        Load: function () {
+            if (!ctx.id) return;
+            state.adjLoading = true;
+
+            var caso = CaseManager.Current();
+            var url = 'adjuntos/' + ctx.id;
+            var params = [];
+            if (caso && caso !== 'all') params.push('ficha_id=' + encodeURIComponent(caso));
+            if (state.adjFilterCategoria) params.push('categoria=' + encodeURIComponent(state.adjFilterCategoria));
+            if (params.length) url += '?' + params.join('&');
+
+            $('#adj-grid').html(
+                '<div class="adj-empty"><i class="fas fa-spinner fa-spin"></i> Cargando adjuntos…</div>'
+            );
+
+            JsManager.SendJsonAsyncON('GET', url, '', onSuccess, onFailed);
+
+            function onSuccess(json) {
+                state.adjLoading = false;
+                if (json && json.status == '1' && json.data) {
+                    state.adjItems   = Manager.DecodeEntitiesDeep(json.data.items || []);
+                    state.adjSummary = json.data.summary || null;
+                    state.adjLoaded  = true;
+                    AdjuntoManager.Render();
+                } else {
+                    AdjuntoManager.RenderError('Respuesta inesperada del servidor.');
+                }
+            }
+            function onFailed(xhr) {
+                state.adjLoading = false;
+                console.error('AdjuntoManager.Load failed', xhr);
+                AdjuntoManager.RenderError('Error de red cargando adjuntos (HTTP ' + xhr.status + ').');
+            }
+        },
+
+        RenderError: function (msgHtml) {
+            $('#adj-grid').html(
+                '<div class="adj-empty"><i class="fas fa-exclamation-triangle"></i>' + msgHtml + '</div>'
+            );
+            $('#adj-summary').text('');
+        },
+
+        Render: function () {
+            AdjuntoManager.RenderSummary();
+            AdjuntoManager.RenderQuota();
+            AdjuntoManager.RenderFilters();
+            AdjuntoManager.RenderGrid();
+        },
+
+        RenderSummary: function () {
+            var s = state.adjSummary || {};
+            var total = s.total_count || 0;
+            var bytes = s.total_bytes || 0;
+            var txt = total === 0
+                ? 'Sin adjuntos todavía.'
+                : (total + ' archivo' + (total === 1 ? '' : 's') +
+                   ' · ' + AdjuntoManager.FormatBytes(bytes));
+            $('#adj-summary').text(txt);
+        },
+
+        RenderQuota: function () {
+            var s = state.adjSummary;
+            if (!s || !s.quota_bytes) { $('#adj-quota').hide(); return; }
+            var used = s.total_bytes || 0;
+            var quota = s.quota_bytes;
+            var pct = Math.min(100, Math.round((used / quota) * 100));
+            var $q = $('#adj-quota');
+            $q.find('.adj-quota-text').text(
+                AdjuntoManager.FormatBytes(used) + ' de ' + AdjuntoManager.FormatBytes(quota) + ' usados (' + pct + '%)'
+            );
+            $q.find('.adj-quota-bar-fill').css('width', pct + '%');
+            $q.toggleClass('is-warn', pct >= 80).show();
+        },
+
+        RenderFilters: function () {
+            var s = state.adjSummary || { by_category: {} };
+            var by = s.by_category || {};
+            var active = state.adjFilterCategoria || '';
+            var totalCount = s.total_count || 0;
+
+            var html = '<button type="button" class="adj-filter-chip ' + (active === '' ? 'is-active' : '') +
+                       '" data-action="adj-filter" data-cat="">' +
+                       '<i class="fas fa-th-large"></i> Todos ' +
+                       '<span class="chip-count">' + totalCount + '</span></button>';
+
+            ADJ_CATEGORIAS.forEach(function (c) {
+                var cnt = by[c.key] ? by[c.key].count : 0;
+                if (cnt === 0 && active !== c.key) return; // ocultar categorías vacías salvo que estén activas
+                html += '<button type="button" class="adj-filter-chip ' + (active === c.key ? 'is-active' : '') +
+                        '" data-action="adj-filter" data-cat="' + c.key + '">' +
+                        '<i class="fas ' + c.icon + '"></i> ' + Manager.EscapeHtml(c.label) +
+                        ' <span class="chip-count">' + cnt + '</span></button>';
+            });
+
+            $('#adj-filters').html(html);
+        },
+
+        RenderGrid: function () {
+            var items = state.adjItems || [];
+            if (!items.length) {
+                $('#adj-grid').html(
+                    '<div class="adj-empty">' +
+                    '<i class="far fa-folder-open"></i>' +
+                    'No hay adjuntos para mostrar.' +
+                    '<div style="font-size:.78rem; color:#adb5bd; margin-top:.6rem;">' +
+                    'Toma una foto o sube un archivo desde los botones de arriba.' +
+                    '</div></div>'
+                );
+                return;
+            }
+
+            var html = items.map(function (it) {
+                var thumb = it.is_image
+                    ? '<img src="' + Manager.EscapeHtml(it.file_url) + '" alt="" loading="lazy">'
+                    : (function () {
+                          var m = ADJ_ICON_MAP[it.mime] || { icon: 'fa-file', cls: '' };
+                          return '<i class="fas ' + m.icon + ' adj-thumb-icon ' + m.cls + '"></i>';
+                      })();
+                var catLabel = it.categoria_label || it.categoria;
+                var date = it.created_at ? Manager.FormatDate(it.created_at.substring(0, 10)) : '';
+
+                return (
+                    '<div class="adj-card" data-action="adj-preview" data-id="' + it.id + '" title="' + Manager.EscapeHtml(it.file_name) + '">' +
+                        '<div class="adj-card-thumb">' +
+                            thumb +
+                            '<div class="adj-card-actions">' +
+                                '<button type="button" data-action="adj-download" data-id="' + it.id + '" title="Descargar">' +
+                                    '<i class="fas fa-download"></i></button>' +
+                                '<button type="button" class="adj-btn-danger" data-action="adj-delete" data-id="' + it.id + '" title="Eliminar">' +
+                                    '<i class="fas fa-trash"></i></button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="adj-card-body">' +
+                            '<div class="adj-card-name">' + Manager.EscapeHtml(it.file_name) + '</div>' +
+                            '<div class="adj-card-meta">' +
+                                '<span class="adj-card-cat">' + Manager.EscapeHtml(catLabel) + '</span>' +
+                                '<span>' + AdjuntoManager.FormatBytes(it.size_bytes) + ' · ' + date + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }).join('');
+
+            $('#adj-grid').html(html);
+        },
+
+        // ---- Filtros ----------------------------------------------------
+
+        SetFilter: function (cat) {
+            state.adjFilterCategoria = cat || '';
+            state.adjLoaded = false; // forzar reload con filtro
+            AdjuntoManager.Load();
+        },
+
+        // ---- Upload -----------------------------------------------------
+
+        /**
+         * Abre el picker de archivos o la cámara según el modo.
+         * mode: 'camera' | 'pick'
+         */
+        TriggerPicker: function (mode) {
+            // Reset valor para permitir re-seleccionar el mismo archivo
+            var $inp = $(mode === 'camera' ? '#adjCameraInput' : '#adjFileInput');
+            $inp.val('').trigger('click');
+        },
+
+        /**
+         * Recibe FileList del input file y abre el modal de confirmación
+         * con la cola, default de categoría y dropdown de ficha.
+         */
+        QueueFiles: function (fileList, defaultCategoria) {
+            if (!fileList || !fileList.length) return;
+            var files = Array.prototype.slice.call(fileList);
+
+            // Validación cliente rápida: tamaño máx 20MB.
+            var MAX = 20 * 1024 * 1024;
+            files = files.filter(function (f) {
+                if (f.size > MAX) {
+                    if (window.Message) Message.Notification('warning', f.name + ': excede 20 MB y será omitido.');
+                    return false;
+                }
+                return true;
+            });
+            if (!files.length) return;
+
+            state.adjUploadQueue = files;
+
+            // Render de la cola en el modal
+            var queueHtml = files.map(function (f, idx) {
+                var icon = (f.type && f.type.indexOf('image/') === 0)
+                    ? 'fa-image'
+                    : (f.type === 'application/pdf' ? 'fa-file-pdf' : 'fa-file');
+                return (
+                    '<div class="upload-queue-item" data-idx="' + idx + '">' +
+                        '<div class="uq-icon"><i class="fas ' + icon + '"></i></div>' +
+                        '<div class="uq-info">' +
+                            '<div class="uq-name">' + Manager.EscapeHtml(f.name) + '</div>' +
+                            '<div class="uq-size">' + AdjuntoManager.FormatBytes(f.size) + '</div>' +
+                        '</div>' +
+                        '<button type="button" class="uq-remove" data-action="adj-uq-remove" data-idx="' + idx + '">' +
+                            '<i class="fas fa-times"></i></button>' +
+                    '</div>'
+                );
+            }).join('');
+            $('#adjUploadQueue').html(queueHtml);
+
+            // Default categoría
+            $('#adjUploadCategoria').val(defaultCategoria || 'otros');
+
+            // Llenar fichas en el dropdown (vincular a caso)
+            AdjuntoManager.PopulateFichaSelect();
+
+            // Reset progress
+            $('#adjUploadProgressWrap').hide();
+            $('#adjUploadProgress').css('width', '0%');
+            $('#adjUploadDescripcion').val('');
+            $('#btnAdjUploadConfirm').prop('disabled', false);
+
+            $('#modalAdjUpload').modal('show');
+        },
+
+        PopulateFichaSelect: function () {
+            var $sel = $('#adjUploadFichaId');
+            // Mantener primera opción ("general del paciente")
+            $sel.find('option:not(:first)').remove();
+            (ctx.fichas || []).forEach(function (f) {
+                var diag = (f.diagnostico || '').trim();
+                var motivo = (f.motivo_consulta || '').trim();
+                var lbl = diag || (motivo.length > 50 ? motivo.substring(0, 50).trim() + '…' : motivo) || ('Ficha #' + f.id);
+                if (f.fecha) lbl += ' · ' + Manager.FormatDate(f.fecha);
+                $sel.append('<option value="' + f.id + '">' + Manager.EscapeHtml(lbl) + '</option>');
+            });
+            // Preseleccionar el caso activo si es numérico
+            var caso = CaseManager.Current();
+            if (caso && /^\d+$/.test(caso)) $sel.val(caso);
+        },
+
+        RemoveFromQueue: function (idx) {
+            var q = state.adjUploadQueue || [];
+            q.splice(idx, 1);
+            if (!q.length) {
+                $('#modalAdjUpload').modal('hide');
+                return;
+            }
+            // Re-render
+            AdjuntoManager.QueueFiles(q, $('#adjUploadCategoria').val());
+        },
+
+        Submit: function () {
+            var queue = state.adjUploadQueue || [];
+            if (!queue.length) return;
+
+            var fd = new FormData();
+            queue.forEach(function (f) { fd.append('files[]', f); });
+            fd.append('patient_id', ctx.id);
+            var fichaId = $('#adjUploadFichaId').val();
+            if (fichaId) fd.append('ficha_id', fichaId);
+            fd.append('categoria', $('#adjUploadCategoria').val() || 'otros');
+            var desc = ($('#adjUploadDescripcion').val() || '').trim();
+            if (desc) fd.append('descripcion', desc);
+            var token = $('meta[name="csrf-token"]').attr('content');
+            if (token) fd.append('_token', token);
+
+            $('#btnAdjUploadConfirm').prop('disabled', true);
+            $('#adjUploadProgressWrap').show();
+
+            // XHR directo para tener progress real
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', JsManager.BaseUrl() + '/adjuntos', true);
+            xhr.upload.onprogress = function (e) {
+                if (!e.lengthComputable) return;
+                var pct = Math.round((e.loaded / e.total) * 100);
+                $('#adjUploadProgress').css('width', pct + '%');
+            };
+            xhr.onload = function () {
+                $('#btnAdjUploadConfirm').prop('disabled', false);
+                var json = null;
+                try { json = JSON.parse(xhr.responseText); } catch (e) {}
+                if (xhr.status >= 200 && xhr.status < 300 && json && (json.status == '1' || json.status === 1)) {
+                    var saved = (json.data && json.data.saved) || [];
+                    var errs  = (json.data && json.data.errors) || [];
+                    if (errs.length && window.Message) {
+                        Message.Notification('warning', errs.length + ' archivo(s) no se pudieron subir.');
+                    }
+                    if (window.Message) Message.Notification('success', saved.length + ' archivo(s) subidos.');
+                    $('#modalAdjUpload').modal('hide');
+                    state.adjLoaded = false;
+                    AdjuntoManager.Load();
+                } else {
+                    var msg = (json && json.message) || 'No se pudo subir.';
+                    if (json && json.data) {
+                        if (typeof json.data === 'object' && json.data.errors && json.data.errors.length) {
+                            msg += ' ' + json.data.errors.map(function (e) { return e.file_name + ': ' + e.reason; }).join('; ');
+                        }
+                    }
+                    if (window.Message) Message.Notification('error', msg);
+                }
+            };
+            xhr.onerror = function () {
+                $('#btnAdjUploadConfirm').prop('disabled', false);
+                if (window.Message) Message.Notification('error', 'Error de red al subir.');
+            };
+            xhr.send(fd);
+        },
+
+        // ---- Preview ----------------------------------------------------
+
+        OpenPreview: function (id) {
+            var it = (state.adjItems || []).find(function (x) { return x.id == id; });
+            if (!it) return;
+            state.adjPreviewCurrent = it;
+
+            $('#adjPreviewTitle').text(it.file_name);
+            $('#adjPreviewMeta').text(
+                (it.categoria_label || it.categoria) + ' · ' +
+                AdjuntoManager.FormatBytes(it.size_bytes) + ' · ' +
+                (it.uploader_name || '—')
+            );
+            $('#adjPreviewDownload').attr('href', JsManager.BaseUrl() + '/adjuntos/' + it.id + '/download');
+
+            var body = '';
+            if (it.is_image) {
+                body = '<img class="adj-preview-img" src="' + Manager.EscapeHtml(it.file_url) + '" alt="">';
+            } else if (it.is_pdf) {
+                body = '<iframe class="adj-preview-pdf" src="' + Manager.EscapeHtml(it.file_url) + '"></iframe>';
+            } else {
+                body = '<div class="adj-empty" style="color:#ced4da;">' +
+                       '<i class="fas fa-file"></i>' +
+                       'Vista previa no disponible para este tipo de archivo.' +
+                       '<div style="font-size:.78rem; margin-top:.6rem;">Descárgalo para abrirlo en su aplicación nativa.</div>' +
+                       '</div>';
+            }
+            $('#adjPreviewBody').html(body);
+            $('#modalAdjPreview').modal('show');
+        },
+
+        // ---- Delete -----------------------------------------------------
+
+        ConfirmAndDelete: function (id) {
+            var it = (state.adjItems || []).find(function (x) { return x.id == id; });
+            if (!it) return;
+
+            var ok = window.confirm('¿Eliminar "' + it.file_name + '"? Esta acción no se puede deshacer.');
+            if (!ok) return;
+
+            JsManager.StartProcessBar();
+            JsManager.SendJson('POST', 'adjuntos/' + id + '/delete', { _token: $('meta[name="csrf-token"]').attr('content') },
+                function (json) {
+                    JsManager.EndProcessBar();
+                    if (json && (json.status == '1' || json.status === 1)) {
+                        if (window.Message) Message.Success('delete');
+                        $('#modalAdjPreview').modal('hide');
+                        state.adjLoaded = false;
+                        AdjuntoManager.Load();
+                    } else {
+                        if (window.Message) Message.Error('delete');
+                    }
+                },
+                function (xhr) {
+                    JsManager.EndProcessBar();
+                    console.error('AdjuntoManager.Delete failed', xhr);
+                    if (window.Message) Message.Notification('error', 'No se pudo eliminar.');
+                });
+        },
+
+        // ---- Utilidades --------------------------------------------------
+
+        FormatBytes: function (b) {
+            if (!b && b !== 0) return '—';
+            b = Number(b);
+            if (b < 1024) return b + ' B';
+            if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+            if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
+            return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+    };
+
+    // ====== Bindings AdjuntoManager ======
+
+    // Acciones principales (botones del dropzone)
+    $(document).on('click', '[data-action="adj-camera"]', function () {
+        AdjuntoManager.TriggerPicker('camera');
+    });
+    $(document).on('click', '[data-action="adj-pick"]', function () {
+        AdjuntoManager.TriggerPicker('pick');
+    });
+
+    // Cuando el usuario elige archivos (picker o cámara) → abrir modal de confirmación
+    $(document).on('change', '#adjFileInput', function () {
+        AdjuntoManager.QueueFiles(this.files, 'otros');
+    });
+    $(document).on('change', '#adjCameraInput', function () {
+        // Las fotos van por default a "fotos_clinicas"
+        AdjuntoManager.QueueFiles(this.files, 'fotos_clinicas');
+    });
+
+    // Quitar archivo individual de la cola del modal
+    $(document).on('click', '[data-action="adj-uq-remove"]', function () {
+        AdjuntoManager.RemoveFromQueue(parseInt($(this).data('idx'), 10));
+    });
+
+    // Submit del modal de upload
+    $(document).on('submit', '#formAdjUpload', function (e) {
+        e.preventDefault();
+        AdjuntoManager.Submit();
+    });
+
+    // Drag & drop sobre el dropzone
+    (function bindDropzone() {
+        var $dz = $('#adj-dropzone');
+        if (!$dz.length) return;
+        ['dragenter', 'dragover'].forEach(function (ev) {
+            $dz.on(ev, function (e) { e.preventDefault(); e.stopPropagation(); $dz.addClass('is-dragover'); });
+        });
+        ['dragleave', 'drop'].forEach(function (ev) {
+            $dz.on(ev, function (e) { e.preventDefault(); e.stopPropagation(); $dz.removeClass('is-dragover'); });
+        });
+        $dz.on('drop', function (e) {
+            var dt = e.originalEvent && e.originalEvent.dataTransfer;
+            if (dt && dt.files && dt.files.length) {
+                AdjuntoManager.QueueFiles(dt.files, 'otros');
+            }
+        });
+    })();
+
+    // Filtros por categoría
+    $(document).on('click', '[data-action="adj-filter"]', function () {
+        AdjuntoManager.SetFilter($(this).data('cat') || '');
+    });
+
+    // Tarjeta → preview (pero NO cuando se hace click en un botón de acción)
+    $(document).on('click', '[data-action="adj-preview"]', function (e) {
+        if ($(e.target).closest('[data-action="adj-download"], [data-action="adj-delete"]').length) return;
+        AdjuntoManager.OpenPreview($(this).data('id'));
+    });
+
+    // Botón descargar (en card)
+    $(document).on('click', '[data-action="adj-download"]', function (e) {
+        e.stopPropagation();
+        var id = $(this).data('id');
+        window.open(JsManager.BaseUrl() + '/adjuntos/' + id + '/download', '_blank');
+    });
+
+    // Botón eliminar (en card o en modal preview)
+    $(document).on('click', '[data-action="adj-delete"]', function (e) {
+        e.stopPropagation();
+        AdjuntoManager.ConfirmAndDelete($(this).data('id'));
+    });
+    $(document).on('click', '#btnAdjPreviewDelete', function () {
+        if (state.adjPreviewCurrent) AdjuntoManager.ConfirmAndDelete(state.adjPreviewCurrent.id);
+    });
+
+    // Exponer para debugging
+    window.AdjuntoManager = AdjuntoManager;
 
 })(jQuery);

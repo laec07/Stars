@@ -316,8 +316,17 @@ public function uploadImage(Request $request)
 
         $filename = time().'_'.$file->getClientOriginalName();
 
+        // Carpeta destino: uploadfiles/adjuntos/{Nombre_Apellido}_{id}/seguimientos
+        // Todo lo del paciente se centraliza bajo su carpeta de adjuntos.
+        // Si no viene patient_id (o no se resuelve), fallback a uploadfiles/ raíz
+        // para no romper el comportamiento previo.
+        $patientId = $request->input('patient_id');
+        $uploadFolder = $patientId
+            ? UtilityRepository::patientFolder($patientId, 'seguimientos')
+            : null;
+
         // Guardar el archivo usando UtilityRepository
-        $cleanData["image"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg']);
+        $cleanData["image"] = UtilityRepository::saveFile($file, ['image/png', 'image/jpg', 'image/jpeg'], $uploadFolder);
 
         // 👇 Si es imagen
         if (str_contains($file->getMimeType(), 'image')) {
