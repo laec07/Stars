@@ -363,8 +363,54 @@
     <!-- Datatables -->
     <script src="{{ dsAsset('js/lib/DataTables/datatables.min.js') }}"></script>
 
+    {{-- Healing Hands — Sidebar colapsado por defecto en tablet.
+         DEBE ir ANTES de atlantis.js: el tema lee `.wrapper.sidebar_minimize`
+         al inicializar (sincroniza el botón toggle). Este script corre de forma
+         síncrona al parsearse, por lo que la clase queda aplicada a tiempo. --}}
+    <script>
+        (function () {
+            // "Tablet" = ancho típico de tablet (incluye landscape y iPad Pro).
+            // Por debajo de 768px Atlantis ya oculta el sidebar (modo overlay),
+            // así que no aplicamos minimize ahí.
+            function isTablet() {
+                var w = window.innerWidth || document.documentElement.clientWidth;
+                return w >= 768 && w <= 1366;
+            }
+            try {
+                var pref = localStorage.getItem('hh_sidebar_minimize'); // '1' | '0' | null
+                var shouldMinimize;
+                if (pref === '1')      shouldMinimize = true;   // el usuario eligió colapsado
+                else if (pref === '0') shouldMinimize = false;  // el usuario eligió expandido
+                else                   shouldMinimize = isTablet(); // sin preferencia → colapsar en tablet
+
+                if (shouldMinimize) {
+                    var wrapper = document.querySelector('.wrapper');
+                    if (wrapper) wrapper.classList.add('sidebar_minimize');
+                }
+            } catch (e) { /* localStorage no disponible — ignorar */ }
+        })();
+    </script>
+
     <!--theam JS -->
     <script src="{{ dsAsset('js/lib/assets/js/atlantis.js') }}"></script>
+
+    {{-- Persistir la preferencia del usuario al togglear el sidebar, para no
+         volver a forzar el colapso si lo expandió manualmente (y viceversa). --}}
+    <script>
+        (function () {
+            document.addEventListener('click', function (ev) {
+                var btn = ev.target.closest && ev.target.closest('.toggle-sidebar');
+                if (!btn) return;
+                // Leer el estado FINAL después de que atlantis procese el toggle.
+                setTimeout(function () {
+                    var wrapper = document.querySelector('.wrapper');
+                    if (!wrapper) return;
+                    var minimized = wrapper.classList.contains('sidebar_minimize');
+                    try { localStorage.setItem('hh_sidebar_minimize', minimized ? '1' : '0'); } catch (e) {}
+                }, 60);
+            });
+        })();
+    </script>
 
     <!--notify JS-->
     <script src="{{ dsAsset('js/lib/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js') }}"></script>

@@ -5,8 +5,12 @@
 @php
     use App\Support\EvaluationMeta;
 
-    $logoPath = public_path('img/brand/logo-full.png');
-    $logoSrc  = file_exists($logoPath) ? $logoPath : null;
+    // Preferir el logo optimizado para PDF (700px). El logo-full.png original es
+    // de 6879x4500px (~31MP con alfa) y mPDF lo omite cuando GD se queda sin
+    // memoria. Fallback al full si el optimizado no existe.
+    $logoPdf  = public_path('img/brand/logo-pdf.png');
+    $logoFull = public_path('img/brand/logo-full.png');
+    $logoSrc  = file_exists($logoPdf) ? $logoPdf : (file_exists($logoFull) ? $logoFull : null);
 
     $decode = function ($v) {
         if (!is_string($v)) return $v;

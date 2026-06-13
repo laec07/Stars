@@ -150,10 +150,28 @@
             window.location.href = 'patient-summary/' + id;
         });
 
+        // ===== Máscara de fecha de nacimiento (dd/mm/aaaa) =====
+        // Reemplaza el datepicker nativo: el usuario escribe solo dígitos y las
+        // barras se insertan automáticamente. Ver Manager.DobMask / DobToIso.
+        $('#dob').on('input', function () {
+            Manager.DobMask(this);
+        });
+
         // ===== Validación submit =====
         JsManager.JqBootstrapValidation('#inputForm', (form, event) => {
             event.preventDefault();
+
+            // Validar y convertir la fecha de nacimiento (dd/mm/aaaa → yyyy-mm-dd)
+            // ANTES de armar el FormData, para que el backend reciba formato ISO.
+            var dobResult = Manager.DobToIso($('#dob').val());
+            if (dobResult.error) {
+                if (window.Message) Message.Notification('warning', dobResult.error);
+                $('#dob').focus();
+                return;
+            }
+
             var formData = new FormData(document.querySelector('#inputForm'));
+            formData.set('dob', dobResult.iso); // sobrescribir con el valor ISO normalizado
             formData.append("phone_no", initTelephone.getNumber());
             // Asegurar que wa_optin = '0' si el checkbox no está marcado
             if (!document.getElementById('wa_optin').checked) {
@@ -264,7 +282,7 @@
                 initTelephone.setNumber('');
             }
             $('#email').val(rowData.email || '');
-            $('#dob').val(Manager.NormalizeDob(rowData.dob));
+            $('#dob').val(Manager.DobToDisplay(rowData.dob));
             $('#tax_number').val(rowData.tax_number || '');
             $('#state').val(rowData.state || '');
             $('#treated').val(rowData.treated || '');
@@ -519,6 +537,70 @@
                 var mm = String(d.getMonth() + 1).padStart(2, '0');
                 var dd = String(d.getDate()).padStart(2, '0');
                 return d.getFullYear() + '-' + mm + '-' + dd;
+            }
+            return '';
+        },
+
+        // Aplica la máscara dd/mm/aaaa en vivo: deja solo dígitos (máx 8) e
+        // inserta las barras automáticamente mientras el usuario escribe.
+        DobMask: function (input) {
+            var digits = String(input.value || '').replace(/\D/g, '').substring(0, 8);
+            var out = digits;
+            if (digits.length > 4) {
+                out = digits.substring(0, 2) + '/' + digits.substring(2, 4) + '/' + digits.substring(4);
+            } else if (digits.length > 2) {
+                out = digits.substring(0, 2) + '/' + digits.substring(2);
+            }
+            input.value = out;
+        },
+
+        // Convierte el texto dd/mm/aaaa a ISO (yyyy-mm-dd) validando que sea una
+        // fecha real, dentro de rango y no futura.
+        // Devuelve { iso: 'yyyy-mm-dd'|'' , error: string|null }.
+        // Vacío se considera válido (el campo es opcional).
+        DobToIso: function (val) {
+            var s = String(val || '').trim();
+            if (s === '') return { iso: '', error: null };
+
+            var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!m) return { iso: null, error: 'Fecha de nacimiento inválida. Usa el formato dd/mm/aaaa.' };
+
+            var dd = parseInt(m[1], 10);
+            var mm = parseInt(m[2], 10);
+            var yyyy = parseInt(m[3], 10);
+            var nowY = new Date().getFullYear();
+
+            if (mm < 1 || mm > 12) return { iso: null, error: 'El mes debe estar entre 01 y 12.' };
+            if (dd < 1 || dd > 31) return { iso: null, error: 'El día debe estar entre 01 y 31.' };
+            if (yyyy < 1900 || yyyy > nowY) return { iso: null, error: 'El año debe estar entre 1900 y ' + nowY + '.' };
+
+            // Validar que la fecha exista realmente (ej. 31/02 no existe)
+            var dt = new Date(yyyy, mm - 1, dd);
+            if (dt.getFullYear() !== yyyy || dt.getMonth() !== (mm - 1) || dt.getDate() !== dd) {
+                return { iso: null, error: 'Esa fecha no existe. Verifica el día y el mes.' };
+            }
+            // No permitir fechas futuras
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dt > today) return { iso: null, error: 'La fecha de nacimiento no puede ser futura.' };
+
+            var pad = function (n) { return String(n).padStart(2, '0'); };
+            return { iso: yyyy + '-' + pad(mm) + '-' + pad(dd), error: null };
+        },
+
+        // Convierte cualquier valor de dob (ISO o dd/mm/yyyy) a dd/mm/aaaa para
+        // mostrarlo en el input de texto al editar un paciente.
+        DobToDisplay: function (value) {
+            if (!value) return '';
+            var s = String(value).trim();
+            var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (iso) return iso[3] + '/' + iso[2] + '/' + iso[1];
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s; // ya está en dd/mm/yyyy
+            // Último recurso: intentar parsear y formatear
+            var d = new Date(s);
+            if (!isNaN(d.getTime())) {
+                var pad = function (n) { return String(n).padStart(2, '0'); };
+                return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
             }
             return '';
         },

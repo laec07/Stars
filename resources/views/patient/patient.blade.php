@@ -102,10 +102,18 @@
 
                         <div class="form-group control-group form-inline controls">
                             <label for="dob">{{translate('Date of Birth')}}</label>
-                            <input type="date" id="dob" name="dob" autocomplete="bday"
-                                   max="{{ date('Y-m-d') }}" min="1900-01-01"
+                            {{-- Campo de texto con máscara dd/mm/aaaa (en vez de <input type=date>):
+                                 el datepicker nativo del navegador era lento de usar en tablet.
+                                 El valor visible es dd/mm/aaaa y se convierte a ISO (yyyy-mm-dd)
+                                 antes de enviar al backend. Ver patient.js (DobMask). --}}
+                            <input type="text" id="dob" name="dob" autocomplete="bday"
+                                   inputmode="numeric" maxlength="10"
+                                   placeholder="dd/mm/aaaa"
                                    style="min-height:44px;font-size:1rem;"
                                    class="form-control input-full" />
+                            <small class="text-muted" style="display:block;margin-top:.2rem;font-size:.75rem;">
+                                {{ translate('Formato') }}: dd/mm/aaaa ({{ translate('ej.') }} 25/12/1990)
+                            </small>
                             <span class="help-block"></span>
                         </div>
                     </div>

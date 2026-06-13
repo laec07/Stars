@@ -9,8 +9,12 @@
     // IMPORTANTE: mPDF se ejecuta dentro del MISMO request PHP que generó esta vista,
     // así que NO puede cargar imágenes vía HTTP (php artisan serve es single-threaded,
     // se queda colgado hasta timeout). Pasamos siempre el path absoluto del filesystem.
-    $logoPath = public_path('img/brand/logo-full.png');
-    $logoSrc  = file_exists($logoPath) ? $logoPath : null;
+    // Preferir el logo optimizado para PDF (700px). El logo-full.png original es
+    // de 6879x4500px (~31MP con alfa) y mPDF lo omite cuando GD se queda sin
+    // memoria. Fallback al full si el optimizado no existe.
+    $logoPdf  = public_path('img/brand/logo-pdf.png');
+    $logoFull = public_path('img/brand/logo-full.png');
+    $logoSrc  = file_exists($logoPdf) ? $logoPdf : (file_exists($logoFull) ? $logoFull : null);
 
     // Helper local: formato seguro para valor
     $formatValue = function ($v) {
