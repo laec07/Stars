@@ -32,7 +32,8 @@ class PatientController extends Controller
     try {
         $data->merge([
             'email' => UtilityRepository::emptyToNull($data->email),
-            'dob'   => UtilityRepository::emptyToNull($data->dob),
+            // Acepta dd/mm/aaaa (máscara del front) o ISO, normaliza a Y-m-d.
+            'dob'   => UtilityRepository::normalizeDate($data->dob),
         ]);
 
         $validator = Validator::make($data->all(), [
@@ -90,7 +91,8 @@ class PatientController extends Controller
         try {
             $data->merge([
                 'email' => UtilityRepository::emptyToNull($data->email),
-                'dob'   => UtilityRepository::emptyToNull($data->dob),
+                // Acepta dd/mm/aaaa (máscara del front) o ISO, normaliza a Y-m-d.
+                'dob'   => UtilityRepository::normalizeDate($data->dob),
             ]);
 
             $validator = Validator::make($data->all(), [

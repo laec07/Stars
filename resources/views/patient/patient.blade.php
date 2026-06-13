@@ -3,7 +3,7 @@
 @push("adminScripts")
 <link rel="stylesheet" href="{{ dsAsset('css/custom/patient-list.css') }}">
 <script src="{{ dsAsset('js/lib/country-list.js') }}"></script>
-<script src="{{dsAsset('js/custom/patient/patient.js')}}"></script>
+<script src="{{dsAsset('js/custom/patient/patient.js')}}?v=202606131242"></script>
 @endpush
 
 <div class="page-inner patient-list-page">

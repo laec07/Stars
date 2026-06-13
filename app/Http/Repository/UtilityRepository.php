@@ -162,6 +162,43 @@ class UtilityRepository
         else
             return $val;
     }
+
+    /**
+     * Normaliza una fecha a formato ISO (Y-m-d) aceptando varias entradas.
+     * Red de seguridad del backend: aunque el front envíe dd/mm/aaaa (porque
+     * el campo de fecha usa máscara de texto), aquí se convierte a Y-m-d antes
+     * de validar/guardar.
+     *
+     *   ''  / null            → null
+     *   '1989-01-21'          → '1989-01-21' (ya ISO)
+     *   '21/01/1989'          → '1989-01-21'
+     *   '21-01-1989'          → '1989-01-21'
+     *   cualquier otra cosa   → se devuelve igual (la validación 'date' la rechaza)
+     */
+    public static function normalizeDate($value): ?string
+    {
+        if ($value === null) return null;
+        $s = trim((string) $value);
+        if ($s === '') return null;
+
+        // Ya viene en ISO (yyyy-mm-dd, con o sin hora)
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $s)) {
+            return substr($s, 0, 10);
+        }
+
+        // dd/mm/yyyy o dd-mm-yyyy
+        if (preg_match('#^(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})$#', $s, $m)) {
+            $d  = str_pad($m[1], 2, '0', STR_PAD_LEFT);
+            $mo = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+            $y  = $m[3];
+            if (checkdate((int) $mo, (int) $d, (int) $y)) {
+                return $y . '-' . $mo . '-' . $d;
+            }
+        }
+
+        // Formato desconocido: devolver tal cual para que la regla 'date' lo rechace
+        return $s;
+    }
     public static function emptyOrNullToZero($val)
     {
         if ($val == null ||  $val == "")

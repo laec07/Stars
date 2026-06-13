@@ -153,7 +153,8 @@
         // ===== Máscara de fecha de nacimiento (dd/mm/aaaa) =====
         // Reemplaza el datepicker nativo: el usuario escribe solo dígitos y las
         // barras se insertan automáticamente. Ver Manager.DobMask / DobToIso.
-        $('#dob').on('input', function () {
+        // Delegado en document para que funcione aunque el form se popule/redibuje.
+        $(document).on('input', '#dob', function () {
             Manager.DobMask(this);
         });
 
