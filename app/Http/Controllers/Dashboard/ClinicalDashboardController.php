@@ -319,26 +319,65 @@ class ClinicalDashboardController extends Controller
     }
 
     // ----------------------------------------------------------------
-    // Top fisioterapeutas por sesiones del mes
+    // Top fisioterapeutas por actividad clínica del mes (sesiones + evaluaciones)
     // ----------------------------------------------------------------
+    // Se rankea por la actividad total, pero se devuelve el desglose para que
+    // el dashboard muestre "X sesiones · Y evaluaciones". Así no se invisibiliza
+    // a los fisios que sobre todo realizan evaluaciones.
     private function buildTopTherapists(): array
     {
         $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $rows = DB::table('fis_seguimientos as s')
-            ->leftJoin('users as u', 's.user_id', '=', 'u.id')
+
+        // Sesiones por fisio (fis_seguimientos)
+        $sesiones = DB::table('fis_seguimientos as s')
             ->where('s.status', 1)
             ->where('s.fecha', '>=', $startOfMonth)
-            ->select('u.id', 'u.name', DB::raw('COUNT(*) as c'))
-            ->groupBy('u.id', 'u.name')
-            ->orderByDesc('c')
-            ->limit(5)
-            ->get();
+            ->whereNotNull('s.user_id')
+            ->select('s.user_id', DB::raw('COUNT(*) as c'))
+            ->groupBy('s.user_id')
+            ->pluck('c', 's.user_id');
 
-        return $rows->map(function ($r) {
-            return [
-                'name'  => $r->name ?? '—',
-                'count' => (int) $r->c,
+        // Evaluaciones por fisio (fis_historys, excluyendo fichas y adjuntos:
+        // ninguno es una evaluación clínica).
+        $evaluaciones = DB::table('fis_historys as h')
+            ->where('h.status', 1)
+            ->where('h.fecha', '>=', $startOfMonth)
+            ->whereNotIn('h.tabla_form', ['fis_fichas', 'fis_adjuntos'])
+            ->whereNotNull('h.user_id')
+            ->select('h.user_id', DB::raw('COUNT(*) as c'))
+            ->groupBy('h.user_id')
+            ->pluck('c', 'h.user_id');
+
+        // Combinar ambos conteos por fisio
+        $byUser = [];
+        foreach ($sesiones as $uid => $c) {
+            $byUser[$uid] = ['ses' => (int) $c, 'eval' => 0];
+        }
+        foreach ($evaluaciones as $uid => $c) {
+            if (!isset($byUser[$uid])) $byUser[$uid] = ['ses' => 0, 'eval' => 0];
+            $byUser[$uid]['eval'] = (int) $c;
+        }
+
+        if (empty($byUser)) return [];
+
+        // Nombres de los fisios involucrados
+        $names = DB::table('users')->whereIn('id', array_keys($byUser))->pluck('name', 'id');
+
+        $result = [];
+        foreach ($byUser as $uid => $vals) {
+            $result[] = [
+                'name'         => $names[$uid] ?? '—',
+                'count'        => $vals['ses'] + $vals['eval'], // total para el ranking
+                'sesiones'     => $vals['ses'],
+                'evaluaciones' => $vals['eval'],
             ];
-        })->toArray();
+        }
+
+        // Ordenar por actividad total (desc) y limitar a 5
+        usort($result, function ($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+
+        return array_slice($result, 0, 5);
     }
 }

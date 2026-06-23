@@ -132,6 +132,7 @@ class FisCheqmusController extends Controller
 
             // Actualizar
             $cheqMusc->update($fillableData);
+            UtilityFisioController::syncHistoryFecha('fis_cheqmus', (int) $request->id, $request->input('fecha'));
             
             return $this->apiResponse(['status' => '1', 'data' => $data], 200);
         } catch (Exception $qx) {

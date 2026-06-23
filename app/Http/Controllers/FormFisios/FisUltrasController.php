@@ -118,6 +118,7 @@ class FisUltrasController extends Controller
 
             $fillableData = $this->cleanRequestData($request);
             $ultras->update($fillableData);
+            UtilityFisioController::syncHistoryFecha('fis_ultras', (int) $request->id, $request->input('fecha'));
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro actualizado correctamente.'], 200);
 

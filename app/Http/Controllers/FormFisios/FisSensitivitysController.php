@@ -125,6 +125,7 @@ class FisSensitivitysController extends Controller
 
         // Actualizar
         $sensitivitys->update($fillableData);
+        UtilityFisioController::syncHistoryFecha('fis_sensitivitys', (int) $request->id, $request->input('fecha'));
 
         return $this->apiResponse(['status' => '1', 'data' => $fillableData], 200);
 

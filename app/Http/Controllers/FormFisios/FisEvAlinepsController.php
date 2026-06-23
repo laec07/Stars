@@ -164,6 +164,7 @@ class FisEvAlinepsController extends Controller
                 }
             }
             $evalineps->update($fillableData);
+            UtilityFisioController::syncHistoryFecha('fis_evalineps', (int) $request->id, $request->input('fecha'));
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro actualizado correctamente.'], 200);
 

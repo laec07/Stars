@@ -118,6 +118,7 @@ class FisElectrosController extends Controller
 
             $fillableData = $this->cleanRequestData($request);
             $electros->update($fillableData);
+            UtilityFisioController::syncHistoryFecha('fis_electros', (int) $request->id, $request->input('fecha'));
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro actualizado correctamente.'], 200);
 

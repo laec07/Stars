@@ -165,6 +165,23 @@
         font-size:.75rem; color:var(--brand-text-muted, #5a6c80);
         margin-top:.1rem;
     }
+    .caso-estado-badge {
+        display:inline-block; font-size:.68rem; font-weight:700;
+        padding:.1rem .5rem; border-radius:1rem; margin-left:.5rem;
+        vertical-align:middle; text-transform:uppercase; letter-spacing:.03em;
+    }
+    .caso-estado-badge.cerrado { background:#e3f6e6; color:#1d7d2c; }
+    .ficha-cierre-block { background:#f4fbf5; border-radius:.4rem; padding:.5rem .7rem; }
+
+    /* Banner de caso cerrado (solo lectura) */
+    .caso-cerrado-banner {
+        display:flex; align-items:flex-start; gap:.6rem;
+        background:#fff4d6; border:1px solid #f0d68a; color:#7a5b00;
+        border-radius:.5rem; padding:.7rem 1rem; margin-bottom:.8rem;
+        font-size:.85rem;
+    }
+    .caso-cerrado-banner i { font-size:1rem; margin-top:.1rem; flex-shrink:0; }
+    .caso-cerrado-banner .ccb-text strong { color:#6b4f00; }
     .ficha-completa-toggle-hint {
         font-size:.78rem; font-weight:600;
         color:var(--brand-primary-darker, #5e4fbf);
@@ -2267,6 +2284,19 @@
         </button>
     </div>
 
+    {{-- Banner de caso cerrado: el caso está dado de alta → solo lectura
+         (no se pueden agregar/editar sesiones ni evaluaciones; sí adjuntos). --}}
+    @if(isset($fichaCompleta) && $fichaCompleta && !empty($fichaCompleta->fecha_alta))
+        <div class="caso-cerrado-banner">
+            <i class="fas fa-lock"></i>
+            <div class="ccb-text">
+                <strong>{{ translate('Caso cerrado') }}</strong>
+                ({{ translate('alta') }} {{ \Carbon\Carbon::parse($fichaCompleta->fecha_alta)->format('d/m/Y') }}).
+                {{ translate('Para registrar sesiones o evaluaciones, reábrelo desde el resumen. Aún puedes consultar el historial y adjuntar documentos.') }}
+            </div>
+        </div>
+    @endif
+
     {{-- Tabs del expediente --}}
     <div class="expediente-tabs">
         <ul class="nav nav-tabs" role="tablist">
@@ -2340,12 +2370,23 @@
                 <div class="ficha-completa-title-block">
                     <div class="ficha-completa-title">
                         {{ $decoder($fichaCompleta->diagnostico) ?: 'Ficha #' . $fichaCompleta->id }}
+                        @if(!empty($fichaCompleta->fecha_alta))
+                            <span class="caso-estado-badge cerrado" title="{{ translate('Caso dado de alta') }}">
+                                <i class="fas fa-check-circle"></i> {{ translate('Cerrado') }}
+                            </span>
+                        @endif
                     </div>
                     <div class="ficha-completa-meta">
                         @if($fichaCompleta->fecha)
                             Iniciada {{ \Carbon\Carbon::parse($fichaCompleta->fecha)->format('d/m/Y') }} ·
                         @endif
                         Caso #{{ $fichaCompleta->id }}
+                        @if(!empty($fichaCompleta->fecha_alta))
+                            · <span title="{{ translate('Fecha de alta') }}">
+                                <i class="fas fa-check-circle" style="color:#1d7d2c;"></i>
+                                {{ translate('Alta') }}: {{ \Carbon\Carbon::parse($fichaCompleta->fecha_alta)->format('d/m/Y') }}
+                            </span>
+                        @endif
                         @php $adjCount = (int) ($adjuntosCount ?? 0); @endphp
                         @if($adjCount > 0)
                             · <span title="{{ translate('Archivos adjuntos en este caso') }}">
@@ -2478,12 +2519,62 @@
                     </div>
                 @endif
 
+                {{-- Cierre del caso: visible solo cuando el caso está cerrado (tiene fecha_alta) --}}
+                @if(!empty($fichaCompleta->fecha_alta))
+                    <div class="ficha-block ficha-cierre-block">
+                        <div class="ficha-block-title"><i class="fas fa-check-circle mr-1" style="color:#1d7d2c;"></i>{{ translate('Cierre del caso') }}</div>
+                        <div class="ficha-field">
+                            <span class="ficha-field-label">{{ translate('Fecha de alta') }}:</span>
+                            <span class="ficha-field-value">{{ \Carbon\Carbon::parse($fichaCompleta->fecha_alta)->format('d/m/Y') }}</span>
+                        </div>
+                        @if(!empty($fichaCompleta->observaciones_cierre))
+                            <div class="ficha-field">
+                                <span class="ficha-field-label">{{ translate('Observaciones de cierre') }}:</span>
+                                <span class="ficha-field-value">{{ $decoder($fichaCompleta->observaciones_cierre) }}</span>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
                 <div class="ficha-completa-actions">
-                    <a href="{{ url('fis-ficha') }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-external-link-alt mr-1"></i> {{ translate('Editar en formulario completo') }}
-                    </a>
+                    {{-- Abre el modal de ficha (NewCaseManager) en modo edición,
+                         pre-cargado con los datos de esta ficha. Reemplaza el link
+                         al formulario antiguo /fis-ficha. --}}
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-action="edit-ficha">
+                        <i class="fas fa-edit mr-1"></i> {{ translate('Editar ficha clínica') }}
+                    </button>
+
+                    @if(empty($fichaCompleta->fecha_alta))
+                        {{-- Caso abierto → cerrar / dar de alta --}}
+                        <button type="button" class="btn btn-outline-success btn-sm ml-1" data-action="close-ficha">
+                            <i class="fas fa-check-circle mr-1"></i> {{ translate('Cerrar caso') }}
+                        </button>
+                    @else
+                        {{-- Caso cerrado → reabrir --}}
+                        <button type="button" class="btn btn-outline-secondary btn-sm ml-1" data-action="reopen-ficha"
+                                data-ficha-id="{{ $fichaCompleta->id }}">
+                            <i class="fas fa-undo mr-1"></i> {{ translate('Reabrir caso') }}
+                        </button>
+                    @endif
+
+                    {{-- Eliminar caso: borrado lógico en cascada (ficha + evaluaciones + sesiones + adjuntos) --}}
+                    <button type="button" class="btn btn-outline-danger btn-sm ml-1" data-action="delete-ficha">
+                        <i class="fas fa-trash-alt mr-1"></i> {{ translate('Eliminar caso') }}
+                    </button>
                 </div>
             </div>
+
+            {{-- Datos completos de la ficha activa para popular el modal de edición.
+                 Decodificados (entidades del middleware xssProtection). --}}
+            <script>
+                window.FICHA_ACTIVA = @json(
+                    collect($fichaCompleta->toArray())->map(function ($v) {
+                        return is_string($v)
+                            ? html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                            : $v;
+                    })
+                );
+            </script>
         </div>
     @endif
 
@@ -3238,6 +3329,94 @@
         </div>
     </div>
 </div>
+
+{{-- ============== Modal: Eliminar caso clínico (borrado lógico en cascada) ============== --}}
+@if(isset($fichaCompleta) && $fichaCompleta)
+<div class="modal fade" id="modalDeleteCaso" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#fdf2f2; border-bottom:1px solid #f5c6cb;">
+                <h5 class="modal-title" style="color:#a32a37;">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> {{ translate('Eliminar caso clínico') }}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:.6rem;">
+                    {{ translate('Vas a eliminar el caso') }}
+                    <strong>"{{ $decoder(trim($fichaCompleta->diagnostico)) ?: ('Ficha #' . $fichaCompleta->id) }}"</strong>.
+                </p>
+                <div style="background:#fdf2f2; border:1px solid #f5c6cb; border-radius:.4rem; padding:.6rem .8rem; margin-bottom:.8rem; font-size:.86rem;">
+                    <div style="font-weight:600; color:#a32a37; margin-bottom:.3rem;">{{ translate('Se desactivarán también:') }}</div>
+                    <ul style="margin:0; padding-left:1.2rem; color:#6c4145;">
+                        <li>{{ $casoEvalCount }} {{ $casoEvalCount === 1 ? translate('evaluación') : translate('evaluaciones') }}</li>
+                        <li>{{ $casoSesCount }} {{ $casoSesCount === 1 ? translate('sesión') : translate('sesiones') }}</li>
+                        <li>{{ $adjuntosCount }} {{ $adjuntosCount === 1 ? translate('adjunto') : translate('adjuntos') }}</li>
+                    </ul>
+                </div>
+                <p style="font-size:.82rem; color:#6c757d; margin-bottom:.7rem;">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {{ translate('El caso dejará de aparecer en el sistema. Esta acción solo puede revertirse desde soporte técnico.') }}
+                </p>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:.82rem; font-weight:600;">
+                        {{ translate('Para confirmar, escribe') }} <span style="color:#a32a37;">ELIMINAR</span>
+                    </label>
+                    <input type="text" id="deleteCasoConfirm" class="form-control" autocomplete="off"
+                           placeholder="ELIMINAR" style="min-height:42px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cancelar') }}</button>
+                <button type="button" class="btn btn-danger btn-sm" id="btnConfirmDeleteCaso"
+                        data-ficha-id="{{ $fichaCompleta->id }}" disabled>
+                    <i class="fas fa-trash-alt mr-1"></i> {{ translate('Sí, eliminar caso') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============== Modal: Cerrar caso clínico (dar de alta) ============== --}}
+<div class="modal fade" id="modalCloseCaso" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#eef9f0; border-bottom:1px solid #c6e9cb;">
+                <h5 class="modal-title" style="color:#1d7d2c;">
+                    <i class="fas fa-check-circle mr-1"></i> {{ translate('Cerrar caso clínico') }}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:.8rem; font-size:.9rem;">
+                    {{ translate('Vas a dar de alta el caso') }}
+                    <strong>"{{ $decoder(trim($fichaCompleta->diagnostico)) ?: ('Ficha #' . $fichaCompleta->id) }}"</strong>.
+                    {{ translate('El historial se conserva; el caso quedará marcado como cerrado y podrás reabrirlo si es necesario.') }}
+                </p>
+                <div class="form-group">
+                    <label style="font-size:.82rem; font-weight:600;">{{ translate('Fecha de alta') }}</label>
+                    <input type="text" id="closeCasoFecha" class="form-control"
+                           inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa"
+                           value="{{ now()->format('d/m/Y') }}" style="min-height:42px;">
+                    <small class="text-muted" style="font-size:.72rem;">{{ translate('Formato') }}: dd/mm/aaaa</small>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:.82rem; font-weight:600;">{{ translate('Observaciones de cierre / finalización') }}</label>
+                    <textarea id="closeCasoObs" class="form-control" rows="3"
+                              placeholder="{{ translate('Resumen de evolución, resultado del tratamiento, recomendaciones al paciente, etc.') }}">{{ $decoder($fichaCompleta->observaciones_cierre) }}</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">{{ translate('Cancelar') }}</button>
+                <button type="button" class="btn btn-success btn-sm" id="btnConfirmCloseCaso"
+                        data-ficha-id="{{ $fichaCompleta->id }}">
+                    <i class="fas fa-check-circle mr-1"></i> {{ translate('Cerrar caso') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- ============== Fase 10 — Modal para guardar plantilla de evaluación ============== --}}
 <div class="modal fade eval-tpl-save-modal" id="modalSaveEvalTpl" tabindex="-1" role="dialog" aria-hidden="true">

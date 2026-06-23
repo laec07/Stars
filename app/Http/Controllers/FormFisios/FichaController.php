@@ -196,6 +196,14 @@ class FichaController extends Controller
                 ], 422);
             }
 
+            // Bloqueo de caso cerrado: no se registran sesiones en una ficha dada de alta.
+            if (\App\Models\FormFisios\Ficha::estaCerrada($request->ficha_id)) {
+                return response()->json([
+                    'status' => '403',
+                    'message' => 'El caso clínico está cerrado. Reábrelo para registrar sesiones.',
+                ], 403);
+            }
+
             // Crear registro
             $seguimiento = FisSeguimientos::create([
                 'ficha_id' => $request->ficha_id,
@@ -243,6 +251,14 @@ class FichaController extends Controller
             }
 
             $seguimiento = FisSeguimientos::findOrFail($id);
+
+            // Bloqueo de caso cerrado: no se modifican sesiones de una ficha dada de alta.
+            if (\App\Models\FormFisios\Ficha::estaCerrada($seguimiento->ficha_id)) {
+                return response()->json([
+                    'status' => '403',
+                    'message' => 'El caso clínico está cerrado. Reábrelo para modificar sesiones.',
+                ], 403);
+            }
 
             $seguimiento->update([
                 'ficha_id' => $request->ficha_id,

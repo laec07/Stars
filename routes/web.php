@@ -420,6 +420,16 @@ Route::group(['middleware' => 'xssProtection'], function () {
             // Fase 1 - Expediente del paciente (solo lectura)
             Route::get('patient-summary/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientSummary'])->name('patient.summary');
 
+            // Vista de Casos Clínicos — índice navegable de fichas (reemplaza /fis-ficha en el dashboard)
+            Route::get('casos-clinicos', [\App\Http\Controllers\Patient\PatientController::class, 'casosClinicos'])->name('casos.clinicos');
+
+            // Eliminar (borrado lógico en cascada) una ficha/caso clínico
+            Route::post('caso-eliminar', [\App\Http\Controllers\Patient\PatientController::class, 'eliminarFicha'])->name('caso.eliminar');
+
+            // Cerrar (dar de alta) y reabrir un caso clínico
+            Route::post('caso-cerrar', [\App\Http\Controllers\Patient\PatientController::class, 'cerrarFicha'])->name('caso.cerrar');
+            Route::post('caso-reabrir', [\App\Http\Controllers\Patient\PatientController::class, 'reabrirFicha'])->name('caso.reabrir');
+
             // Fase 2 - Datos de sesiones del paciente (JSON)
             Route::get('patient-sesiones/{id}', [\App\Http\Controllers\Patient\PatientController::class, 'patientSesionesData'])->name('patient.sesiones.data');
 

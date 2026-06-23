@@ -118,6 +118,7 @@ class FisEvPielsController extends Controller
 
             $fillableData = $this->cleanRequestData($request);
             $evpiels->update($fillableData);
+            UtilityFisioController::syncHistoryFecha('fis_evpiels', (int) $request->id, $request->input('fecha'));
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro actualizado correctamente.'], 200);
 

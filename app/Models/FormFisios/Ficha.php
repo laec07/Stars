@@ -15,6 +15,19 @@ class Ficha extends Model
 
     protected $primaryKey = 'id';
 
+    /**
+     * ¿La ficha (caso clínico) está cerrada? Una ficha cerrada tiene fecha_alta.
+     * Devuelve false si el id es vacío/null (vista global) o la ficha no existe.
+     */
+    public static function estaCerrada($fichaId): bool
+    {
+        if (empty($fichaId)) return false;
+        return self::where('id', (int) $fichaId)
+            ->where('status', 1)
+            ->whereNotNull('fecha_alta')
+            ->exists();
+    }
+
     protected $fillable = [
         'id',
         'patient_id',
@@ -52,6 +65,7 @@ class Ficha extends Model
         'observaciones',
         'firma_profesional',
         'fecha_alta',
+        'observaciones_cierre',
         'recomendaciones_finales',
         'firma',
         'nota_detallada',

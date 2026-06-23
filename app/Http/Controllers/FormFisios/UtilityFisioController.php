@@ -23,15 +23,32 @@ class UtilityFisioController extends Controller
         $fichaId = $data['ficha_id']
             ?? request()->input('ficha_id', null);
 
+        // Bloqueo de caso cerrado: no se registran nuevas evaluaciones en una
+        // ficha dada de alta. Punto único que cubre los 11 formularios
+        // (todos pasan por aquí para vincular su ficha_id).
+        if (\App\Models\FormFisios\Ficha::estaCerrada($fichaId)) {
+            throw new \RuntimeException('El caso clínico está cerrado. Reábrelo para registrar evaluaciones.');
+        }
+
+        // Fecha: respetar la que el usuario envió en el formulario (campo 'fecha'),
+        // igual que con ficha_id. Solo cae a hoy si el formulario no la trae.
+        // Antes se usaba siempre now(), lo que ignoraba fechas anteriores.
+        $fechaInput = $data['fecha'] ?? request()->input('fecha', null);
+        $fecha = \App\Http\Repository\UtilityRepository::normalizeDate($fechaInput)
+            ?: now()->format('Y-m-d');
+
         $payload = array_merge([
             'patient_id'    => $data['patient_id'] ?? null,
             'ficha_id'      => $fichaId,
             'id_formulario' => $data['id_formulario'] ?? null,
             'tabla_form'    => $data['tabla_form'] ?? null,
             'status'        => $data['status'] ?? 1,
-            'fecha'         => $data['fecha'] ?? now()->format('Y-m-d'),
+            'fecha'         => $fecha,
             'user_id'       => $data['user_id'] ?? Auth::id(),
         ], $data);
+
+        // Forzar la fecha normalizada (por si $data trae una 'fecha' cruda)
+        $payload['fecha'] = $fecha;
 
         // Si ficha_id es vacío (0 o ""), normalizar a null
         if (empty($payload['ficha_id'])) {
@@ -90,6 +107,23 @@ class UtilityFisioController extends Controller
         $model->save();
 
         return $model;
+    }
+
+    /**
+     * Sincroniza la fecha de la bitácora (fis_historys) cuando se EDITA una
+     * evaluación. El expediente muestra fis_historys.fecha, así que al cambiar
+     * la fecha de una evaluación hay que reflejarla aquí también.
+     * No-op si no se proporciona una fecha válida.
+     */
+    public static function syncHistoryFecha(string $tabla_form, int $id_formulario, $fecha): void
+    {
+        $f = \App\Http\Repository\UtilityRepository::normalizeDate($fecha);
+        if (! $f) return;
+        \Illuminate\Support\Facades\DB::table('fis_historys')
+            ->where('tabla_form', $tabla_form)
+            ->where('id_formulario', $id_formulario)
+            ->where('status', 1)
+            ->update(['fecha' => $f]);
     }
 
     /**

@@ -10,6 +10,13 @@
     "use strict";
 
     var ctx = window.PATIENT_CONTEXT || { id: null, name: '', uploadUrl: 'seguimiento/upload-image', activeCase: 'all', fichas: [] };
+
+    // ¿El caso activo está cerrado (dado de alta)? Solo aplica cuando hay un caso
+    // específico seleccionado. En caso cerrado: solo lectura para sesiones y
+    // evaluaciones (los adjuntos sí se permiten).
+    function casoActivoCerrado() {
+        return !!(window.FICHA_ACTIVA && window.FICHA_ACTIVA.fecha_alta);
+    }
     var state = {
         sesiones: [],
         fichas: [],
@@ -153,14 +160,64 @@
     // ========================================================================
     var NewCaseManager = {
 
+        currentEditId: null,   // null = crear, id = editar ficha existente
+
         Open: function () {
+            // Modo CREAR
+            NewCaseManager.currentEditId = null;
             // Reset del formulario
             var $f = $('#formNewCase')[0];
             if ($f) $f.reset();
             // Cerrar todos los paneles del acordeón
             $('#newCaseAccordion .collapse').removeClass('show');
+            // Restaurar textos a "crear"
+            $('#modalNewCase .modal-title').html(
+                '<i class="fas fa-folder-plus mr-1" style="color:var(--brand-primary, #9F93E7);"></i> ' +
+                'Nueva ficha clínica' +
+                (ctx.name ? ' — <span class="text-muted" style="font-weight:400; font-size:.92rem;">' + Manager.EscapeHtml(ctx.name) + '</span>' : '')
+            );
+            $('#btnSaveNewCase').html('<i class="fas fa-save mr-1"></i> Crear ficha clínica');
             // Focus en el primer campo importante
             setTimeout(function () { $('#formNewCase [name="motivo_consulta"]').focus(); }, 200);
+            $('#modalNewCase').modal('show');
+        },
+
+        // Abre el modal en modo EDICIÓN, pre-cargado con los datos de la ficha.
+        OpenEdit: function (data) {
+            if (!data || !data.id) {
+                if (window.Message) Message.Notification('warning', 'No hay una ficha activa para editar.');
+                return;
+            }
+            NewCaseManager.currentEditId = data.id;
+
+            // Reset y luego popular cada campo por su name
+            var $f = $('#formNewCase')[0];
+            if ($f) $f.reset();
+            $('#newCaseAccordion .collapse').removeClass('show');
+
+            Object.keys(data).forEach(function (key) {
+                var $el = $('#formNewCase [name="' + key + '"]');
+                if (!$el.length) return;
+                var val = data[key];
+                var $checkbox = $el.filter(':checkbox');
+                if ($checkbox.length) {
+                    // Modalidades: par hidden(0)+checkbox(1). Solo marcamos el checkbox.
+                    $checkbox.prop('checked', val == 1 || val === true || val === '1');
+                } else if ($el.is(':radio')) {
+                    $el.filter('[value="' + val + '"]').prop('checked', true);
+                } else {
+                    $el.val(val != null ? val : '');
+                }
+            });
+
+            // Cambiar UI a modo edición
+            $('#modalNewCase .modal-title').html(
+                '<i class="fas fa-folder-open mr-1" style="color:var(--brand-primary, #9F93E7);"></i> ' +
+                'Editar ficha clínica' +
+                (ctx.name ? ' — <span class="text-muted" style="font-weight:400; font-size:.92rem;">' + Manager.EscapeHtml(ctx.name) + '</span>' : '')
+            );
+            $('#btnSaveNewCase').html('<i class="fas fa-save mr-1"></i> Guardar cambios');
+
             $('#modalNewCase').modal('show');
         },
 
@@ -178,38 +235,50 @@
                 return;
             }
 
-            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Creando…');
+            var isEdit = !!NewCaseManager.currentEditId;
+            var endpoint = isEdit ? '/ficha-update' : '/ficha-create';
+            var savingLabel = isEdit ? 'Guardando…' : 'Creando…';
+            var defaultLabel = isEdit
+                ? '<i class="fas fa-save mr-1"></i> Guardar cambios'
+                : '<i class="fas fa-save mr-1"></i> Crear ficha clínica';
+
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> ' + savingLabel);
             JsManager.StartProcessBar();
 
             // Recolectar todos los campos del form (serialize maneja checkbox + hidden de 0/1)
             var payload = $form.serialize();
+            // En edición, inyectar el id de la ficha que espera ficha-update
+            if (isEdit) payload += '&id=' + encodeURIComponent(NewCaseManager.currentEditId);
 
             $.ajax({
                 type: 'POST',
-                url:  JsManager.BaseUrl() + '/ficha-create',
+                url:  JsManager.BaseUrl() + endpoint,
                 data: payload,
                 dataType: 'json',
                 success: function (json) {
                     JsManager.EndProcessBar();
                     if (json && (json.status == '1' || json.status === 1)) {
-                        if (window.Message) Message.Notification('success', 'Ficha clínica creada correctamente.');
+                        if (window.Message) Message.Notification('success',
+                            isEdit ? 'Ficha clínica actualizada correctamente.' : 'Ficha clínica creada correctamente.');
                         $('#modalNewCase').modal('hide');
-                        // Recargar el expediente — el backend ya verá la nueva ficha en el selector
-                        // y la podemos pre-seleccionar si la respuesta nos dio el id.
-                        var newId = (json.data && json.data.id) || (json.ficha_id) || null;
+                        // Recargar el expediente manteniendo el caso activo.
+                        var targetId = isEdit
+                            ? NewCaseManager.currentEditId
+                            : ((json.data && json.data.id) || (json.ficha_id) || null);
                         var url = window.location.pathname;
-                        if (newId) url += '?caso=' + encodeURIComponent(newId);
+                        if (targetId) url += '?caso=' + encodeURIComponent(targetId);
                         setTimeout(function () { window.location.href = url; }, 600);
                     } else {
-                        $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Crear ficha clínica');
-                        if (window.Message) Message.Notification('error', 'No se pudo crear la ficha.');
+                        $btn.prop('disabled', false).html(defaultLabel);
+                        if (window.Message) Message.Notification('error',
+                            isEdit ? 'No se pudo actualizar la ficha.' : 'No se pudo crear la ficha.');
                     }
                 },
                 error: function (xhr) {
                     JsManager.EndProcessBar();
-                    $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Crear ficha clínica');
-                    console.error('Create ficha failed', xhr);
-                    var msg = 'Error al crear la ficha clínica.';
+                    $btn.prop('disabled', false).html(defaultLabel);
+                    console.error((isEdit ? 'Update' : 'Create') + ' ficha failed', xhr);
+                    var msg = isEdit ? 'Error al actualizar la ficha clínica.' : 'Error al crear la ficha clínica.';
                     try {
                         var resp = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
                         if (resp && resp.data && typeof resp.data === 'string') msg += ' ' + resp.data;
@@ -234,6 +303,13 @@
             CaseManager.Set(newCase);
         });
 
+        // ====== Bloqueo de caso cerrado (solo lectura) ======
+        // Oculta las acciones de crear sesión cuando el caso activo está cerrado.
+        // El launcher y los botones inline de evaluación se manejan en su render.
+        if (casoActivoCerrado()) {
+            $('#btnNuevaSesion, #btnDuplicarUltima').hide();
+        }
+
         // ====== Quick-add ficha clínica ======
         $('#btnNewCase').on('click', function () {
             NewCaseManager.Open();
@@ -241,6 +317,154 @@
         $('#formNewCase').on('submit', function (e) {
             e.preventDefault();
             NewCaseManager.Save();
+        });
+
+        // "Editar ficha clínica" (tab Resumen) → abre el modal en modo edición
+        // con los datos de la ficha activa inyectados en window.FICHA_ACTIVA.
+        $(document).on('click', '[data-action="edit-ficha"]', function (e) {
+            e.preventDefault();
+            NewCaseManager.OpenEdit(window.FICHA_ACTIVA || null);
+        });
+
+        // ====== Eliminar caso clínico (borrado lógico en cascada) ======
+        $(document).on('click', '[data-action="delete-ficha"]', function (e) {
+            e.preventDefault();
+            // Reset del input de confirmación y botón cada vez que se abre
+            $('#deleteCasoConfirm').val('');
+            $('#btnConfirmDeleteCaso').prop('disabled', true);
+            $('#modalDeleteCaso').modal('show');
+        });
+
+        // Habilitar el botón solo cuando se escribe exactamente "ELIMINAR"
+        $(document).on('input', '#deleteCasoConfirm', function () {
+            var ok = $(this).val().trim().toUpperCase() === 'ELIMINAR';
+            $('#btnConfirmDeleteCaso').prop('disabled', !ok);
+        });
+
+        // ====== Cerrar caso (dar de alta) ======
+        $(document).on('click', '[data-action="close-ficha"]', function (e) {
+            e.preventDefault();
+            $('#modalCloseCaso').modal('show');
+        });
+
+        // Máscara dd/mm/aaaa para la fecha de alta
+        $(document).on('input', '#closeCasoFecha', function () {
+            var d = String(this.value || '').replace(/\D/g, '').substring(0, 8);
+            var out = d;
+            if (d.length > 4)      out = d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4);
+            else if (d.length > 2) out = d.substring(0, 2) + '/' + d.substring(2);
+            this.value = out;
+        });
+
+        $(document).on('click', '#btnConfirmCloseCaso', function () {
+            var $btn = $(this);
+            var fichaId = $btn.data('ficha-id');
+            if (!fichaId) return;
+            var fecha = ($('#closeCasoFecha').val() || '').trim();
+            var obs   = ($('#closeCasoObs').val() || '').trim();
+
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Cerrando…');
+            JsManager.StartProcessBar();
+            var token = $('meta[name="csrf-token"]').attr('content');
+
+            $.ajax({
+                type: 'POST',
+                url:  JsManager.BaseUrl() + '/caso-cerrar',
+                data: { id: fichaId, fecha_alta: fecha, observaciones_cierre: obs, _token: token },
+                dataType: 'json',
+                success: function (json) {
+                    JsManager.EndProcessBar();
+                    if (json && (json.status == '1' || json.status === 1)) {
+                        if (window.Message) Message.Notification('success', 'Caso cerrado (alta registrada).');
+                        $('#modalCloseCaso').modal('hide');
+                        setTimeout(function () {
+                            window.location.href = window.location.pathname + '?caso=' + encodeURIComponent(fichaId);
+                        }, 600);
+                    } else {
+                        $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> Cerrar caso');
+                        if (window.Message) Message.Notification('error', 'No se pudo cerrar el caso.');
+                    }
+                },
+                error: function (xhr) {
+                    JsManager.EndProcessBar();
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> Cerrar caso');
+                    console.error('caso-cerrar failed', xhr);
+                    if (window.Message) Message.Notification('error', 'Error al cerrar el caso.');
+                }
+            });
+        });
+
+        // ====== Reabrir caso ======
+        $(document).on('click', '[data-action="reopen-ficha"]', function (e) {
+            e.preventDefault();
+            var $btn = $(this);
+            var fichaId = $btn.data('ficha-id');
+            if (!fichaId) return;
+            if (!window.confirm('¿Reabrir este caso? Volverá a estado "abierto" (la fecha de alta se quitará).')) return;
+
+            JsManager.StartProcessBar();
+            var token = $('meta[name="csrf-token"]').attr('content');
+            $.ajax({
+                type: 'POST',
+                url:  JsManager.BaseUrl() + '/caso-reabrir',
+                data: { id: fichaId, _token: token },
+                dataType: 'json',
+                success: function (json) {
+                    JsManager.EndProcessBar();
+                    if (json && (json.status == '1' || json.status === 1)) {
+                        if (window.Message) Message.Notification('success', 'Caso reabierto.');
+                        setTimeout(function () {
+                            window.location.href = window.location.pathname + '?caso=' + encodeURIComponent(fichaId);
+                        }, 600);
+                    } else {
+                        if (window.Message) Message.Notification('error', 'No se pudo reabrir el caso.');
+                    }
+                },
+                error: function (xhr) {
+                    JsManager.EndProcessBar();
+                    console.error('caso-reabrir failed', xhr);
+                    if (window.Message) Message.Notification('error', 'Error al reabrir el caso.');
+                }
+            });
+        });
+
+        // Confirmar y ejecutar el borrado
+        $(document).on('click', '#btnConfirmDeleteCaso', function () {
+            var $btn = $(this);
+            var fichaId = $btn.data('ficha-id');
+            if (!fichaId) return;
+            if ($('#deleteCasoConfirm').val().trim().toUpperCase() !== 'ELIMINAR') return;
+
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Eliminando…');
+            JsManager.StartProcessBar();
+
+            var token = $('meta[name="csrf-token"]').attr('content');
+            $.ajax({
+                type: 'POST',
+                url:  JsManager.BaseUrl() + '/caso-eliminar',
+                data: { id: fichaId, _token: token },
+                dataType: 'json',
+                success: function (json) {
+                    JsManager.EndProcessBar();
+                    if (json && (json.status == '1' || json.status === 1)) {
+                        if (window.Message) Message.Notification('success', 'Caso clínico eliminado.');
+                        $('#modalDeleteCaso').modal('hide');
+                        // Recargar el expediente en vista global (sin el caso borrado)
+                        setTimeout(function () {
+                            window.location.href = window.location.pathname;
+                        }, 600);
+                    } else {
+                        $btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar caso');
+                        if (window.Message) Message.Notification('error', 'No se pudo eliminar el caso.');
+                    }
+                },
+                error: function (xhr) {
+                    JsManager.EndProcessBar();
+                    $btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar caso');
+                    console.error('caso-eliminar failed', xhr);
+                    if (window.Message) Message.Notification('error', 'Error al eliminar el caso clínico.');
+                }
+            });
         });
 
         // Lazy-load al abrir la pestaña Sesiones por primera vez
@@ -728,13 +952,14 @@
                 }
             }
 
-            // Actions
-            var actionsHtml =
-                '<div class="sesion-actions">' +
+            // Actions — en caso cerrado (solo lectura) ocultamos editar/duplicar/eliminar.
+            var actionsHtml = casoActivoCerrado()
+                ? ''
+                : '<div class="sesion-actions">' +
                     '<button class="btn btn-light sesion-duplicate" data-id="' + s.id + '" title="Duplicar"><i class="fas fa-copy"></i></button>' +
                     '<button class="btn btn-light sesion-edit" data-id="' + s.id + '" title="Editar"><i class="fas fa-edit"></i></button>' +
                     '<button class="btn btn-light sesion-delete" data-id="' + s.id + '" title="Eliminar"><i class="far fa-trash-alt text-danger"></i></button>' +
-                '</div>';
+                  '</div>';
 
             return (
                 '<div class="sesion-card">' +
@@ -1438,6 +1663,17 @@
             var $box = $('#eval-launcher');
             if (!$box.length) return;
 
+            // Caso cerrado → no se pueden agregar evaluaciones. Mostrar aviso.
+            if (casoActivoCerrado()) {
+                $box.attr('class', 'eval-launcher').html(
+                    '<div class="eval-launcher-warn" style="margin:0;">' +
+                    '<i class="fas fa-lock"></i>' +
+                    '<span>Este caso está cerrado. Reábrelo desde el resumen para registrar evaluaciones.</span>' +
+                    '</div>'
+                ).show();
+                return;
+            }
+
             var hasFichas = state.evalFichas && state.evalFichas.length > 0;
             var caso = state.evalCurrentFilter;
             var hasActiveCase = caso && /^\d+$/.test(caso);
@@ -1544,21 +1780,24 @@
                     var delBtn  = '';
                     var pdfBtn  = '';
                     if (InlineFormManager.HasConfigFor(key) && r.id_formulario) {
-                        editBtn =
-                            '<button type="button" class="eval-row-edit" title="Editar inline" ' +
-                                ' data-key="' + Manager.EscapeHtml(key) + '"' +
-                                ' data-id="'  + Manager.EscapeHtml(String(r.id_formulario)) + '">' +
-                                '<i class="fas fa-edit"></i>' +
-                            '</button>';
-                        // Fase 4b — botón Eliminar
-                        delBtn =
-                            '<button type="button" class="eval-row-delete" title="Eliminar evaluación" ' +
-                                ' data-key="' + Manager.EscapeHtml(key) + '"' +
-                                ' data-id="'  + Manager.EscapeHtml(String(r.id_formulario)) + '"' +
-                                ' data-fecha="' + Manager.EscapeHtml(fecha) + '"' +
-                                ' data-label="' + Manager.EscapeHtml(meta.label) + '">' +
-                                '<i class="fas fa-trash-alt"></i>' +
-                            '</button>';
+                        // Editar y eliminar solo si el caso NO está cerrado (solo lectura).
+                        if (!casoActivoCerrado()) {
+                            editBtn =
+                                '<button type="button" class="eval-row-edit" title="Editar inline" ' +
+                                    ' data-key="' + Manager.EscapeHtml(key) + '"' +
+                                    ' data-id="'  + Manager.EscapeHtml(String(r.id_formulario)) + '">' +
+                                    '<i class="fas fa-edit"></i>' +
+                                '</button>';
+                            // Fase 4b — botón Eliminar
+                            delBtn =
+                                '<button type="button" class="eval-row-delete" title="Eliminar evaluación" ' +
+                                    ' data-key="' + Manager.EscapeHtml(key) + '"' +
+                                    ' data-id="'  + Manager.EscapeHtml(String(r.id_formulario)) + '"' +
+                                    ' data-fecha="' + Manager.EscapeHtml(fecha) + '"' +
+                                    ' data-label="' + Manager.EscapeHtml(meta.label) + '">' +
+                                    '<i class="fas fa-trash-alt"></i>' +
+                                '</button>';
+                        }
                         // Fase 6a — botón Descargar PDF (abre en nueva pestaña).
                         // URL absoluta vía JsManager.BaseUrl() porque la página actual
                         // es /patient-summary/{id} y un href relativo se resolvería como
@@ -1588,8 +1827,11 @@
 
             // Link/botón para agregar. Si hay config inline → abre modal genérico;
             // si no, navega al formulario standalone (Fase 3a behavior).
+            // En caso cerrado no se permite agregar (solo lectura).
             var addLink = '';
-            if (InlineFormManager.HasConfigFor(key)) {
+            if (casoActivoCerrado()) {
+                addLink = '';
+            } else if (InlineFormManager.HasConfigFor(key)) {
                 addLink =
                     '<div class="eval-add-row">' +
                         '<a href="#" class="eval-add-inline" data-key="' + key + '">' +

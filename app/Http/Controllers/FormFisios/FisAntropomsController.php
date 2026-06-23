@@ -122,6 +122,7 @@ class FisAntropomsController extends Controller
 
         // Actualizar
         $antropoms->update($fillableData);
+        UtilityFisioController::syncHistoryFecha('fis_antropoms', (int) $request->id, $request->input('fecha'));
 
         return $this->apiResponse(['status' => '1', 'data' => $fillableData], 200);
 

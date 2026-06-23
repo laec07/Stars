@@ -118,6 +118,7 @@ class FisAntropometriasController extends Controller
 
             $fillableData = $this->cleanRequestData($request);
             $antropometrias->update($fillableData);
+            UtilityFisioController::syncHistoryFecha('fis_antropometrias', (int) $request->id, $request->input('fecha'));
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro actualizado correctamente.'], 200);
 

@@ -486,17 +486,179 @@ class PatientController extends Controller
         // Fase Reorg-A.2 — Si hay caso seleccionado, cargar la ficha COMPLETA
         // para mostrarla expandida en el tab Resumen.
         $fichaCompleta = null;
+        // Conteos del caso para el modal "Eliminar caso" (impacto del borrado)
+        $casoEvalCount = 0;
+        $casoSesCount  = 0;
         if (is_numeric($casoActivo)) {
             $fichaCompleta = \App\Models\FormFisios\Ficha::where('id', (int) $casoActivo)
                 ->where('patient_id', $id)
                 ->where('status', 1)
                 ->first();
+
+            if ($fichaCompleta) {
+                $casoEvalCount = \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('ficha_id', $fichaCompleta->id)
+                    ->where('status', 1)
+                    ->whereNotIn('tabla_form', ['fis_fichas', 'fis_adjuntos'])
+                    ->count();
+                $casoSesCount = \Illuminate\Support\Facades\DB::table('fis_seguimientos')
+                    ->where('ficha_id', $fichaCompleta->id)
+                    ->where('status', 1)
+                    ->count();
+            }
         }
 
         return view('patient.summary', compact(
             'patient', 'age', 'timeline', 'formMeta', 'counts', 'totalEvents', 'lastEvent',
-            'fichas', 'casoActivo', 'fichaCompleta', 'adjuntosCount'
+            'fichas', 'casoActivo', 'fichaCompleta', 'adjuntosCount',
+            'casoEvalCount', 'casoSesCount'
         ));
+    }
+
+    /**
+     * Elimina (borrado lógico) una ficha clínica y todo lo asociado: sesiones,
+     * evaluaciones (vía bitácora fis_historys) y adjuntos. Todo en una
+     * transacción; status=0 para poder revertir desde BD si fue un error.
+     */
+    public function eliminarFicha(Request $request)
+    {
+        try {
+            $id = (int) $request->input('id');
+            $ficha = \App\Models\FormFisios\Ficha::where('id', $id)->where('status', 1)->first();
+            if (! $ficha) {
+                return $this->apiResponse(['status' => '404', 'data' => 'Ficha no encontrada o ya eliminada.'], 404);
+            }
+
+            \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+                // 1) La ficha
+                \Illuminate\Support\Facades\DB::table('fis_fichas')
+                    ->where('id', $id)->update(['status' => 0]);
+                // 2) Sesiones del caso
+                \Illuminate\Support\Facades\DB::table('fis_seguimientos')
+                    ->where('ficha_id', $id)->update(['status' => 0]);
+                // 3) Evaluaciones + métricas (la bitácora es la fuente de verdad)
+                \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->where('ficha_id', $id)->update(['status' => 0]);
+                // 4) Adjuntos del caso
+                \Illuminate\Support\Facades\DB::table('fis_adjuntos')
+                    ->where('ficha_id', $id)->update(['status' => 0]);
+            });
+
+            return $this->apiResponse(['status' => '1', 'data' => ['id' => $id]], 200);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('eliminarFicha: ' . $e->getMessage());
+            return $this->apiResponse(['status' => '500', 'data' => 'Error al eliminar el caso.'], 500);
+        }
+    }
+
+    /**
+     * Cierra (da de alta) un caso clínico: registra la fecha de alta y las
+     * observaciones de cierre. No borra nada — el historial queda intacto y el
+     * caso pasa a "cerrado" en la vista de Casos Clínicos.
+     */
+    public function cerrarFicha(Request $request)
+    {
+        try {
+            $id = (int) $request->input('id');
+            $ficha = \App\Models\FormFisios\Ficha::where('id', $id)->where('status', 1)->first();
+            if (! $ficha) {
+                return $this->apiResponse(['status' => '404', 'data' => 'Ficha no encontrada.'], 404);
+            }
+
+            // Fecha de alta: la provista (dd/mm/aaaa o ISO) o, por defecto, hoy.
+            $fechaAlta = UtilityRepository::normalizeDate($request->input('fecha_alta'))
+                ?: now()->format('Y-m-d');
+
+            $ficha->fecha_alta = $fechaAlta;
+            $ficha->observaciones_cierre = $request->input('observaciones_cierre');
+            $ficha->save();
+
+            return $this->apiResponse(['status' => '1', 'data' => ['id' => $id, 'fecha_alta' => $fechaAlta]], 200);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('cerrarFicha: ' . $e->getMessage());
+            return $this->apiResponse(['status' => '500', 'data' => 'Error al cerrar el caso.'], 500);
+        }
+    }
+
+    /**
+     * Reabre un caso cerrado: limpia la fecha de alta (vuelve a "abierto").
+     * Las observaciones de cierre se conservan por trazabilidad.
+     */
+    public function reabrirFicha(Request $request)
+    {
+        try {
+            $id = (int) $request->input('id');
+            $ficha = \App\Models\FormFisios\Ficha::where('id', $id)->where('status', 1)->first();
+            if (! $ficha) {
+                return $this->apiResponse(['status' => '404', 'data' => 'Ficha no encontrada.'], 404);
+            }
+
+            $ficha->fecha_alta = null;
+            $ficha->save();
+
+            return $this->apiResponse(['status' => '1', 'data' => ['id' => $id]], 200);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('reabrirFicha: ' . $e->getMessage());
+            return $this->apiResponse(['status' => '500', 'data' => 'Error al reabrir el caso.'], 500);
+        }
+    }
+
+    /**
+     * Vista de Casos Clínicos — índice navegable de todas las fichas.
+     * No permite crear fichas aisladas (eso se hace desde el expediente);
+     * cada caso enlaza al expediente del paciente con ese caso activo.
+     */
+    public function casosClinicos()
+    {
+        $casos = \Illuminate\Support\Facades\DB::table('fis_fichas as f')
+            ->join('cmn_patients as p', 'f.patient_id', '=', 'p.id')
+            ->leftJoin('users as u', 'f.user_id', '=', 'u.id')
+            ->where('f.status', 1)
+            ->where('p.status', 1)
+            ->select(
+                'f.id', 'f.patient_id', 'f.diagnostico', 'f.motivo_consulta',
+                'f.fecha', 'f.fecha_alta',
+                'p.full_name as patient_name',
+                'u.name as fisio_name'
+            )
+            ->selectSub(
+                \Illuminate\Support\Facades\DB::table('fis_historys')
+                    ->whereColumn('fis_historys.ficha_id', 'f.id')
+                    ->where('fis_historys.status', 1)
+                    ->whereNotIn('fis_historys.tabla_form', ['fis_fichas', 'fis_adjuntos'])
+                    ->selectRaw('COUNT(*)'),
+                'eval_count'
+            )
+            ->selectSub(
+                \Illuminate\Support\Facades\DB::table('fis_seguimientos')
+                    ->whereColumn('fis_seguimientos.ficha_id', 'f.id')
+                    ->where('fis_seguimientos.status', 1)
+                    ->selectRaw('COUNT(*)'),
+                'ses_count'
+            )
+            // Abiertos primero (fecha_alta NULL), luego por fecha desc
+            ->orderByRaw('f.fecha_alta IS NOT NULL ASC')
+            ->orderByDesc('f.fecha')
+            ->get();
+
+        $decoder = fn($v) => is_string($v) ? html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8') : $v;
+
+        $casos = $casos->map(function ($c) use ($decoder) {
+            $c->diagnostico     = $decoder($c->diagnostico);
+            $c->motivo_consulta = $decoder($c->motivo_consulta);
+            $c->patient_name    = $decoder($c->patient_name);
+            $c->fisio_name      = $decoder($c->fisio_name);
+            $c->estado          = empty($c->fecha_alta) ? 'abierto' : 'cerrado';
+            return $c;
+        });
+
+        // Fisios distintos para el filtro (ya decodificados en el map anterior)
+        $fisios = $casos->pluck('fisio_name')->filter()->unique()->sort()->values();
+
+        $totalAbiertos = $casos->where('estado', 'abierto')->count();
+        $totalCerrados = $casos->where('estado', 'cerrado')->count();
+
+        return view('patient.casos', compact('casos', 'fisios', 'totalAbiertos', 'totalCerrados'));
     }
 
     /**

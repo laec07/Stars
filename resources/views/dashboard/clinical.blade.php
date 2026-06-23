@@ -243,7 +243,9 @@
         font-size: .88rem;
     }
     .top-therapist:last-child { border-bottom: none; }
+    .top-therapist-info { display: flex; flex-direction: column; min-width: 0; }
     .top-therapist-name { color: var(--brand-text); font-weight: 500; }
+    .top-therapist-breakdown { color: #adb5bd; font-size: .72rem; margin-top: .1rem; }
     .top-therapist-count {
         background: var(--brand-primary);
         color: #fff;
@@ -251,6 +253,8 @@
         padding: .15rem .65rem;
         border-radius: 1rem;
         font-size: .78rem;
+        flex-shrink: 0;
+        margin-left: .5rem;
     }
 
     /* Loading state */
@@ -281,13 +285,15 @@
     <div class="clinical-greeting">
         <h2>
             @php
-                $hora = (int) \Carbon\Carbon::now()->format('H');
+                // app.timezone = America/Guatemala, así que now() ya es hora local.
+                $ahoraLocal = \Carbon\Carbon::now();
+                $hora = (int) $ahoraLocal->format('H');
                 $saludo = $hora < 12 ? 'Buenos días' : ($hora < 19 ? 'Buenas tardes' : 'Buenas noches');
             @endphp
             {{ $saludo }}, {{ auth()->user()->name ?? 'usuario' }}.
         </h2>
         <div class="greeting-sub">
-            Resumen clínico — {{ \Carbon\Carbon::now()->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}
+            Resumen clínico — {{ $ahoraLocal->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}
         </div>
     </div>
 
@@ -303,8 +309,8 @@
             <a href="{{ url('patient') }}" class="cd-quick-action-btn">
                 <i class="fas fa-users"></i> Pacientes
             </a>
-            <a href="{{ url('fis-ficha') }}" class="cd-quick-action-btn">
-                <i class="fas fa-folder-open"></i> Fichas clínicas
+            <a href="{{ route('casos.clinicos') }}" class="cd-quick-action-btn">
+                <i class="fas fa-folder-open"></i> Casos clínicos
             </a>
             <a href="{{ route('home') }}" class="cd-quick-action-btn">
                 <i class="fas fa-calendar-alt"></i> Citas
@@ -355,7 +361,10 @@
             </div>
         </div>
         <div class="clinical-card">
-            <div class="clinical-card-title"><span><i class="fas fa-trophy"></i> Top fisioterapeutas del mes</span></div>
+            <div class="clinical-card-title">
+                <span><i class="fas fa-trophy"></i> Top fisioterapeutas del mes</span>
+                <small class="text-muted" style="font-weight:400;font-size:.72rem;">por actividad clínica</small>
+            </div>
             <div id="topTherapistsList">
                 <div class="empty-list">Cargando…</div>
             </div>
@@ -548,9 +557,19 @@
             return;
         }
         var html = list.map(function (t) {
+            var ses  = t.sesiones || 0;
+            var ev   = t.evaluaciones || 0;
+            // Desglose legible: "X sesiones · Y evaluaciones" (omite los de 0)
+            var parts = [];
+            if (ses > 0) parts.push(ses + ' ' + (ses === 1 ? 'sesión' : 'sesiones'));
+            if (ev > 0)  parts.push(ev + ' ' + (ev === 1 ? 'evaluación' : 'evaluaciones'));
+            var breakdown = parts.join(' · ');
             return '<div class="top-therapist">' +
-                       '<span class="top-therapist-name">' + (t.name || '—') + '</span>' +
-                       '<span class="top-therapist-count">' + t.count + '</span>' +
+                       '<div class="top-therapist-info">' +
+                           '<span class="top-therapist-name">' + (t.name || '—') + '</span>' +
+                           (breakdown ? '<span class="top-therapist-breakdown">' + breakdown + '</span>' : '') +
+                       '</div>' +
+                       '<span class="top-therapist-count" title="Actividad clínica total">' + t.count + '</span>' +
                    '</div>';
         }).join('');
         $list.html(html);
