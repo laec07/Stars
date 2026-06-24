@@ -45,7 +45,7 @@ class FisCheqmus extends Model
             $model->created_by = Auth::id();
             $model->updated_by = Auth::id();
             $model->status = 1;
-            $model->fecha = Carbon::now()->format('Y-m-d');
+            if (empty($model->fecha)) { $model->fecha = Carbon::now()->format('Y-m-d'); }
         });
 
         static::updating(function ($model) {

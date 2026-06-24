@@ -60,7 +60,11 @@
             <div class="logo-header" data-background-color="blue">
 
                 <a href="{{route('home')}}" class="logo">
-                    <img height="30" width="145" src="{{url($appearance->logo)}}" alt="navbar brand" class="navbar-brand br-5 bg-white" />
+                    {{-- width:auto + object-fit:contain mantienen la proporción real del
+                         logo (antes width/height fijos lo estiraban horizontalmente). --}}
+                    <img src="{{url($appearance->logo)}}" alt="navbar brand"
+                         class="navbar-brand br-5 bg-white"
+                         style="height:40px; width:auto; max-width:160px; object-fit:contain; padding:4px 8px;" />
                 </a>
                 <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse" data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon">
