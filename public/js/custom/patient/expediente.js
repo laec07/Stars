@@ -2816,8 +2816,10 @@
                       { name: 'foto3', label: 'Anterior' },
                       { name: 'foto4', label: 'Lateral izquierdo' }
                   ],
-                  accept: 'image/*',
-                  capture: 'environment'
+                  accept: 'image/*'
+                  // Sin 'capture': con capture="environment" el navegador móvil
+                  // (Android/iOS) abre la cámara directo y OCULTA la galería.
+                  // Al omitirlo, el selector nativo ofrece cámara + galería + archivos.
                 },
 
                 { type: 'section', label: 'Cierre' },
@@ -2934,6 +2936,15 @@
         currentKey: null,
         currentRecordId: null,         // si != null, estamos en modo edit
         currentRecordPK: null,         // nombre real del PK (id vs Id) para el payload de update
+
+        // Placeholder de las tarjetas de foto (file_uploads): combina cámara + galería
+        // para no sugerir que solo se puede tomar foto (el input no lleva 'capture',
+        // así que el selector nativo ofrece ambas opciones).
+        FU_PLACEHOLDER_HTML:
+            '<span class="fu-placeholder">' +
+                '<i class="fas fa-camera"></i><i class="fas fa-image"></i>' +
+                '<span class="fu-placeholder-hint">Cámara o galería</span>' +
+            '</span>',
 
         Open: function (tableKey) {
             var cfg = EVAL_INLINE_CONFIGS[tableKey];
@@ -3181,7 +3192,7 @@
                 $input.off('change.fu').on('change.fu', function (e) {
                     var file = this.files && this.files[0];
                     if (!file) {
-                        $preview.html('<i class="fas fa-camera"></i>').removeClass('has-image');
+                        $preview.html(InlineFormManager.FU_PLACEHOLDER_HTML).removeClass('has-image');
                         $clear.hide();
                         return;
                     }
@@ -3196,7 +3207,7 @@
 
                 $clear.hide().off('click.fu').on('click.fu', function () {
                     $input.val('');
-                    $preview.html('<i class="fas fa-camera"></i>').removeClass('has-image');
+                    $preview.html(InlineFormManager.FU_PLACEHOLDER_HTML).removeClass('has-image');
                     $clear.hide();
                 });
             });
@@ -3408,7 +3419,7 @@
                     return (
                         '<div class="fu-slot" data-fu-slot="' + Manager.EscapeHtml(s.name) + '">' +
                             '<div class="fu-label">' + Manager.EscapeHtml(s.label || ('Foto ' + (idx + 1))) + '</div>' +
-                            '<div class="fu-preview" data-fu-preview><i class="fas fa-camera"></i></div>' +
+                            '<div class="fu-preview" data-fu-preview>' + InlineFormManager.FU_PLACEHOLDER_HTML + '</div>' +
                             '<input type="file" name="' + Manager.EscapeHtml(s.name) + '" accept="' + accept + '"' + capture + ' class="fu-input">' +
                             '<button type="button" class="fu-clear" data-fu-clear title="Quitar foto"><i class="fas fa-times"></i></button>' +
                         '</div>'

@@ -1397,6 +1397,16 @@
         overflow:hidden;
         transition:border-color .15s ease, background .15s ease;
     }
+    .inline-eval-modal .field-file-uploads .fu-placeholder {
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        gap:.15rem;
+    }
+    .inline-eval-modal .field-file-uploads .fu-placeholder i { font-size:1.1rem; }
+    .inline-eval-modal .field-file-uploads .fu-placeholder i + i { margin-left:.3rem; }
+    .inline-eval-modal .field-file-uploads .fu-placeholder-hint {
+        font-size:.6rem; color:#adb5bd; text-transform:none;
+        letter-spacing:0; font-weight:500; margin-top:.15rem;
+    }
     .inline-eval-modal .field-file-uploads .fu-preview:hover {
         border-color:var(--brand-primary-darker);
         background:#f0f7ff;
