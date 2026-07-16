@@ -2703,11 +2703,20 @@
                                             {{ translate('por') }} {{ $event->user_name }}
                                         @endif
                                         {{-- Deep link al registro específico:
-                                             - Si la evaluación tiene config inline (JS lo decide) → abre modal pre-cargado.
-                                             - Si no, fallback al formulario externo.
-                                             Aquí siempre emitimos el botón con la info del registro;
-                                             el handler JS decide el destino real. --}}
-                                        @if($event->id_formulario)
+                                             - "Ficha clínica" (fis_fichas): NO es una evaluación y no tiene modal
+                                               inline propio, así que en vez de caer al listado antiguo /fis-ficha
+                                               navegamos dentro del mismo expediente: selecciona ese caso y expande
+                                               la tarjeta de ficha ya existente en el tab Resumen.
+                                             - Evaluaciones con config inline (JS lo decide) → abren modal pre-cargado.
+                                             - Cualquier otra → fallback al formulario externo. --}}
+                                        @if($event->tabla_form === 'fis_fichas' && $event->id_formulario)
+                                            · <a href="{{ url('patient-summary/' . $patient->id) }}?caso={{ $event->id_formulario }}&abrirFicha=1"
+                                                 style="color:var(--brand-primary-darker);"
+                                                 title="{{ translate('Ver esta ficha clínica') }}">
+                                                {{ translate('Ver ficha') }}
+                                                <i class="fas fa-folder-open" style="font-size:.7rem;"></i>
+                                            </a>
+                                        @elseif($event->id_formulario)
                                             · <a href="#" data-action="view-event"
                                                  data-key="{{ $event->tabla_form }}"
                                                  data-id="{{ $event->id_formulario }}"

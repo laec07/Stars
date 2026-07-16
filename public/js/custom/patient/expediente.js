@@ -294,6 +294,28 @@
 
     $(document).ready(function () {
 
+        // ====== Deep link "Ver ficha" desde el Timeline (tab Resumen) ======
+        // El link trae ?caso=X&abrirFicha=1: el caso ya viene seleccionado
+        // server-side (ficha-completa-card renderizada), solo falta expandirla
+        // y llevar la vista hasta ahí. Limpiamos el flag de la URL para que un
+        // refresh posterior no la vuelva a forzar abierta.
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('abrirFicha') !== '1') return;
+            var $card = $('#fichaCompletaBody');
+            if (!$card.length) return;
+            setTimeout(function () {
+                $card.collapse('show');
+                $('#fichaCompletaToggle').attr('aria-expanded', 'true');
+                $card.closest('.ficha-completa-card')[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 150);
+            try {
+                params.delete('abrirFicha');
+                var newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                window.history.replaceState({}, '', newUrl);
+            } catch (e) {}
+        })();
+
         // ====== Fase Reorg-A — Case selector ======
         // Cuando cambia el caso seleccionado, invalida los caches de cada tab
         // y refetcha el tab actualmente visible. Persiste en URL para preservar
