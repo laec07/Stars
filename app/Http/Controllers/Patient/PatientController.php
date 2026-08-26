@@ -1405,7 +1405,13 @@ class PatientController extends Controller
                 'margin_footer' => 8,
             ]);
 
-            $caseTitle = trim((string) $ficha->diagnostico) ?: ('Caso #' . $ficha->id);
+            // El diagnóstico viene con entidades HTML codificadas por el middleware
+            // xssProtection al guardar (ó → &oacute;, • → &bull;). Decodificar antes
+            // de usarlo, para que {{ }} en el blade no lo vuelva a escapar (doble encode).
+            $caseTitleRaw = trim((string) $ficha->diagnostico);
+            $caseTitle = $caseTitleRaw !== ''
+                ? html_entity_decode($caseTitleRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                : ('Caso #' . $ficha->id);
             $mpdf->SetTitle('Reporte clínico — ' . $caseTitle . ' — ' . $patient->full_name);
             $mpdf->SetAuthor('Healing Hands');
 

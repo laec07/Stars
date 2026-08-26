@@ -185,7 +185,7 @@
         // Abre el modal en modo EDICIÓN, pre-cargado con los datos de la ficha.
         OpenEdit: function (data) {
             if (!data || !data.id) {
-                if (window.Message) Message.Notification('warning', 'No hay una ficha activa para editar.');
+                if (window.Message) Message.Warning('No hay una ficha activa para editar.');
                 return;
             }
             NewCaseManager.currentEditId = data.id;
@@ -229,7 +229,7 @@
             var motivo = ($form.find('[name="motivo_consulta"]').val() || '').trim();
             var diag   = ($form.find('[name="diagnostico"]').val() || '').trim();
             if (!motivo && !diag) {
-                if (window.Message) Message.Notification('warning',
+                if (window.Message) Message.Warning(
                     'Llena al menos el motivo de consulta o el diagnóstico para crear la ficha.');
                 $form.find('[name="motivo_consulta"]').focus();
                 return;
@@ -258,7 +258,7 @@
                 success: function (json) {
                     JsManager.EndProcessBar();
                     if (json && (json.status == '1' || json.status === 1)) {
-                        if (window.Message) Message.Notification('success',
+                        if (window.Message) Message.SuccessMessage(
                             isEdit ? 'Ficha clínica actualizada correctamente.' : 'Ficha clínica creada correctamente.');
                         $('#modalNewCase').modal('hide');
                         // Recargar el expediente manteniendo el caso activo.
@@ -270,7 +270,7 @@
                         setTimeout(function () { window.location.href = url; }, 600);
                     } else {
                         $btn.prop('disabled', false).html(defaultLabel);
-                        if (window.Message) Message.Notification('error',
+                        if (window.Message) Message.ErrorMessage(
                             isEdit ? 'No se pudo actualizar la ficha.' : 'No se pudo crear la ficha.');
                     }
                 },
@@ -284,7 +284,7 @@
                         if (resp && resp.data && typeof resp.data === 'string') msg += ' ' + resp.data;
                         if (resp && resp.message) msg += ' ' + resp.message;
                     } catch (e) {}
-                    if (window.Message) Message.Notification('error', msg);
+                    if (window.Message) Message.ErrorMessage(msg);
                 }
             });
         }
@@ -397,21 +397,21 @@
                 success: function (json) {
                     JsManager.EndProcessBar();
                     if (json && (json.status == '1' || json.status === 1)) {
-                        if (window.Message) Message.Notification('success', 'Caso cerrado (alta registrada).');
+                        if (window.Message) Message.SuccessMessage('Caso cerrado (alta registrada).');
                         $('#modalCloseCaso').modal('hide');
                         setTimeout(function () {
                             window.location.href = window.location.pathname + '?caso=' + encodeURIComponent(fichaId);
                         }, 600);
                     } else {
                         $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> Cerrar caso');
-                        if (window.Message) Message.Notification('error', 'No se pudo cerrar el caso.');
+                        if (window.Message) Message.ErrorMessage('No se pudo cerrar el caso.');
                     }
                 },
                 error: function (xhr) {
                     JsManager.EndProcessBar();
                     $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> Cerrar caso');
                     console.error('caso-cerrar failed', xhr);
-                    if (window.Message) Message.Notification('error', 'Error al cerrar el caso.');
+                    if (window.Message) Message.ErrorMessage('Error al cerrar el caso.');
                 }
             });
         });
@@ -434,18 +434,18 @@
                 success: function (json) {
                     JsManager.EndProcessBar();
                     if (json && (json.status == '1' || json.status === 1)) {
-                        if (window.Message) Message.Notification('success', 'Caso reabierto.');
+                        if (window.Message) Message.SuccessMessage('Caso reabierto.');
                         setTimeout(function () {
                             window.location.href = window.location.pathname + '?caso=' + encodeURIComponent(fichaId);
                         }, 600);
                     } else {
-                        if (window.Message) Message.Notification('error', 'No se pudo reabrir el caso.');
+                        if (window.Message) Message.ErrorMessage('No se pudo reabrir el caso.');
                     }
                 },
                 error: function (xhr) {
                     JsManager.EndProcessBar();
                     console.error('caso-reabrir failed', xhr);
-                    if (window.Message) Message.Notification('error', 'Error al reabrir el caso.');
+                    if (window.Message) Message.ErrorMessage('Error al reabrir el caso.');
                 }
             });
         });
@@ -469,7 +469,7 @@
                 success: function (json) {
                     JsManager.EndProcessBar();
                     if (json && (json.status == '1' || json.status === 1)) {
-                        if (window.Message) Message.Notification('success', 'Caso clínico eliminado.');
+                        if (window.Message) Message.SuccessMessage('Caso clínico eliminado.');
                         $('#modalDeleteCaso').modal('hide');
                         // Recargar el expediente en vista global (sin el caso borrado)
                         setTimeout(function () {
@@ -477,14 +477,14 @@
                         }, 600);
                     } else {
                         $btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar caso');
-                        if (window.Message) Message.Notification('error', 'No se pudo eliminar el caso.');
+                        if (window.Message) Message.ErrorMessage('No se pudo eliminar el caso.');
                     }
                 },
                 error: function (xhr) {
                     JsManager.EndProcessBar();
                     $btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar caso');
                     console.error('caso-eliminar failed', xhr);
-                    if (window.Message) Message.Notification('error', 'Error al eliminar el caso clínico.');
+                    if (window.Message) Message.ErrorMessage('Error al eliminar el caso clínico.');
                 }
             });
         });
@@ -596,6 +596,21 @@
                 // Fallback: abrir formulario standalone si NewCaseManager no está disponible
                 var url = EvaluacionManager.UrlForForm('fis_fichas');
                 if (url) window.open(url, '_blank');
+            }
+        });
+
+        // ====== "Mejorar redacción" (IA) — teaser de funcionalidad premium ======
+        // Aún NO está conectado a ningún backend/modelo de IA. Solo informa que
+        // la función existe pero no está activada, como gancho comercial para
+        // ofrecerla como complemento de pago. Cuando se active de verdad, este
+        // handler debe reemplazarse por la llamada real al endpoint de IA.
+        $(document).on('click', '[data-action="ai-improve-text"]', function (e) {
+            e.preventDefault();
+            var msg = 'Funcionalidad no activada. Contacta al administrador del sistema para activarla.';
+            if (window.Message && typeof Message.Warning === 'function') {
+                Message.Warning(msg);
+            } else {
+                alert(msg);
             }
         });
 
@@ -1098,11 +1113,11 @@
             var fecha = $('#sesion_fecha').val();
 
             if (!fichaId) {
-                if (window.Message) Message.Notification('warning', 'Selecciona una ficha clínica.');
+                if (window.Message) Message.Warning('Selecciona una ficha clínica.');
                 return;
             }
             if (!fecha) {
-                if (window.Message) Message.Notification('warning', 'Indica la fecha.');
+                if (window.Message) Message.Warning('Indica la fecha.');
                 return;
             }
 
@@ -1308,11 +1323,11 @@
 
         HandleImageUpload: function (file) {
             if (!file || !file.type || file.type.indexOf('image/') !== 0) {
-                if (window.Message) Message.Notification('warning', 'Sólo se permiten imágenes.');
+                if (window.Message) Message.Warning('Sólo se permiten imágenes.');
                 return;
             }
             if (file.size > CONFIG.IMAGE_MAX_INPUT_BYTES) {
-                if (window.Message) Message.Notification('warning', 'La imagen excede 12 MB.');
+                if (window.Message) Message.Warning('La imagen excede 12 MB.');
                 return;
             }
 
@@ -1329,7 +1344,7 @@
                 })
                 .catch(function (err) {
                     console.error('upload image error', err);
-                    if (window.Message) Message.Notification('error', 'No se pudo subir la imagen: ' + (err.message || err));
+                    if (window.Message) Message.ErrorMessage('No se pudo subir la imagen: ' + (err.message || err));
                 })
                 .then(function () {
                     $('#notaUploadProgress').removeClass('active');
@@ -2254,7 +2269,7 @@
                     var resp = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
                     if (resp && typeof resp.data === 'string') msg += ' ' + resp.data;
                 } catch (e) { /* ignore */ }
-                if (window.Message) Message.Notification('error', msg);
+                if (window.Message) Message.ErrorMessage(msg);
             }
         }
     };
@@ -3029,7 +3044,7 @@
             JsManager.SendJson('GET', 'evaluation-record/' + tableKey + '/' + recordId, '', function (json) {
                 JsManager.EndProcessBar();
                 if (!json || json.status != '1' || !json.data) {
-                    if (window.Message) Message.Notification('error', 'No se pudo cargar la evaluación.');
+                    if (window.Message) Message.ErrorMessage('No se pudo cargar la evaluación.');
                     return;
                 }
                 // Decodificar entidades HTML en TODOS los strings del registro.
@@ -3048,7 +3063,7 @@
             }, function (xhr) {
                 JsManager.EndProcessBar();
                 console.error('OpenEdit fetch failed', xhr);
-                if (window.Message) Message.Notification('error', 'No se pudo cargar la evaluación para editar.');
+                if (window.Message) Message.ErrorMessage('No se pudo cargar la evaluación para editar.');
             });
             return true;
         },
@@ -3309,7 +3324,7 @@
                                 $oldTa.val('');
                             }
                             if (window.Message) {
-                                Message.Notification('info', 'Máximo ' + maxSel + ' zonas. Se desmarcó "' + ($oldBtn.data('region-label') || '') + '".');
+                                Message.Notification('Máximo ' + maxSel + ' zonas. Se desmarcó "' + ($oldBtn.data('region-label') || '') + '".');
                             }
                         }
                         $btn.addClass('selected').attr('aria-pressed', 'true');
@@ -3727,7 +3742,7 @@
 
             var fichaId = $('#evalInline_ficha_id').val();
             if (!fichaId) {
-                if (window.Message) Message.Notification('warning', 'Selecciona o crea una ficha clínica primero.');
+                if (window.Message) Message.Warning('Selecciona o crea una ficha clínica primero.');
                 return;
             }
 
@@ -3845,7 +3860,7 @@
                     : !!payload[fld.name];
 
                 if (!present) {
-                    if (window.Message) Message.Notification('warning', 'Completa: ' + fld.label);
+                    if (window.Message) Message.Warning('Completa: ' + fld.label);
                     $('#formEvalInline [name="' + fld.name + '"]').focus();
                     return;
                 }
@@ -3931,7 +3946,7 @@
                         }
                     }
                 } catch (e) { /* ignore */ }
-                if (window.Message) Message.Notification('error', msg);
+                if (window.Message) Message.ErrorMessage(msg);
             }
         },
 
@@ -4022,21 +4037,21 @@
             JsManager.SendJson('GET', 'eval-templates/' + id, '', function (json) {
                 JsManager.EndProcessBar();
                 if (!json || json.status != '1' || !json.data) {
-                    if (window.Message) Message.Notification('error', 'No se pudo cargar la plantilla.');
+                    if (window.Message) Message.ErrorMessage('No se pudo cargar la plantilla.');
                     return;
                 }
                 var data = json.data;
                 if (data.tabla_form !== InlineFormManager.currentKey) {
-                    if (window.Message) Message.Notification('warning', 'Esta plantilla no aplica a este tipo de evaluación.');
+                    if (window.Message) Message.Warning('Esta plantilla no aplica a este tipo de evaluación.');
                     return;
                 }
                 // Reutilizar PopulateForm de Fase 4a — sabe llenar todos los tipos de campo
                 InlineFormManager.PopulateForm(data.payload || {});
-                if (window.Message) Message.Notification('success', 'Plantilla aplicada: ' + (data.name || ''));
+                if (window.Message) Message.SuccessMessage('Plantilla aplicada: ' + (data.name || ''));
             }, function (xhr) {
                 JsManager.EndProcessBar();
                 console.error('Apply template failed', xhr);
-                if (window.Message) Message.Notification('error', 'Error al aplicar la plantilla.');
+                if (window.Message) Message.ErrorMessage('Error al aplicar la plantilla.');
             });
         },
 
@@ -4118,13 +4133,13 @@
         OpenSaveModal: function () {
             var tabla = InlineFormManager.currentKey;
             if (!tabla) {
-                if (window.Message) Message.Notification('warning', 'Abre primero una evaluación.');
+                if (window.Message) Message.Warning('Abre primero una evaluación.');
                 return;
             }
             // Verificar que haya datos para guardar
             var payload = InlineFormManager.CollectCurrentPayload();
             if (!payload || Object.keys(payload).length === 0) {
-                if (window.Message) Message.Notification('warning', 'Llena algunos campos antes de guardar como plantilla.');
+                if (window.Message) Message.Warning('Llena algunos campos antes de guardar como plantilla.');
                 return;
             }
             $('#saveTplId').val('');
@@ -4144,12 +4159,12 @@
         Save: function () {
             var name = ($('#saveTplName').val() || '').trim();
             if (!name) {
-                if (window.Message) Message.Notification('warning', 'Ponle un nombre a la plantilla.');
+                if (window.Message) Message.Warning('Ponle un nombre a la plantilla.');
                 return;
             }
             var payload = InlineFormManager.CollectCurrentPayload();
             if (!payload || Object.keys(payload).length === 0) {
-                if (window.Message) Message.Notification('warning', 'No hay datos que guardar.');
+                if (window.Message) Message.Warning('No hay datos que guardar.');
                 return;
             }
 
@@ -4168,10 +4183,10 @@
             JsManager.SendJson('POST', 'eval-templates', data, function (json) {
                 JsManager.EndProcessBar();
                 if (json && (json.status == '1' || json.status === 1)) {
-                    if (window.Message) Message.Notification('success', 'Plantilla guardada.');
+                    if (window.Message) Message.SuccessMessage('Plantilla guardada.');
                     $('#modalSaveEvalTpl').modal('hide');
                 } else {
-                    if (window.Message) Message.Notification('error', 'No se pudo guardar la plantilla.');
+                    if (window.Message) Message.ErrorMessage('No se pudo guardar la plantilla.');
                 }
             }, function (xhr) {
                 JsManager.EndProcessBar();
@@ -4181,7 +4196,7 @@
                     var resp = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
                     if (resp && resp.message) msg += ' ' + resp.message;
                 } catch (e) {}
-                if (window.Message) Message.Notification('error', msg);
+                if (window.Message) Message.ErrorMessage(msg);
             });
         },
 
@@ -4199,14 +4214,14 @@
             }, function (json) {
                 JsManager.EndProcessBar();
                 if (json && (json.status == '1' || json.status === 1)) {
-                    if (window.Message) Message.Notification('success', 'Plantilla eliminada.');
+                    if (window.Message) Message.SuccessMessage('Plantilla eliminada.');
                     TemplateManager.LoadList();
                 } else {
-                    if (window.Message) Message.Notification('error', 'No se pudo eliminar la plantilla.');
+                    if (window.Message) Message.ErrorMessage('No se pudo eliminar la plantilla.');
                 }
             }, function () {
                 JsManager.EndProcessBar();
-                if (window.Message) Message.Notification('error', 'Error al eliminar la plantilla.');
+                if (window.Message) Message.ErrorMessage('Error al eliminar la plantilla.');
             });
         }
     };
@@ -4582,7 +4597,7 @@
         Send: function () {
             var body = ($('#msgBody').val() || '').trim();
             if (!body) {
-                if (window.Message) Message.Notification('warning', 'Escribe un mensaje antes de enviar.');
+                if (window.Message) Message.Warning('Escribe un mensaje antes de enviar.');
                 return;
             }
 
@@ -4605,7 +4620,7 @@
                     MessagingManager.Load();
                 } else {
                     var msg = (json && json.error) || (json && json.data && json.data.error) || 'No se pudo enviar el mensaje.';
-                    if (window.Message) Message.Notification('error', msg);
+                    if (window.Message) Message.ErrorMessage(msg);
                 }
             }
             function onFailed(xhr) {
@@ -4617,7 +4632,7 @@
                     if (resp && resp.message) msg += ' ' + resp.message;
                     if (resp && resp.data && resp.data.error) msg += ' ' + resp.data.error;
                 } catch (e) {}
-                if (window.Message) Message.Notification('error', msg);
+                if (window.Message) Message.ErrorMessage(msg);
             }
         }
     };
@@ -4831,7 +4846,7 @@
             var MAX = 20 * 1024 * 1024;
             files = files.filter(function (f) {
                 if (f.size > MAX) {
-                    if (window.Message) Message.Notification('warning', f.name + ': excede 20 MB y será omitido.');
+                    if (window.Message) Message.Warning(f.name + ': excede 20 MB y será omitido.');
                     return false;
                 }
                 return true;
@@ -4935,9 +4950,9 @@
                     var saved = (json.data && json.data.saved) || [];
                     var errs  = (json.data && json.data.errors) || [];
                     if (errs.length && window.Message) {
-                        Message.Notification('warning', errs.length + ' archivo(s) no se pudieron subir.');
+                        Message.Warning(errs.length + ' archivo(s) no se pudieron subir.');
                     }
-                    if (window.Message) Message.Notification('success', saved.length + ' archivo(s) subidos.');
+                    if (window.Message) Message.SuccessMessage(saved.length + ' archivo(s) subidos.');
                     $('#modalAdjUpload').modal('hide');
                     state.adjLoaded = false;
                     AdjuntoManager.Load();
@@ -4948,12 +4963,12 @@
                             msg += ' ' + json.data.errors.map(function (e) { return e.file_name + ': ' + e.reason; }).join('; ');
                         }
                     }
-                    if (window.Message) Message.Notification('error', msg);
+                    if (window.Message) Message.ErrorMessage(msg);
                 }
             };
             xhr.onerror = function () {
                 $('#btnAdjUploadConfirm').prop('disabled', false);
-                if (window.Message) Message.Notification('error', 'Error de red al subir.');
+                if (window.Message) Message.ErrorMessage('Error de red al subir.');
             };
             xhr.send(fd);
         },
@@ -5014,7 +5029,7 @@
                 function (xhr) {
                     JsManager.EndProcessBar();
                     console.error('AdjuntoManager.Delete failed', xhr);
-                    if (window.Message) Message.Notification('error', 'No se pudo eliminar.');
+                    if (window.Message) Message.ErrorMessage('No se pudo eliminar.');
                 });
         },
 

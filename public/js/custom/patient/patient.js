@@ -166,7 +166,7 @@
             // ANTES de armar el FormData, para que el backend reciba formato ISO.
             var dobResult = Manager.DobToIso($('#dob').val());
             if (dobResult.error) {
-                if (window.Message) Message.Notification('warning', dobResult.error);
+                if (window.Message) Message.Warning(dobResult.error);
                 $('#dob').focus();
                 return;
             }

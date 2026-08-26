@@ -24,7 +24,7 @@
     $modalidades = collect([
         'modalidades_ejercicio_terapeutico' => 'Ejercicio terapéutico',
         'modalidades_electroterapia'        => 'Electroterapia',
-        'modalidades_masoterapia'           => 'Masoterapia',
+        'modalidades_masoterapia'           => 'Terapia manual',
         'modalidades_estiramientos'         => 'Estiramientos',
         'modalidades_tecaterapia'           => 'Tecarterapia',
         'modalidades_puncion_seca'          => 'Punción seca',

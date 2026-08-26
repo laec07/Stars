@@ -193,7 +193,7 @@
                     $modalidades_col1 = [
                         'modalidades_ejercicio_terapeutico' => 'Ejercicio terapéutico',
                         'modalidades_electroterapia'        => 'Electroterapia',
-                        'modalidades_masoterapia'           => 'Masoterapia',
+                        'modalidades_masoterapia'           => 'Terapia manual',
                         'modalidades_estiramientos'         => 'Estiramientos',
                     ];
 

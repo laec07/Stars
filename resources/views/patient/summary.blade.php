@@ -396,6 +396,36 @@
         margin-bottom: .25rem;
     }
     .new-case-modal .form-group { margin-bottom: .75rem; }
+
+    /* Botón "Mejorar redacción" — teaser de funcionalidad premium (no conectada).
+       Estilo distintivo (gradiente + badge "IA") para diferenciarlo de acciones normales. */
+    .new-case-modal .nc-label-row {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: .5rem; flex-wrap: wrap; margin-bottom: .25rem;
+    }
+    .new-case-modal .nc-label-row label { margin-bottom: 0; }
+    .new-case-modal .nc-ai-assist-btn {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: linear-gradient(135deg, rgba(159,147,231,.14) 0%, rgba(159,147,231,.06) 100%);
+        border: 1px solid rgba(159,147,231,.4);
+        color: var(--brand-primary-darker, #5e4fbf);
+        font-size: .72rem; font-weight: 600;
+        padding: .25rem .55rem; border-radius: 1rem;
+        cursor: pointer; white-space: nowrap;
+        transition: background .15s ease, border-color .15s ease;
+    }
+    .new-case-modal .nc-ai-assist-btn:hover {
+        background: linear-gradient(135deg, rgba(159,147,231,.24) 0%, rgba(159,147,231,.12) 100%);
+        border-color: var(--brand-primary-darker, #5e4fbf);
+    }
+    .new-case-modal .nc-ai-assist-btn i { font-size: .78rem; }
+    .new-case-modal .nc-ai-badge {
+        background: var(--brand-primary-darker, #5e4fbf);
+        color: #fff; font-size: .58rem; font-weight: 800;
+        letter-spacing: .04em;
+        padding: .05rem .35rem; border-radius: .7rem;
+        line-height: 1.3;
+    }
     .new-case-modal textarea.form-control { font-family: var(--brand-font-body); font-size: .88rem; }
 
     /* Acordeón */
@@ -2364,7 +2394,7 @@
             $modalidadesSeleccionadas = collect([
                 'modalidades_ejercicio_terapeutico' => 'Ejercicio terapéutico',
                 'modalidades_electroterapia'        => 'Electroterapia',
-                'modalidades_masoterapia'           => 'Masoterapia',
+                'modalidades_masoterapia'           => 'Terapia manual',
                 'modalidades_estiramientos'         => 'Estiramientos',
                 'modalidades_tecaterapia'           => 'Tecarterapia',
                 'modalidades_puncion_seca'          => 'Punción seca',
@@ -3154,7 +3184,18 @@
                             <span class="text-muted" style="font-size:.72rem; margin-left:.4rem;">{{ translate('(recomendado)') }}</span>
                         </div>
                         <div class="form-group">
-                            <label>{{ translate('Motivo de consulta') }} <span class="text-danger">*</span></label>
+                            <div class="nc-label-row">
+                                <label>{{ translate('Motivo de consulta') }} <span class="text-danger">*</span></label>
+                                {{-- Teaser de funcionalidad premium (no conectada aún). Al hacer clic
+                                     muestra un aviso de "no activada" — ver AiWriteAssistManager en
+                                     expediente.js. No debe llamar a ningún backend/IA real todavía. --}}
+                                <button type="button" class="nc-ai-assist-btn" data-action="ai-improve-text"
+                                        data-target="motivo_consulta"
+                                        title="{{ translate('Mejorar redacción con IA') }}">
+                                    <i class="fas fa-magic"></i> {{ translate('Mejorar redacción') }}
+                                    <span class="nc-ai-badge">IA</span>
+                                </button>
+                            </div>
                             <textarea name="motivo_consulta" class="form-control" rows="2" placeholder="¿Por qué viene? Síntomas principales, cuándo iniciaron, etc."></textarea>
                         </div>
                         <div class="form-group">
@@ -3296,7 +3337,7 @@
                                             $mods = [
                                                 'modalidades_ejercicio_terapeutico' => ['icon' => 'fa-dumbbell',          'label' => 'Ejercicio terapéutico'],
                                                 'modalidades_electroterapia'        => ['icon' => 'fa-bolt',              'label' => 'Electroterapia'],
-                                                'modalidades_masoterapia'           => ['icon' => 'fa-hands',             'label' => 'Masoterapia'],
+                                                'modalidades_masoterapia'           => ['icon' => 'fa-hands',             'label' => 'Terapia manual'],
                                                 'modalidades_estiramientos'         => ['icon' => 'fa-stretching-figure', 'label' => 'Estiramientos'],
                                                 'modalidades_tecaterapia'           => ['icon' => 'fa-wave-square',       'label' => 'Tecarterapia'],
                                                 'modalidades_puncion_seca'          => ['icon' => 'fa-syringe',           'label' => 'Punción seca'],
