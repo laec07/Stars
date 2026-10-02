@@ -315,9 +315,6 @@
             <a href="{{ route('home') }}" class="cd-quick-action-btn">
                 <i class="fas fa-calendar-alt"></i> Citas
             </a>
-            <a href="{{ url('fis-evdolors') }}" class="cd-quick-action-btn">
-                <i class="fas fa-stethoscope"></i> Evaluaciones
-            </a>
         </div>
     </div>
 

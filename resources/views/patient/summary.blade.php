@@ -2758,8 +2758,6 @@
                                                 {{ translate('Ver evaluación') }}
                                                 <i class="fas fa-eye" style="font-size:.7rem;"></i>
                                             </a>
-                                        @elseif($meta['route'] && \Illuminate\Support\Facades\Route::has($meta['route']))
-                                            · <a href="{{ route($meta['route']) }}" style="color:var(--brand-primary-darker);">{{ translate('Abrir formulario') }} <i class="fas fa-external-link-alt" style="font-size:.7rem;"></i></a>
                                         @endif
                                     </div>
                                 </div>
