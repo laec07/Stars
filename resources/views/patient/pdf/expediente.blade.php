@@ -19,7 +19,11 @@
     };
     $formatValue = function ($v) {
         if ($v === null || $v === '') return '<span style="color:#adb5bd;">—</span>';
-        return e((string)$v);
+        // mPDF ignora white-space:pre-wrap: se convierten los saltos de línea a <br>
+        // para respetar párrafos y espacios capturados por el usuario.
+        $t = str_replace(["\r\n", "\r"], "\n", trim((string)$v));
+        $t = preg_replace("/\n{3,}/", "\n\n", $t);
+        return nl2br(e($t), false);
     };
 @endphp
 <!DOCTYPE html>
@@ -207,7 +211,7 @@
         </div>
         @if(!empty($ficha->motivo_consulta))
             <div class="ficha-motivo">
-                <strong>Motivo:</strong> {{ Str::limit($decode($ficha->motivo_consulta), 400) }}
+                <strong>Motivo:</strong> {!! nl2br(e(Str::limit($decode($ficha->motivo_consulta), 400)), false) !!}
             </div>
         @endif
     </div>
@@ -282,10 +286,10 @@
                 @endif
             </div>
             @if(!empty($ses->evolucion))
-                <div class="sesion-content"><strong>Evolución:</strong> {{ Str::limit(strip_tags($decode($ses->evolucion)), 350) }}</div>
+                <div class="sesion-content"><strong>Evolución:</strong> {!! nl2br(e(Str::limit(strip_tags($decode($ses->evolucion)), 350)), false) !!}</div>
             @endif
             @if(!empty($ses->observaciones))
-                <div class="sesion-content"><strong>Observaciones:</strong> {{ Str::limit(strip_tags($decode($ses->observaciones)), 350) }}</div>
+                <div class="sesion-content"><strong>Observaciones:</strong> {!! nl2br(e(Str::limit(strip_tags($decode($ses->observaciones)), 350)), false) !!}</div>
             @endif
         </div>
     @endforeach
