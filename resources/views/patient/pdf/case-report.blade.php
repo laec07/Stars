@@ -16,6 +16,15 @@
         if (!is_string($v)) return $v;
         return html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     };
+    // mPDF ignora `white-space: pre-wrap`, así que los saltos de línea/párrafos
+    // que el usuario captura en los textareas se perdían. Se escapa el texto y
+    // se convierten los saltos a <br> para respetar la distribución original.
+    $multiline = function ($v) use ($decode) {
+        $v = trim((string) $decode($v));
+        $v = str_replace(["\r\n", "\r"], "\n", $v);
+        $v = preg_replace("/\n{3,}/", "\n\n", $v);
+        return nl2br(e($v), false);
+    };
     $formatValue = function ($v) {
         if ($v === null || $v === '') return '<span style="color:#adb5bd;">—</span>';
         return e((string)$v);
@@ -79,7 +88,7 @@
         }
 
         .ficha-section {
-            margin-bottom:10pt; page-break-inside:avoid;
+            margin-bottom:10pt;
         }
         .ficha-section .sec-title {
             background:#DFBEF4; color:#2F4157;
@@ -99,13 +108,14 @@
             background:#faf8ff;
             border-left:3pt solid #DFBEF4;
             font-size:9pt;
-            white-space:pre-wrap;
-            margin-bottom:6pt;
+            line-height:1.55;
+            margin-bottom:8pt;
+            page-break-inside:auto;
         }
         .long-text .lbl {
             font-weight:bold; color:#5e4fbf;
             text-transform:uppercase; font-size:7.5pt; letter-spacing:.5pt;
-            display:block; margin-bottom:2pt;
+            display:block; margin-bottom:4pt;
         }
 
         .modality-tags { display:block; }
@@ -221,7 +231,7 @@
 @if(!empty($ficha->motivo_consulta))
     <div class="long-text">
         <span class="lbl">Motivo de consulta</span>
-        {{ $decode($ficha->motivo_consulta) }}
+        {!! $multiline($ficha->motivo_consulta) !!}
     </div>
 @endif
 
@@ -289,7 +299,7 @@
         @foreach($evalFields as $key => $lbl)
             <div class="long-text">
                 <span class="lbl">{{ $lbl }}</span>
-                {{ $decode($ficha->{$key}) }}
+                {!! $multiline($ficha->{$key}) !!}
             </div>
         @endforeach
     </div>
@@ -332,7 +342,7 @@
         @if(!empty($ficha->modalidades_otros))
             <div class="long-text">
                 <span class="lbl">Otros tratamientos</span>
-                {{ $decode($ficha->modalidades_otros) }}
+                {!! $multiline($ficha->modalidades_otros) !!}
             </div>
         @endif
         @if(!empty($ficha->frecuencia_semana) || !empty($ficha->duracion_semanas))
@@ -409,10 +419,10 @@
                 @endif
             </div>
             @if(!empty($ses->evolucion))
-                <div class="ses-content"><strong>Evolución:</strong> {{ $decode($ses->evolucion) }}</div>
+                <div class="ses-content"><strong>Evolución:</strong> {!! $multiline($ses->evolucion) !!}</div>
             @endif
             @if(!empty($ses->observaciones))
-                <div class="ses-content"><strong>Observaciones:</strong> {{ $decode($ses->observaciones) }}</div>
+                <div class="ses-content"><strong>Observaciones:</strong> {!! $multiline($ses->observaciones) !!}</div>
             @endif
         </div>
     @endforeach
