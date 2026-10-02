@@ -60,7 +60,11 @@ class FisCheqsController extends Controller
             $cleanData = $this->cleanRequestData($request);
             $cleanData['user_id'] = Auth::id();
 
-            FisCheqs::create($cleanData);
+            $form = FisCheqs::create($cleanData);
+
+            // Bitácora: sin esta entrada el registro no aparece en el expediente
+            // (Evaluación / Resumen / Evolución), igual que el resto de formularios.
+            UtilityFisioController::logEntry((int) $request->input('patient_id'), 'fis_cheqs', (int) $form->id, 1);
 
             return $this->apiResponse(['status' => '1', 'data' => 'Registro guardado exitosamente.'], 200);
 
