@@ -24,7 +24,11 @@
             // Solo si NO parece un valor de escala (heurística simple)
             // No transformamos automáticamente para preservar significado.
         }
-        return e((string)$v);
+        // mPDF ignora white-space:pre-wrap: se convierten los saltos de línea a <br>
+        // para respetar párrafos y espacios capturados por el usuario.
+        $t = str_replace(["\r\n", "\r"], "\n", trim((string)$v));
+        $t = preg_replace("/\n{3,}/", "\n\n", $t);
+        return nl2br(e($t), false);
     };
 @endphp
 <!DOCTYPE html>
@@ -156,7 +160,7 @@
         .long-field .val {
             color: #2F4157;
             font-size: 9pt;
-            white-space: pre-wrap;
+            line-height: 1.55;
         }
 
         /* Footer — firma + datos */
