@@ -227,8 +227,97 @@
             separateDialCode: true,
             utilsScript: "js/lib/tel-input/js/utils.js",
         });
+        PhoneCountrySearch.Init(document.querySelector("#phone_no"), initTelephone);
     });
 
+
+
+    /* ============================================================
+       PhoneCountrySearch — buscador dentro del selector de país
+       (intl-tel-input v17 no lo trae). Se inyecta al abrir el menú.
+       Filtra por nombre (sin acentos), código ISO o código de marcado.
+       ============================================================ */
+    var PhoneCountrySearch = {
+        Init: function (telInput, iti) {
+            if (!telInput || !iti) return;
+            var norm = function (t) {
+                return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            };
+            var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+            telInput.addEventListener('open:countrydropdown', function () {
+                var box = iti.dropdown, list = iti.countryList;
+                if (!box || !list) return;
+
+                var old = box.querySelector('.hh-iti-search');
+                if (old) old.parentNode.removeChild(old);
+
+                var wrap = document.createElement('div');
+                wrap.className = 'hh-iti-search';
+                wrap.innerHTML = '<i class="fas fa-search"></i>' +
+                    '<input type="search" placeholder="Buscar país o código…" autocomplete="off" ' +
+                    'autocapitalize="off" spellcheck="false" aria-label="Buscar país">';
+                box.insertBefore(wrap, list);
+                var input = wrap.querySelector('input');
+
+                var items = list.querySelectorAll('li.iti__country');
+                var dividers = list.querySelectorAll('li.iti__divider');
+                var empty = document.createElement('li');
+                empty.className = 'hh-iti-empty';
+                empty.textContent = 'Sin resultados';
+                empty.style.display = 'none';
+                list.appendChild(empty);
+
+                var firstVisible = function () {
+                    for (var i = 0; i < items.length; i++) if (items[i].style.display !== 'none') return items[i];
+                    return null;
+                };
+                var filter = function () {
+                    var q = norm(input.value).replace(/^\+/, '').trim();
+                    var shown = 0;
+                    for (var i = 0; i < items.length; i++) {
+                        var li = items[i];
+                        var hit = !q ||
+                            norm(li.textContent).indexOf(q) !== -1 ||
+                            (li.getAttribute('data-dial-code') || '').indexOf(q) === 0 ||
+                            (li.getAttribute('data-country-code') || '') === q;
+                        li.style.display = hit ? '' : 'none';
+                        if (hit) shown++;
+                    }
+                    for (var d = 0; d < dividers.length; d++) dividers[d].style.display = q ? 'none' : '';
+                    empty.style.display = shown ? 'none' : '';
+                    list.scrollTop = 0;
+                };
+
+                // La librería escucha keydown/click en document y los consume (preventDefault /
+                // cerrar el menú). Se detiene la propagación para poder escribir en el campo.
+                input.addEventListener('keydown', function (e) {
+                    e.stopPropagation();
+                    if (e.key === 'Escape') { iti._closeDropdown(); return; }
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        var first = firstVisible();
+                        if (first) first.click();
+                    }
+                });
+                input.addEventListener('click', function (e) { e.stopPropagation(); });
+                wrap.addEventListener('click', function (e) { e.stopPropagation(); });
+                input.addEventListener('input', filter);
+
+                // En escritorio se enfoca de inmediato; en táctiles no, para no abrir el
+                // teclado y tapar la lista hasta que el usuario toque el buscador.
+                if (!coarse) setTimeout(function () { input.focus(); }, 0);
+            });
+
+            telInput.addEventListener('close:countrydropdown', function () {
+                var list = iti.countryList;
+                if (!list) return;
+                list.querySelectorAll('li.iti__country, li.iti__divider').forEach(function (li) { li.style.display = ''; });
+                var e = list.querySelector('.hh-iti-empty');
+                if (e) e.parentNode.removeChild(e);
+            });
+        }
+    };
 
     /* ============================================================
        DrawerManager — abrir/cerrar drawer lateral
