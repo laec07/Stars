@@ -2758,8 +2758,6 @@
                                                 {{ translate('Ver evaluación') }}
                                                 <i class="fas fa-eye" style="font-size:.7rem;"></i>
                                             </a>
-                                        @elseif($meta['route'] && \Illuminate\Support\Facades\Route::has($meta['route']))
-                                            · <a href="{{ route($meta['route']) }}" style="color:var(--brand-primary-darker);">{{ translate('Abrir formulario') }} <i class="fas fa-external-link-alt" style="font-size:.7rem;"></i></a>
                                         @endif
                                     </div>
                                 </div>
@@ -2947,7 +2945,7 @@
 </div>
 
 {{-- ===================== MODAL COMPOSER DE SESIÓN ===================== --}}
-<div class="modal fade sesion-composer" id="modalSesion" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade sesion-composer" id="modalSesion" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form id="formSesion" autocomplete="off">
@@ -3051,7 +3049,7 @@
 </div>
 
 {{-- ============== Fase 3b — Modal genérico de evaluación inline ============== --}}
-<div class="modal fade inline-eval-modal" id="modalEvalInline" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade inline-eval-modal" id="modalEvalInline" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form id="formEvalInline" autocomplete="off">
@@ -3100,7 +3098,7 @@
 </div>
 
 {{-- ============== Fase 9a — Modal de envío de mensaje ============== --}}
-<div class="modal fade msg-send-modal" id="modalSendMsg" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade msg-send-modal" id="modalSendMsg" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form id="formSendMsg" autocomplete="off">
@@ -3157,7 +3155,7 @@
 </div>
 
 {{-- ============== Quick-add — Modal de nueva ficha clínica ============== --}}
-<div class="modal fade new-case-modal" id="modalNewCase" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade new-case-modal" id="modalNewCase" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form id="formNewCase" autocomplete="off">
@@ -3479,7 +3477,7 @@
 @endif
 
 {{-- ============== Fase 10 — Modal para guardar plantilla de evaluación ============== --}}
-<div class="modal fade eval-tpl-save-modal" id="modalSaveEvalTpl" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade eval-tpl-save-modal" id="modalSaveEvalTpl" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <form id="formSaveEvalTpl" autocomplete="off">
@@ -3562,7 +3560,7 @@
 </div>
 
 {{-- =============== MODAL UPLOAD DE ADJUNTOS (Fase 15) =============== --}}
-<div class="modal fade adj-upload-modal" id="modalAdjUpload" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade adj-upload-modal" id="modalAdjUpload" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form id="formAdjUpload" autocomplete="off">

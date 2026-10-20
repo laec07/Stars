@@ -130,6 +130,9 @@ class FisCheqsController extends Controller
             $cheqs->updated_by = Auth::id();
             $cheqs->save();
 
+            // Borrar entrada en la bitácora (de ahí lee el expediente)
+            UtilityFisioController::logDeleteByFields($cheqs->patient_id, 'fis_cheqs', $request->id);
+
             return $this->apiResponse(['status' => '1', 'data' => 'Registro desactivado exitosamente.'], 200);
 
         } catch (Exception $e) {
